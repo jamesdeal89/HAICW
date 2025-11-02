@@ -14,8 +14,8 @@ NOTE: Allowed libraries include:
 
 '''
 CHECKLIST OF EXPECTED FEATURES:
-1. Intent matching. [ ]
-2. Identity matching. [ ]
+1. Intent matching. [x]
+2. Identity management. [ ]
 3. Transactions. [ ]
 4. Information retrieval & Question answering. [ ]
 5. Small talk. [ ]
@@ -83,7 +83,15 @@ def main():
         prompt = input("Please enter your prompt (QUIT to exit): ")
         if prompt.lower() == "quit":
             break
-        print(intents[searchIntent(invIdx, prompt, count, tfidf, XtrainTf, intents)[0]][1])
+        intent = intents[searchIntent(invIdx, prompt, count, tfidf, XtrainTf, intents)[0]][1]
+        if intent == "discover":
+            discover()
+        elif intent == "small":
+            small(prompt)
+        elif intent == "question":
+            question(prompt)
+        elif intent == "identity":
+            identity(prompt)
         
     print("Goodbye!")
 
@@ -135,7 +143,7 @@ import re
 p_stemmer = PorterStemmer()
 def stemmed_words(doc):
     tokens = re.findall(r'\b\w+\b', doc.lower())
-    return [p_stemmer.stem(token) for token in tokens if token not in stopwords.words('english')]
+    return [p_stemmer.stem(token) for token in tokens]
 
 def stemVectorWeight(intents):
     # If already saved to disk, simply load and return the disk objects
@@ -156,7 +164,7 @@ def stemVectorWeight(intents):
 
     # Initialise and run the count based vectoriser on the prompts, 
     # filtering out stop-words, and using the stemmer.
-    count_vect = CountVectorizer(stop_words=stopwords.words('english'), tokenizer=stemmed_words, lowercase=True)
+    count_vect = CountVectorizer(tokenizer=stemmed_words, lowercase=True)
     X_train_counts = count_vect.fit_transform(prompts)
 
     # Term weighting: Term frequency - Inverse document frequency
@@ -253,11 +261,30 @@ def searchIntent(inverted_index, query, vectoriser, tfidf, X_train_tf, intents):
 
 # TODO: small talk 
 
+def small(prompt):
+    print("Small talk coming soon!")
+
 # TODO: discoverability
+
+def discover():
+    print(
+    "I can help with many things!\n",
+    "Let me walk you through my features:\n"
+    "   1. Book orders - I can help you order a book and set a delivery or pick-up time.\n",
+    "   2. Book information - if you're not sure what you want to order, you can ask me about genres and authors and I'll recommend you a book.\n",
+    "   3. Memory - I will remeber your name and address you as such if you inform me of it!\n",
+    "   4. Small talk - I can handle basic small talk if you'd like to chat.\n",
+    "I hope this helps you converse with me effectively!")
 
 # TODO: user personalisation / memory
 
+def identity(prompt):
+    print("Identity management coming soon!")
+
 # TODO: Q&A with stocks & bonds dataset provided for checkpoint
+
+def question(prompt):
+    print("Q&A coming soon!")
 
 
 if __name__ == "__main__":
