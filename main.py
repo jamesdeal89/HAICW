@@ -85,49 +85,50 @@ from sklearn.feature_extraction.text import CountVectorizer
 
 # ------ Pre-processing ------
 
-'''
-Read in the CSV of example prompts labelled with respetive intents.
-As similarity based intent matching, resolve the user prompt to the 
-most similar entry in the corpus of prompt docs, resolve to respective intent label.
-The labels are one of:
-1. "small"
-2. "question"
-3. "identity"
-4. "discover"
-'''
+def readIntentsCsv():
+    '''
+    Read in the CSV of example prompts labelled with respetive intents.
+    As similarity based intent matching, resolve the user prompt to the 
+    most similar entry in the corpus of prompt docs, resolve to respective intent label.
+    The labels are one of:
+    1. "small"
+    2. "question"
+    3. "identity"
+    4. "discover"
+    '''
 
-intents = []
-import csv
-with open('intents.csv', 'r', newline='') as f:
-    r = csv.reader(f, delimiter=',')
-    for row in r:
-        # format: ["prompt","intent"]
-        intents.append(row)
-print(intents)
-# TODO: pickle intents object so it doesn't re-load every run
+    intents = []
+    import csv
+    with open('intents.csv', 'r', newline='') as f:
+        r = csv.reader(f, delimiter=',')
+        for row in r:
+            # format: ["prompt","intent"]
+            intents.append(row)
+    return intents
+    # TODO: pickle intents object so it doesn't re-load every run
 
 # ------ Stemming, Vectorising, Weighting ------
-
-# Initialise a stemmer to use with the vectoriser
-from nltk.stem.snowball import PorterStemmer
-p_stemmer = PorterStemmer()
-analyser = CountVectorizer.build_analyzer()
-def stemmed_words(doc):
-    return (p_stemmer.stem(w) for w in analyser(doc))
-
-# Get just the prompts to vectorise, but maintain indexing to resolve to labels.
-prompts = []
-for pair in intents: prompts.append(pair[0])
-
-# Initialise and run the count based vectoriser on the prompts, 
-# filtering out stop-words, and using the stemmer.
-count_vect = CountVectorizer(stop_words=stopwords.words('english'), analyzer=stemmed_words)
-X_train_counts = count_vect.fit_transform(prompts)
-
-# Term weighting: Term frequency - Inverse document frequency
 from sklearn.feature_extraction.text import TfidfTransformer
-tf_transformer = TfidfTransformer(use_idf=True, sublinear_tf=True).fit(X_train_counts)
-X_train_tf = tf_transformer.transform(X_train_counts)
+from nltk.stem.snowball import PorterStemmer
+def stemVectorWeight(intents):
+    # Initialise a stemmer to use with the vectoriser
+    p_stemmer = PorterStemmer()
+    analyser = CountVectorizer.build_analyzer()
+    def stemmed_words(doc):
+        return (p_stemmer.stem(w) for w in analyser(doc))
+
+    # Get just the prompts to vectorise, but maintain indexing to resolve to labels.
+    prompts = []
+    for pair in intents: prompts.append(pair[0])
+
+    # Initialise and run the count based vectoriser on the prompts, 
+    # filtering out stop-words, and using the stemmer.
+    count_vect = CountVectorizer(stop_words=stopwords.words('english'), analyzer=stemmed_words)
+    X_train_counts = count_vect.fit_transform(prompts)
+
+    # Term weighting: Term frequency - Inverse document frequency
+    tf_transformer = TfidfTransformer(use_idf=True, sublinear_tf=True).fit(X_train_counts)
+    return (tf_transformer.transform(X_train_counts), count_vect)
 
 # ------ Term Document Matrix ------
 
@@ -141,21 +142,30 @@ Advantage:
 - Just store list of documents containing a term as a list.
 '''
 from collections import defaultdict
-# Format: {term: {docId: tfidfScore}}
-inverted_index = defaultdict(lambda: defaultdict(int))
+def generateInvertedIndex(count_vect, X_train_tf):
+    # Format: {term: {docId: tfidfScore}}
+    inverted_index = defaultdict(lambda: defaultdict(int))
 
-feature_names = count_vect.get_feature_names_out()
-# Convert to co-ordinate format to make iteration more efficient.
-tfid_matrix = X_train_tf.tocoo()
-for docId, termId, score in zip(tfid_matrix.row, tfid_matrix.col, tfid_matrix.data):
-    term = feature_names[termId]
-    inverted_index[term][docId] = score
+    feature_names = count_vect.get_feature_names_out()
+    # Convert to co-ordinate format to make iteration more efficient.
+    tfid_matrix = X_train_tf.tocoo()
+    for docId, termId, score in zip(tfid_matrix.row, tfid_matrix.col, tfid_matrix.data):
+        term = feature_names[termId]
+        inverted_index[term][docId] = score
+    return inverted_index
 
 # 'Postings' => list of docs that contain each term, alongside the term's importance in those docs.
 # inverted_index resolves a term in the vocab to it's respective postings.
 
 # ------ Search ------
 
+'''
+Use cosine similarity => cosine angle between the doc vector and the prompt vector.
+'''
+from numpy import dot
+from numpy.linalg import norm
+def getCosineSimilarity(query_doc, doc):
+    return dot(query_doc, doc) / (norm(query_doc) * norm(doc))
 
 
 # TODO: small talk 
