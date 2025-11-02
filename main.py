@@ -80,6 +80,7 @@ if __name__ == "__main__":
 
 # TODO: similarity-based intent matching
 from nltk.corpus import stopwords
+# nltk.download('stopwords', quiet=True)
 from sklearn.feature_extraction.text import CountVectorizer
 
 # ------ Pre-processing ------
@@ -139,6 +140,21 @@ Advantage:
 - Do *not* need to build the full matrix.
 - Just store list of documents containing a term as a list.
 '''
+from collections import defaultdict
+# Format: {term: {docId: tfidfScore}}
+inverted_index = defaultdict(lambda: defaultdict(int))
+
+feature_names = count_vect.get_feature_names_out()
+# Convert to co-ordinate format to make iteration more efficient.
+tfid_matrix = X_train_tf.tocoo()
+for docId, termId, score in zip(tfid_matrix.row, tfid_matrix.col, tfid_matrix.data):
+    term = feature_names[termId]
+    inverted_index[term][docId] = score
+
+# 'Postings' => list of docs that contain each term, alongside the term's importance in those docs.
+# inverted_index resolves a term in the vocab to it's respective postings.
+
+# ------ Search ------
 
 
 
