@@ -75,25 +75,27 @@ def main():
     """)
     print("Welcome to BlackSmith's Bookstore Chatbot!")
 
-    
+    intents = readIntentsCsv()
+    XtrainTf, count, tfidf = stemVectorWeight(intents)
+    invIdx = generateInvertedIndex(count, XtrainTf)
 
     while True:
         prompt = input("Please enter your prompt (QUIT to exit): ")
         if prompt.lower() == "quit":
             break
+        print(intents[searchIntent(invIdx, prompt, count, tfidf, XtrainTf, intents)[0]][1])
         
     print("Goodbye!")
 
-if __name__ == "__main__":
-    main()
-
-# TODO: similarity-based intent matching
 from nltk.corpus import stopwords
-# nltk.download('stopwords', quiet=True)
+from nltk import download
+download('stopwords', quiet=True)
 from sklearn.feature_extraction.text import CountVectorizer
 
 # ------ Pre-processing ------
 
+import os
+import pickle
 def readIntentsCsv():
     '''
     Read in the CSV of example prompts labelled with respetive intents.
@@ -105,7 +107,12 @@ def readIntentsCsv():
     3. "identity"
     4. "discover"
     '''
+    # If we have the intents object saved to disk, just load and return that
+    if os.path.exists('intents.pickle'):
+        with open("intents.pickle", "rb") as f:
+            return pickle.load(f)
 
+    # If not saved to disk, re-load from csv
     intents = []
     import csv
     with open('intents.csv', 'r', newline='') as f:
@@ -113,18 +120,35 @@ def readIntentsCsv():
         for row in r:
             # format: ["prompt","intent"]
             intents.append(row)
+    
+    # Save to disk for next time
+    with open(f"intents.pickle", "wb") as f:
+        pickle.dump(intents, f)
+
     return intents
-    # TODO: pickle intents object so it doesn't re-load every run
 
 # ------ Stemming, Vectorising, Weighting ------
 from sklearn.feature_extraction.text import TfidfTransformer
 from nltk.stem.snowball import PorterStemmer
+import re
+
+p_stemmer = PorterStemmer()
+def stemmed_words(doc):
+    tokens = re.findall(r'\b\w+\b', doc.lower())
+    return [p_stemmer.stem(token) for token in tokens if token not in stopwords.words('english')]
+
 def stemVectorWeight(intents):
-    # Initialise a stemmer to use with the vectoriser
-    p_stemmer = PorterStemmer()
-    analyser = CountVectorizer.build_analyzer()
-    def stemmed_words(doc):
-        return (p_stemmer.stem(w) for w in analyser(doc))
+    # If already saved to disk, simply load and return the disk objects
+    if os.path.exists("tfidf.pickle") and os.path.exists("XtrainTf.pickle") and os.path.exists("count.pickle"):
+        with open("tfidf.pickle", "rb") as f:
+            tfidf = pickle.load(f)
+        with open("XtrainTf.pickle", "rb") as f:
+            XtrainTf = pickle.load(f)
+        with open("count.pickle", "rb") as f:
+            count = pickle.load(f)
+        return (XtrainTf, count, tfidf)
+    # If not found on disk, re-generate.
+
 
     # Get just the prompts to vectorise, but maintain indexing to resolve to labels.
     prompts = []
@@ -132,12 +156,20 @@ def stemVectorWeight(intents):
 
     # Initialise and run the count based vectoriser on the prompts, 
     # filtering out stop-words, and using the stemmer.
-    count_vect = CountVectorizer(stop_words=stopwords.words('english'), analyzer=stemmed_words)
+    count_vect = CountVectorizer(stop_words=stopwords.words('english'), tokenizer=stemmed_words, lowercase=True)
     X_train_counts = count_vect.fit_transform(prompts)
 
     # Term weighting: Term frequency - Inverse document frequency
     tf_transformer = TfidfTransformer(use_idf=True, sublinear_tf=True).fit(X_train_counts)
-    return (tf_transformer.transform(X_train_counts), count_vect)
+    X_train_tf = tf_transformer.transform(X_train_counts)
+    # Save to disk for next run
+    with open(f"XtrainTf.pickle", "wb") as f:
+        pickle.dump(X_train_tf, f)
+    with open(f"count.pickle", "wb") as f:
+        pickle.dump(count_vect, f)
+    with open(f"tfidf.pickle", "wb") as f:
+        pickle.dump(tf_transformer, f)
+    return (X_train_tf, count_vect, tf_transformer)
 
 # ------ Term Document Matrix ------
 
@@ -151,9 +183,16 @@ Advantage:
 - Just store list of documents containing a term as a list.
 '''
 from collections import defaultdict
+
+def createFloatDict():
+    return defaultdict(float)
+
 def generateInvertedIndex(count_vect, X_train_tf):
+    if os.path.exists('invIdx.pickle'):
+        with open("invIdx.pickle", "rb") as f:
+            return pickle.load(f)
     # Format: {term: {docId: tfidfScore}}
-    inverted_index = defaultdict(lambda: defaultdict(int))
+    inverted_index = defaultdict(createFloatDict)
 
     feature_names = count_vect.get_feature_names_out()
     # Convert to co-ordinate format to make iteration more efficient.
@@ -161,6 +200,9 @@ def generateInvertedIndex(count_vect, X_train_tf):
     for docId, termId, score in zip(tfid_matrix.row, tfid_matrix.col, tfid_matrix.data):
         term = feature_names[termId]
         inverted_index[term][docId] = score
+    # Save to disk for next time
+    with open(f"invIdx.pickle", "wb") as f:
+        pickle.dump(inverted_index, f)
     return inverted_index
 
 # 'Postings' => list of docs that contain each term, alongside the term's importance in those docs.
@@ -177,11 +219,16 @@ def getCosineSimilarity(query_doc, doc):
     # norm() gives the l2-norm of a vector:
     #   - square root of, the sum of, the squares of a vector's components.
     # dot() gives the dot-product of two vectors.
+    query_norm = norm(query_doc)
+    doc_norm = norm(doc)
+    # Check for zero vectors to avoid division by zero
+    if doc_norm == 0 or query_norm == 0:
+        return 0.0
     return dot(query_doc, doc) / (norm(query_doc) * norm(doc))
 
 def searchIntent(inverted_index, query, vectoriser, tfidf, X_train_tf, intents):
     # Vectorise the query 
-    qCounts = vectoriser.transform(query)
+    qCounts = vectoriser.transform([query])
     qTfidf = tfidf.transform(qCounts)
     # Convert to dense arrays for consistent dimensions
     qVec = qTfidf.toarray().flatten()
@@ -213,4 +260,5 @@ def searchIntent(inverted_index, query, vectoriser, tfidf, X_train_tf, intents):
 # TODO: Q&A with stocks & bonds dataset provided for checkpoint
 
 
-
+if __name__ == "__main__":
+    main()
