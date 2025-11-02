@@ -75,6 +75,15 @@ def main():
     """)
     print("Welcome to BlackSmith's Bookstore Chatbot!")
 
+    
+
+    while True:
+        prompt = input("Please enter your prompt (QUIT to exit): ")
+        if prompt.lower() == "quit":
+            break
+        
+    print("Goodbye!")
+
 if __name__ == "__main__":
     main()
 
@@ -165,7 +174,34 @@ Use cosine similarity => cosine angle between the doc vector and the prompt vect
 from numpy import dot
 from numpy.linalg import norm
 def getCosineSimilarity(query_doc, doc):
+    # norm() gives the l2-norm of a vector:
+    #   - square root of, the sum of, the squares of a vector's components.
+    # dot() gives the dot-product of two vectors.
     return dot(query_doc, doc) / (norm(query_doc) * norm(doc))
+
+def searchIntent(inverted_index, query, vectoriser, tfidf, X_train_tf, intents):
+    # Vectorise the query 
+    qCounts = vectoriser.transform(query)
+    qTfidf = tfidf.transform(qCounts)
+    # Convert to dense arrays for consistent dimensions
+    qVec = qTfidf.toarray().flatten()
+    dVecs = X_train_tf.toarray()
+
+    similarity = []
+    # Calculate cosine similarity to each doc's vector
+    for docId in range(len(intents)):
+        dVec = dVecs[docId]
+        similarity.append((docId,getCosineSimilarity(qVec, dVec)))
+    # Return the most likely intent
+    '''
+    Intent can be one of:
+        1. "small"
+        2. "question"
+        3. "identity"
+        4. "discover"
+    '''
+    similarity.sort(key = lambda x:x[1], reverse=True)
+    return similarity[0]
 
 
 # TODO: small talk 
