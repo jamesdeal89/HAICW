@@ -82,6 +82,64 @@ if __name__ == "__main__":
 from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import CountVectorizer
 
+# ------ Pre-processing ------
+
+'''
+Read in the CSV of example prompts labelled with respetive intents.
+As similarity based intent matching, resolve the user prompt to the 
+most similar entry in the corpus of prompt docs, resolve to respective intent label.
+The labels are one of:
+1. "small"
+2. "question"
+3. "identity"
+4. "discover"
+'''
+
+intents = []
+import csv
+with open('intents.csv', 'r', newline='') as f:
+    r = csv.reader(f, delimiter=',')
+    for row in r:
+        # format: ["prompt","intent"]
+        intents.append(row)
+print(intents)
+# TODO: pickle intents object so it doesn't re-load every run
+
+# ------ Stemming, Vectorising, Weighting ------
+
+# Initialise a stemmer to use with the vectoriser
+from nltk.stem.snowball import PorterStemmer
+p_stemmer = PorterStemmer()
+analyser = CountVectorizer.build_analyzer()
+def stemmed_words(doc):
+    return (p_stemmer.stem(w) for w in analyser(doc))
+
+# Get just the prompts to vectorise, but maintain indexing to resolve to labels.
+prompts = []
+for pair in intents: prompts.append(pair[0])
+
+# Initialise and run the count based vectoriser on the prompts, 
+# filtering out stop-words, and using the stemmer.
+count_vect = CountVectorizer(stop_words=stopwords.words('english'), analyzer=stemmed_words)
+X_train_counts = count_vect.fit_transform(prompts)
+
+# Term weighting: Term frequency - Inverse document frequency
+from sklearn.feature_extraction.text import TfidfTransformer
+tf_transformer = TfidfTransformer(use_idf=True, sublinear_tf=True).fit(X_train_counts)
+X_train_tf = tf_transformer.transform(X_train_counts)
+
+# ------ Term Document Matrix ------
+
+'''
+Building an *Inverted Index*:
+Term-document (TD) matrix is imply the tranpose of the document-term matrix.
+- Instead of which terms appear in a document:
+    - care about which documents contain a specific term.
+Advantage:
+- Do *not* need to build the full matrix.
+- Just store list of documents containing a term as a list.
+'''
+
 
 
 # TODO: small talk 
