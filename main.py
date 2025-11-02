@@ -79,6 +79,10 @@ if __name__ == "__main__":
     main()
 
 # TODO: similarity-based intent matching
+from nltk.corpus import stopwords
+from sklearn.feature_extraction.text import CountVectorizer
+
+
 
 # TODO: small talk 
 
