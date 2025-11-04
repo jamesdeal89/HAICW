@@ -95,7 +95,7 @@ def main():
         elif intent == "small":
             small(prompt)
         elif intent == "question":
-            print(question(prompt))
+            print(question(qa, prompt, countQa, tfidfQa, XtrainTfQa))
         elif intent == "identity":
             identity(prompt)
         
@@ -150,8 +150,11 @@ p_stemmer = PorterStemmer()
 def stemmed_words(doc):
     tokens = re.findall(r'\b\w+\b', doc.lower())
     return [p_stemmer.stem(token) for token in tokens]
+def stemmed_filterStopwords_words(doc):
+    tokens = re.findall(r'\b\w+\b', doc.lower())
+    return [p_stemmer.stem(token) for token in tokens if token not in stopwords.words('english')]
 
-def stemVectorWeight(intents: list, stopwords: bool, pName: str, pName1: str, pName2: str):
+def stemVectorWeight(intents: list, filterStopwords: bool, pName: str, pName1: str, pName2: str):
     # If already saved to disk, simply load and return the disk objects
     if os.path.exists(pName) and os.path.exists(pName1) and os.path.exists(pName2):
         with open(pName, "rb") as f:
@@ -169,8 +172,8 @@ def stemVectorWeight(intents: list, stopwords: bool, pName: str, pName1: str, pN
 
     # Initialise and run the count based vectoriser on the prompts, 
     # also using the stemmer.
-    if stopwords:
-        count_vect = CountVectorizer(tokenizer=stemmed_words, stop_words=stopwords.words('english'), lowercase=True)
+    if filterStopwords:
+        count_vect = CountVectorizer(tokenizer=stemmed_filterStopwords_words, lowercase=True)
     else:
         count_vect = CountVectorizer(tokenizer=stemmed_words, lowercase=True)
     X_train_counts = count_vect.fit_transform(prompts)
@@ -180,7 +183,7 @@ def stemVectorWeight(intents: list, stopwords: bool, pName: str, pName1: str, pN
     X_train_tf = tf_transformer.transform(X_train_counts)
     # Save to disk for next run
     with open(pName, "wb") as f:
-        pickle.dump(XtrainTf, f)
+        pickle.dump(X_train_tf, f)
     with open(pName1, "wb") as f:
         pickle.dump(count_vect, f)
     with open(pName2, "wb") as f:
@@ -306,7 +309,7 @@ def question(qa, question, vectoriser, tfidf, X_train_tf):
         similarity.append((docId,getCosineSimilarity(qVec, dVec)))
     # Return the most likely answer
     similarity.sort(key = lambda x:x[1], reverse=True)
-    return qa[similarity[0]][1]
+    return qa[similarity[0][0]][1]
 
 def readQaCsv():
     # If we have the QA object saved to disk, just load and return that
