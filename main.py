@@ -15,9 +15,9 @@ NOTE: Allowed libraries include:
 '''
 CHECKLIST OF EXPECTED FEATURES:
 1. Intent matching. [x]
-2. Identity management. [ ]
+2. Identity management. [x]
 3. Transactions. [ ]
-4. Information retrieval & Question answering. [ ]
+4. Information retrieval & Question answering. [x]
 5. Small talk. [ ]
 '''
 
@@ -97,7 +97,9 @@ def main():
         elif intent == "question":
             print(question(qa, prompt, countQa, tfidfQa, XtrainTfQa))
         elif intent == "identity":
-            identity(prompt)
+            print(identity(prompt))
+        else:
+            print("I'm not sure I understand. Could you try re-wording that?")
         
     print("Goodbye!")
 
@@ -232,6 +234,7 @@ def generateInvertedIndex(count_vect, X_train_tf, pName):
 '''
 Use cosine similarity => cosine angle between the doc vector and the prompt vector.
 '''
+import json, re
 from numpy import dot
 from numpy.linalg import norm
 def getCosineSimilarity(query_doc, doc):
@@ -290,9 +293,50 @@ def discover():
 # TODO: user personalisation / memory
 
 def identity(prompt):
-    print("Identity management coming soon!")
+    # Use regular expression to determine specific intent (either they want to set the name or recall it)
+    reIntents = [r"(?i)\b(?:my name is|call me|i am|i'm)\s+([A-Za-z][A-Za-z' -]*)",
+                 r"(?i)\b(?:what\s+is\s+my\s+name|do\s+you\s+know\s+my\s+name|who\s+am\s+i)\b"]
+    name = re.search(reIntents[0], prompt)
+    recall = re.search(reIntents[1], prompt)
+    if name:
+        saveName(name.group())
+        return f"Thanks for letting me know your name, {name.group()}. I'll remember that."
+    elif recall:
+        name = readName()
+        if name:
+            return f"I remember your name is {name}, of course!"
+        else:
+            return "I'm sorry, I don't think you've told me your name before. What is your name?"
+    else:
+        return "I'm sorry, I don't understand your indentity related request. Perhaps try re-wording your prompt."
 
-# TODO: Q&A with stocks & bonds dataset provided for checkpoint
+def readName():
+    # Read name from session JSON on disk
+    if os.path.exists('session.json'):
+        with open("session.json", "r") as f:
+            session = json.load(f)
+        return session['name']
+
+def saveName(name):
+    # Save the user details into a JSON on disk 
+    # Check if a JSON exists already
+    if os.path.exists('session.json'):
+        # Exists already, so read it, update the name field, write back.
+        with open("session.json", "r") as f:
+            session = json.load(f)
+        session['name'] = name
+        with open("session.json", "w") as f:
+            json.dump(session, f)
+    else:
+        session = {
+            "name": name
+        }
+        with open("session.json", "w") as f:
+            json.dump(session, f)
+
+def resetSession():
+    # Delete session JSON on disk
+    pass
 
 def question(qa, question, vectoriser, tfidf, X_train_tf):
     # Vectorise the query 
