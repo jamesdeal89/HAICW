@@ -309,6 +309,8 @@ def question(qa, question, vectoriser, tfidf, X_train_tf):
         similarity.append((docId,getCosineSimilarity(qVec, dVec)))
     # Return the most likely answer
     similarity.sort(key = lambda x:x[1], reverse=True)
+    if qa[similarity[0][0]][1] == "Answer":
+        return "I'm sorry I'm not able to answer that with my current knowledge. \nMaybe try re-wording your question?"
     return qa[similarity[0][0]][1]
 
 def readQaCsv():
