@@ -278,8 +278,6 @@ def searchIntent(inverted_index, query, vectoriser, tfidf, X_train_tf, intents):
 def small(prompt):
     print("Small talk coming soon!")
 
-# TODO: discoverability
-
 def discover():
     print(
     "I can help with many things!\n",
@@ -290,23 +288,38 @@ def discover():
     "   4. Small talk - I can handle basic small talk if you'd like to chat.\n",
     "I hope this helps you converse with me effectively!")
 
-# TODO: user personalisation / memory
-
 def identity(prompt):
     # Use regular expression to determine specific intent (either they want to set the name or recall it)
     reIntents = [r"(?i)\b(?:my name is|call me|i am|i'm)\s+([A-Za-z][A-Za-z' -]*)",
-                 r"(?i)\b(?:what\s+is\s+my\s+name|do\s+you\s+know\s+my\s+name|who\s+am\s+i)\b"]
+                 r"(?i)\b(?:what\s+is\s+my\s+name|do\s+you\s+know\s+my\s+name|who\s+am\s+i)\b",
+                 r"(?i)\b(?:forget\s+me|forget\s+my\s+(?:info|information|name|data)|delete\s+my\s+(?:info|information|name|data)|remove\s+my\s+data|erase\s+my\s+information)\b"]
     name = re.search(reIntents[0], prompt)
     recall = re.search(reIntents[1], prompt)
+    forget = re.search(reIntents[2], prompt)
     if name:
-        saveName(name.group())
-        return f"Thanks for letting me know your name, {name.group()}. I'll remember that."
+        saveName(name.group(1))
+        return f"Thanks for letting me know your name, {name.group(1)}. I'll remember that."
     elif recall:
         name = readName()
         if name:
             return f"I remember your name is {name}, of course!"
         else:
             return "I'm sorry, I don't think you've told me your name before. What is your name?"
+    elif forget:
+        # Confirm user's intention to remove their data from memory
+        print("You want me to forget your information I've saved up until now?")
+        answer = input("Please enter your prompt (QUIT to exit): ")
+        if answer.lower() == "quit":
+            exit()
+        affirm = re.search(r"(?i)^\s*(?:yes|yep|yeah|y|sure|ok|okay|alright|affirmative|of course|definitely|certainly|sure thing|sounds good|roger)\b", answer) 
+        if affirm:
+            resetSession()
+            return "Okay I've forgotten any information I remembered about you."
+        else:
+            return "Okay, I won't forget your information."
+
+        
+
     else:
         return "I'm sorry, I don't understand your indentity related request. Perhaps try re-wording your prompt."
 
@@ -336,7 +349,7 @@ def saveName(name):
 
 def resetSession():
     # Delete session JSON on disk
-    pass
+    os.remove("session.json")
 
 def question(qa, question, vectoriser, tfidf, X_train_tf):
     # Vectorise the query 
