@@ -75,9 +75,15 @@ def main():
     """)
     print("Welcome to BlackSmith's Bookstore Chatbot!")
 
+    # intent matching initialisations
     intents = readIntentsCsv()
-    XtrainTf, count, tfidf = stemVectorWeight(intents)
-    invIdx = generateInvertedIndex(count, XtrainTf)
+    XtrainTf, count, tfidf = stemVectorWeight(intents, False, "XtrainTf.pickle", "count.pickle", "tfidf.pickle")
+    invIdx = generateInvertedIndex(count, XtrainTf, "invIdx.pickle")
+
+    # QA search initialisations
+    qa = readQaCsv()
+    XtrainTfQa, countQa, tfidfQa = stemVectorWeight(qa, True, "XtrainTfQa.pickle", "countQa.pickle", "tfidfQa.pickle")
+    invIdx = generateInvertedIndex(countQa, XtrainTfQa, "invIdxQa.pickle")
 
     while True:
         prompt = input("Please enter your prompt (QUIT to exit): ")
@@ -89,7 +95,7 @@ def main():
         elif intent == "small":
             small(prompt)
         elif intent == "question":
-            question(prompt)
+            print(question(prompt))
         elif intent == "identity":
             identity(prompt)
         
@@ -103,6 +109,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 # ------ Pre-processing ------
 
 import os
+import csv
 import pickle
 def readIntentsCsv():
     '''
@@ -122,7 +129,6 @@ def readIntentsCsv():
 
     # If not saved to disk, re-load from csv
     intents = []
-    import csv
     with open('intents.csv', 'r', newline='') as f:
         r = csv.reader(f, delimiter=',')
         for row in r:
@@ -145,37 +151,39 @@ def stemmed_words(doc):
     tokens = re.findall(r'\b\w+\b', doc.lower())
     return [p_stemmer.stem(token) for token in tokens]
 
-def stemVectorWeight(intents):
+def stemVectorWeight(intents: list, stopwords: bool, pName: str, pName1: str, pName2: str):
     # If already saved to disk, simply load and return the disk objects
-    if os.path.exists("tfidf.pickle") and os.path.exists("XtrainTf.pickle") and os.path.exists("count.pickle"):
-        with open("tfidf.pickle", "rb") as f:
-            tfidf = pickle.load(f)
-        with open("XtrainTf.pickle", "rb") as f:
+    if os.path.exists(pName) and os.path.exists(pName1) and os.path.exists(pName2):
+        with open(pName, "rb") as f:
             XtrainTf = pickle.load(f)
-        with open("count.pickle", "rb") as f:
+        with open(pName1, "rb") as f:
             count = pickle.load(f)
+        with open(pName2, "rb") as f:
+            tfidf = pickle.load(f)
         return (XtrainTf, count, tfidf)
     # If not found on disk, re-generate.
-
 
     # Get just the prompts to vectorise, but maintain indexing to resolve to labels.
     prompts = []
     for pair in intents: prompts.append(pair[0])
 
     # Initialise and run the count based vectoriser on the prompts, 
-    # filtering out stop-words, and using the stemmer.
-    count_vect = CountVectorizer(tokenizer=stemmed_words, lowercase=True)
+    # also using the stemmer.
+    if stopwords:
+        count_vect = CountVectorizer(tokenizer=stemmed_words, stop_words=stopwords.words('english'), lowercase=True)
+    else:
+        count_vect = CountVectorizer(tokenizer=stemmed_words, lowercase=True)
     X_train_counts = count_vect.fit_transform(prompts)
 
     # Term weighting: Term frequency - Inverse document frequency
     tf_transformer = TfidfTransformer(use_idf=True, sublinear_tf=True).fit(X_train_counts)
     X_train_tf = tf_transformer.transform(X_train_counts)
     # Save to disk for next run
-    with open(f"XtrainTf.pickle", "wb") as f:
-        pickle.dump(X_train_tf, f)
-    with open(f"count.pickle", "wb") as f:
+    with open(pName, "wb") as f:
+        pickle.dump(XtrainTf, f)
+    with open(pName1, "wb") as f:
         pickle.dump(count_vect, f)
-    with open(f"tfidf.pickle", "wb") as f:
+    with open(pName2, "wb") as f:
         pickle.dump(tf_transformer, f)
     return (X_train_tf, count_vect, tf_transformer)
 
@@ -195,9 +203,9 @@ from collections import defaultdict
 def createFloatDict():
     return defaultdict(float)
 
-def generateInvertedIndex(count_vect, X_train_tf):
-    if os.path.exists('invIdx.pickle'):
-        with open("invIdx.pickle", "rb") as f:
+def generateInvertedIndex(count_vect, X_train_tf, pName):
+    if os.path.exists(pName):
+        with open(pName, "rb") as f:
             return pickle.load(f)
     # Format: {term: {docId: tfidfScore}}
     inverted_index = defaultdict(createFloatDict)
@@ -209,7 +217,7 @@ def generateInvertedIndex(count_vect, X_train_tf):
         term = feature_names[termId]
         inverted_index[term][docId] = score
     # Save to disk for next time
-    with open(f"invIdx.pickle", "wb") as f:
+    with open(pName, "wb") as f:
         pickle.dump(inverted_index, f)
     return inverted_index
 
@@ -283,9 +291,42 @@ def identity(prompt):
 
 # TODO: Q&A with stocks & bonds dataset provided for checkpoint
 
-def question(prompt):
-    print("Q&A coming soon!")
+def question(qa, question, vectoriser, tfidf, X_train_tf):
+    # Vectorise the query 
+    qCounts = vectoriser.transform([question])
+    qTfidf = tfidf.transform(qCounts)
+    # Convert to dense arrays for consistent dimensions
+    qVec = qTfidf.toarray().flatten()
+    dVecs = X_train_tf.toarray()
 
+    similarity = []
+    # Calculate cosine similarity to each doc's vector
+    for docId in range(len(qa)):
+        dVec = dVecs[docId]
+        similarity.append((docId,getCosineSimilarity(qVec, dVec)))
+    # Return the most likely answer
+    similarity.sort(key = lambda x:x[1], reverse=True)
+    return qa[similarity[0]][1]
+
+def readQaCsv():
+    # If we have the QA object saved to disk, just load and return that
+    if os.path.exists('qa.pickle'):
+        with open("qa.pickle", "rb") as f:
+            return pickle.load(f)
+
+    # If not saved to disk, re-load from csv
+    qa = []
+    with open('qa.csv', 'r', newline='') as f:
+        r = csv.reader(f, delimiter=',')
+        for row in r:
+            # format: ["question","intent"]
+            qa.append(row[1:3])
+    
+    # Save to disk for next time
+    with open(f"qa.pickle", "wb") as f:
+        pickle.dump(qa, f)
+
+    return qa
 
 if __name__ == "__main__":
     main()
