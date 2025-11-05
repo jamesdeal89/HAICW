@@ -1,4 +1,6 @@
 PROMPT, INTENT
+"hello","small"
+"hi","small"
 "how's the weather today?","small"
 "tell me a joke","small"
 "what's your favorite movie?","small"

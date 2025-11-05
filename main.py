@@ -18,7 +18,7 @@ CHECKLIST OF EXPECTED FEATURES:
 2. Identity management. [x]
 3. Transactions. [ ]
 4. Information retrieval & Question answering. [x]
-5. Small talk. [ ]
+5. Small talk. [x]
 '''
 
 '''
@@ -93,7 +93,7 @@ def main():
         if intent == "discover":
             discover()
         elif intent == "small":
-            small(prompt)
+            print(small(prompt))
         elif intent == "question":
             print(question(qa, prompt, countQa, tfidfQa, XtrainTfQa))
         elif intent == "identity":
@@ -274,9 +274,61 @@ def searchIntent(inverted_index, query, vectoriser, tfidf, X_train_tf, intents):
 
 
 # TODO: small talk 
+# For small talk, I want to emulate something akin to ELIZA.
 
 def small(prompt):
-    print("Small talk coming soon!")
+    # Pattern match prompt to identify keywords which can be saved and referred to in NLG responses.
+    # If no match, resort to generic response like 'Why do you say that?' or 'Tell me more'.
+
+    # Small talk should be multi-turn, as per ELIZA, but have a way to return to 'base path' if user wants to end small talk.
+    # I.E small() will enter a loop of small talk interactions, 
+    # but if no matches are detected / intent is no longer small talk, 
+    # break and refer to that intent's function.
+
+    # List of regex patterns to match and capture specific keywords.
+    # These keywords, depending on type, will be inserted into template responses. 
+
+    # \b word boundary, ensures matches whole words
+    # \s whitespace chars
+    # \w word
+    # (?:...) create non-capturing group
+    patterns = [r"(?i)\b(?:feel|feeling)\s+(\w+)",
+                r"(?i)\bI feel (\w+) when (.+)",
+                r"(?i)\b(?:how\s*are\s*you|how\'?s\s*it\s*going|how\'?s\s*things|what\'?s\s*new|how\s*have\s*you\s*been)\b",
+                r"(?i)\b(?:hi|hey|hello|howdy|greetings|good\s+(?:morning|afternoon|evening|day)|what\'?s\s*up|sup)\b"]
+
+    emotion = re.search(patterns[0], prompt)
+    emotionWithReason = re.search(patterns[1], prompt)
+    howAre = re.search(patterns[2], prompt)
+    greet = re.search(patterns[3], prompt)
+
+    # build up response gradually
+    response = ""
+
+    if greet:
+        if readName():
+            response += f"Hi, {readName()}. "
+        else:
+            # re-use the identity function by putting a pseudo-prompt which will make the system as for the user's name
+            print(identity("what is my name"))
+
+    if emotionWithReason:
+        # TODO: map 'i' to 'you', 'my' to 'your'
+        response += f"Why does {emotionWithReason.group(2)} make you feel {emotionWithReason.group(1)}? "
+    
+    elif emotion:
+        response += f"Tell me more about why you feel {emotion.group(1)}. "
+
+    if howAre:
+        if readName():
+            response += f"I'm doing well! How about you, {readName()}? "
+        else:
+            response += "I'm doing well! How about you? "
+    
+    if not response:
+        response += "Tell me more."
+
+    return response
 
 def discover():
     print(
