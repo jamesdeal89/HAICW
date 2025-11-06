@@ -273,9 +273,6 @@ def searchIntent(inverted_index, query, vectoriser, tfidf, X_train_tf, intents):
     return similarity[0]
 
 
-# TODO: small talk 
-# For small talk, I want to emulate something akin to ELIZA.
-
 def small(prompt):
     # Pattern match prompt to identify keywords which can be saved and referred to in NLG responses.
     # If no match, resort to generic response like 'Why do you say that?' or 'Tell me more'.
@@ -292,11 +289,12 @@ def small(prompt):
     # \s whitespace chars
     # \w word
     # (?:...) create non-capturing group
+
     patterns = [r"(?i)\b(?:feel|feeling)\s+(\w+)",
-                r"(?i)\bi feel (\w+) when (.+)",
-                r"(?i)\bwhen (.+) i feel (\w+)",
-                r"(?i)\b(?:how\s*are\s*you|how\'?s\s*it\s*going|how\'?s\s*things|what\'?s\s*new|how\s*have\s*you\s*been)\b",
-                r"(?i)\b(?:hi|hey|hello|howdy|greetings|good\s+(?:morning|afternoon|evening|day)|what\'?s\s*up|sup)\b"]
+                r"(?i)\b(?:I|me)\b(?:\s+\w)?\s+feel\s+(.+?)\s+when\s+(.+)",
+                r"(?i)\bwhen\s+(.+?)\s+(it\smakes\s)(?:i|me)\b(?:\s+\w)?\s+feel\s+(.+)",
+                r"(?i)\b(?:how\sare\syou|how'?s\sit\sgoing|how'?s\sthings|what'?s\snew|how\shave\syou\sbeen)\b",
+                r"(?i)\b(?:hi|hey|hello|howdy|greetings|good\s+(?:morning|afternoon|evening|day)|what'?s\sup|sup)\b"]
 
     emotion = re.search(patterns[0], prompt)
     emotionWithReason = re.search(patterns[1], prompt)
