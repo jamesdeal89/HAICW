@@ -293,17 +293,24 @@ def small(prompt):
     # \w word
     # (?:...) create non-capturing group
     patterns = [r"(?i)\b(?:feel|feeling)\s+(\w+)",
-                r"(?i)\b(?:i feel (\w+) when (.+))|(?:when (.+) i feel (\w+))",
+                r"(?i)\bi feel (\w+) when (.+)",
+                r"(?i)\bwhen (.+) i feel (\w+)",
                 r"(?i)\b(?:how\s*are\s*you|how\'?s\s*it\s*going|how\'?s\s*things|what\'?s\s*new|how\s*have\s*you\s*been)\b",
                 r"(?i)\b(?:hi|hey|hello|howdy|greetings|good\s+(?:morning|afternoon|evening|day)|what\'?s\s*up|sup)\b"]
 
     emotion = re.search(patterns[0], prompt)
     emotionWithReason = re.search(patterns[1], prompt)
-    howAre = re.search(patterns[2], prompt)
-    greet = re.search(patterns[3], prompt)
+    emotionWithReason1 = re.search(patterns[2], prompt)
+    howAre = re.search(patterns[3], prompt)
+    greet = re.search(patterns[4], prompt)
 
-    # map for
-
+    # Map for entity reference words, so they can be 'flipped' when the system uses them.
+    # e.g: 'I feel sad when people laugh at me' -> 'why do you feel sad when people laugh at you'
+    referenceMap = {
+        'me': 'you',
+        'i': 'you',
+        'my': 'your',
+    }
 
     # build up response gradually
     response = ""
@@ -313,16 +320,29 @@ def small(prompt):
             response += f"Hi, {readName()}. "
         else:
             print("Hello! ", end='')
-            # re-use the identity function by putting a pseudo-prompt which will make the system as for the user's name
+            # re-use the identity function by putting a pseudo-prompt which will make the system ask for the user's name
             print(identity("what is my name"), end='')
 
     if emotionWithReason:
-        # TODO: map 'i' to 'you', 'my' to 'your'
-        # if statement to account for the 2 orders of this kind of prompt
-        if emotionWithReason.group(1):
-            response += f"Why does {emotionWithReason.group(2)} make you feel {emotionWithReason.group(1)}? "
-        else:
-            response += f"Why does {emotionWithReason.group(4)} make you feel {emotionWithReason.group(3)}? "
+        reason = ""
+        for word in re.findall('\w+',emotionWithReason.group(2)):
+            if word in referenceMap.keys():
+                reason += referenceMap[word] + " "
+            else:
+                reason += word + " "
+
+        # [:-1] indexing on reason is simply to remove trailing whitespace before ?
+        response += f"Why do you feel {emotionWithReason.group(1)} when {reason[:-1]}? "
+    elif emotionWithReason1:
+        reason = ""
+        # instead of split(' '), this will also remove punctuation when tokenising
+        for word in re.findall('\w+',emotionWithReason1.group(1)):
+            if word in referenceMap.keys():
+                reason += referenceMap[word] + " "
+            else:
+                reason += word + " "
+
+        response += f"Why do you feel {emotionWithReason1.group(2)} when {reason[:-1]}? "
     
     elif emotion:
         response += f"Tell me more about why you feel {emotion.group(1)}. "
