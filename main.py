@@ -293,7 +293,7 @@ def small(prompt):
     # \w word
     # (?:...) create non-capturing group
     patterns = [r"(?i)\b(?:feel|feeling)\s+(\w+)",
-                r"(?i)\bI feel (\w+) when (.+)",
+                r"(?i)\b(?:i feel (\w+) when (.+))|(?:when (.+) i feel (\w+))",
                 r"(?i)\b(?:how\s*are\s*you|how\'?s\s*it\s*going|how\'?s\s*things|what\'?s\s*new|how\s*have\s*you\s*been)\b",
                 r"(?i)\b(?:hi|hey|hello|howdy|greetings|good\s+(?:morning|afternoon|evening|day)|what\'?s\s*up|sup)\b"]
 
@@ -302,6 +302,9 @@ def small(prompt):
     howAre = re.search(patterns[2], prompt)
     greet = re.search(patterns[3], prompt)
 
+    # map for
+
+
     # build up response gradually
     response = ""
 
@@ -309,12 +312,17 @@ def small(prompt):
         if readName():
             response += f"Hi, {readName()}. "
         else:
+            print("Hello! ", end='')
             # re-use the identity function by putting a pseudo-prompt which will make the system as for the user's name
-            print(identity("what is my name"))
+            print(identity("what is my name"), end='')
 
     if emotionWithReason:
         # TODO: map 'i' to 'you', 'my' to 'your'
-        response += f"Why does {emotionWithReason.group(2)} make you feel {emotionWithReason.group(1)}? "
+        # if statement to account for the 2 orders of this kind of prompt
+        if emotionWithReason.group(1):
+            response += f"Why does {emotionWithReason.group(2)} make you feel {emotionWithReason.group(1)}? "
+        else:
+            response += f"Why does {emotionWithReason.group(4)} make you feel {emotionWithReason.group(3)}? "
     
     elif emotion:
         response += f"Tell me more about why you feel {emotion.group(1)}. "
@@ -325,7 +333,7 @@ def small(prompt):
         else:
             response += "I'm doing well! How about you? "
     
-    if not response:
+    if not response and not greet:
         response += "Tell me more."
 
     return response
@@ -356,7 +364,18 @@ def identity(prompt):
         if name:
             return f"I remember your name is {name}, of course!"
         else:
-            return "I'm sorry, I don't think you've told me your name before. What is your name?"
+            # Need to a separate input here as they may respond with simply 'Joe' which the intents input loop may not be able to handle.
+            print("I'm sorry, I don't think you've told me your name before. What is your name?")
+            answer = input("Please enter your prompt (QUIT to exit): ")
+            if answer.lower() == "quit":
+                exit()
+            uName = re.search(reIntents[0],answer)
+            if not uName and len(answer.strip().split(' ')) == 1:
+                saveName(answer.strip())
+            else:
+                saveName(uName.group(1))
+            return f"Thanks for letting me know your name, {readName()}. I'll remember that."
+
     elif forget:
         # Confirm user's intention to remove their data from memory
         print("You want me to forget your information I've saved up until now?")
