@@ -325,7 +325,7 @@ def small(prompt):
 
     if emotionWithReason:
         reason = ""
-        for word in re.findall('\w+',emotionWithReason.group(2)):
+        for word in re.findall(r"\w+",emotionWithReason.group(2)):
             if word in referenceMap.keys():
                 reason += referenceMap[word] + " "
             else:
@@ -336,7 +336,7 @@ def small(prompt):
     elif emotionWithReason1:
         reason = ""
         # instead of split(' '), this will also remove punctuation when tokenising
-        for word in re.findall('\w+',emotionWithReason1.group(1)):
+        for word in re.findall(r"\w+",emotionWithReason1.group(1)):
             if word in referenceMap.keys():
                 reason += referenceMap[word] + " "
             else:
