@@ -1,0 +1,384 @@
+{
+  "locations": [
+    {
+      "name": "Nottingham",
+      "open": 7,
+      "close": 20,
+      "days": "1111110",
+      "daysOfWeek": {
+        "monday": true,
+        "tuesday": true,
+        "wednesday": true,
+        "thursday": true,
+        "friday": true,
+        "saturday": true,
+        "sunday": false
+      },
+      "address": "7 King's Road, City Centre, Nottingham, NG1 1RA",
+      "email": "nottingham@blacksmiths.co.uk",
+      "cafe": true,
+      "floors": 3
+    },
+    {
+      "name": "London",
+      "open": 6,
+      "close": 22,
+      "days": "1111111",
+      "daysOfWeek": {
+        "monday": true,
+        "tuesday": true,
+        "wednesday": true,
+        "thursday": true,
+        "friday": true,
+        "saturday": true,
+        "sunday": true
+      },
+      "address": "42 Charing Cross Road, West End, London, WC2H 0AB",
+      "email": "london@blacksmiths.co.uk",
+      "cafe": true,
+      "floors": 5
+    },
+    {
+      "name": "Manchester",
+      "open": 8,
+      "close": 19,
+      "days": "1111100",
+      "daysOfWeek": {
+        "monday": true,
+        "tuesday": true,
+        "wednesday": true,
+        "thursday": true,
+        "friday": true,
+        "saturday": false,
+        "sunday": false
+      },
+      "address": "89 Deansgate, City Centre, Manchester, M3 2BW",
+      "email": "manchester@blacksmiths.co.uk",
+      "cafe": true,
+      "floors": 4
+    },
+    {
+      "name": "Edinburgh",
+      "open": 9,
+      "close": 18,
+      "days": "1111110",
+      "daysOfWeek": {
+        "monday": true,
+        "tuesday": true,
+        "wednesday": true,
+        "thursday": true,
+        "friday": true,
+        "saturday": true,
+        "sunday": false
+      },
+      "address": "156 Royal Mile, Old Town, Edinburgh, EH8 8DU",
+      "email": "edinburgh@blacksmiths.co.uk",
+      "cafe": false,
+      "floors": 2
+    },
+    {
+      "name": "Birmingham",
+      "open": 7,
+      "close": 21,
+      "days": "1111110",
+      "daysOfWeek": {
+        "monday": true,
+        "tuesday": true,
+        "wednesday": true,
+        "thursday": true,
+        "friday": true,
+        "saturday": true,
+        "sunday": false
+      },
+      "address": "203 Corporation Street, City Centre, Birmingham, B4 6SG",
+      "email": "birmingham@blacksmiths.co.uk",
+      "cafe": true,
+      "floors": 3
+    },
+    {
+      "name": "Bristol",
+      "open": 8,
+      "close": 20,
+      "days": "1111110",
+      "daysOfWeek": {
+        "monday": true,
+        "tuesday": true,
+        "wednesday": true,
+        "thursday": true,
+        "friday": true,
+        "saturday": true,
+        "sunday": false
+      },
+      "address": "72 Broad Street, City Centre, Bristol, BS1 2EL",
+      "email": "bristol@blacksmiths.co.uk",
+      "cafe": true,
+      "floors": 2
+    },
+    {
+      "name": "Leeds",
+      "open": 7,
+      "close": 19,
+      "days": "1111100",
+      "daysOfWeek": {
+        "monday": true,
+        "tuesday": true,
+        "wednesday": true,
+        "thursday": true,
+        "friday": true,
+        "saturday": false,
+        "sunday": false
+      },
+      "address": "15 Briggate, City Centre, Leeds, LS1 6AY",
+      "email": "leeds@blacksmiths.co.uk",
+      "cafe": false,
+      "floors": 3
+    },
+    {
+      "name": "Glasgow",
+      "open": 9,
+      "close": 17,
+      "days": "1110111",
+      "daysOfWeek": {
+        "monday": true,
+        "tuesday": true,
+        "wednesday": true,
+        "thursday": false,
+        "friday": true,
+        "saturday": true,
+        "sunday": true
+      },
+      "address": "298 Sauchiehall Street, City Centre, Glasgow, G2 3EQ",
+      "email": "glasgow@blacksmiths.co.uk",
+      "cafe": true,
+      "floors": 2
+    },
+    {
+      "name": "Cardiff",
+      "open": 8,
+      "close": 18,
+      "days": "1111100",
+      "daysOfWeek": {
+        "monday": true,
+        "tuesday": true,
+        "wednesday": true,
+        "thursday": true,
+        "friday": true,
+        "saturday": false,
+        "sunday": false
+      },
+      "address": "35 High Street, City Centre, Cardiff, CF10 1PG",
+      "email": "cardiff@blacksmiths.co.uk",
+      "cafe": false,
+      "floors": 2
+    },
+    {
+      "name": "Oxford",
+      "open": 10,
+      "close": 17,
+      "days": "1110110",
+      "daysOfWeek": {
+        "monday": true,
+        "tuesday": true,
+        "wednesday": true,
+        "thursday": false,
+        "friday": true,
+        "saturday": true,
+        "sunday": false
+      },
+      "address": "54 Broad Street, University Area, Oxford, OX1 3BA",
+      "email": "oxford@blacksmiths.co.uk",
+      "cafe": true,
+      "floors": 2
+    },
+    {
+      "name": "Cambridge",
+      "open": 9,
+      "close": 18,
+      "days": "1110110",
+      "daysOfWeek": {
+        "monday": true,
+        "tuesday": true,
+        "wednesday": true,
+        "thursday": false,
+        "friday": true,
+        "saturday": true,
+        "sunday": false
+      },
+      "address": "23 King's Parade, City Centre, Cambridge, CB2 1SJ",
+      "email": "cambridge@blacksmiths.co.uk",
+      "cafe": true,
+      "floors": 2
+    },
+    {
+      "name": "Bath",
+      "open": 8,
+      "close": 19,
+      "days": "1111110",
+      "daysOfWeek": {
+        "monday": true,
+        "tuesday": true,
+        "wednesday": true,
+        "thursday": true,
+        "friday": true,
+        "saturday": true,
+        "sunday": false
+      },
+      "address": "11 Milsom Street, City Centre, Bath, BA1 1DA",
+      "email": "bath@blacksmiths.co.uk",
+      "cafe": false,
+      "floors": 2
+    },
+    {
+      "name": "York",
+      "open": 7,
+      "close": 18,
+      "days": "1110111",
+      "daysOfWeek": {
+        "monday": true,
+        "tuesday": true,
+        "wednesday": true,
+        "thursday": false,
+        "friday": true,
+        "saturday": true,
+        "sunday": true
+      },
+      "address": "88 Stonegate, Medieval Quarter, York, YO1 8AY",
+      "email": "york@blacksmiths.co.uk",
+      "cafe": true,
+      "floors": 2
+    },
+    {
+      "name": "Liverpool",
+      "open": 6,
+      "close": 20,
+      "days": "1111110",
+      "daysOfWeek": {
+        "monday": true,
+        "tuesday": true,
+        "wednesday": true,
+        "thursday": true,
+        "friday": true,
+        "saturday": true,
+        "sunday": false
+      },
+      "address": "124 Bold Street, City Centre, Liverpool, L1 4DQ",
+      "email": "liverpool@blacksmiths.co.uk",
+      "cafe": true,
+      "floors": 3
+    },
+    {
+      "name": "Newcastle",
+      "open": 7,
+      "close": 19,
+      "days": "1111100",
+      "daysOfWeek": {
+        "monday": true,
+        "tuesday": true,
+        "wednesday": true,
+        "thursday": true,
+        "friday": true,
+        "saturday": false,
+        "sunday": false
+      },
+      "address": "67 Grey's Monument, City Centre, Newcastle, NE1 6EF",
+      "email": "newcastle@blacksmiths.co.uk",
+      "cafe": true,
+      "floors": 2
+    },
+    {
+      "name": "Brighton",
+      "open": 9,
+      "close": 21,
+      "days": "1111111",
+      "daysOfWeek": {
+        "monday": true,
+        "tuesday": true,
+        "wednesday": true,
+        "thursday": true,
+        "friday": true,
+        "saturday": true,
+        "sunday": true
+      },
+      "address": "47 The Lanes, City Centre, Brighton, BN1 1EL",
+      "email": "brighton@blacksmiths.co.uk",
+      "cafe": true,
+      "floors": 2
+    },
+    {
+      "name": "Sheffield",
+      "open": 8,
+      "close": 18,
+      "days": "1111100",
+      "daysOfWeek": {
+        "monday": true,
+        "tuesday": true,
+        "wednesday": true,
+        "thursday": true,
+        "friday": true,
+        "saturday": false,
+        "sunday": false
+      },
+      "address": "102 Fargate, City Centre, Sheffield, S1 2DA",
+      "email": "sheffield@blacksmiths.co.uk",
+      "cafe": false,
+      "floors": 2
+    },
+    {
+      "name": "Belfast",
+      "open": 7,
+      "close": 17,
+      "days": "1111100",
+      "daysOfWeek": {
+        "monday": true,
+        "tuesday": true,
+        "wednesday": true,
+        "thursday": true,
+        "friday": true,
+        "saturday": false,
+        "sunday": false
+      },
+      "address": "9 Donegall Place, City Centre, Belfast, BT1 5GB",
+      "email": "belfast@blacksmiths.co.uk",
+      "cafe": false,
+      "floors": 2
+    },
+    {
+      "name": "Dublin",
+      "open": 8,
+      "close": 20,
+      "days": "1111111",
+      "daysOfWeek": {
+        "monday": true,
+        "tuesday": true,
+        "wednesday": true,
+        "thursday": true,
+        "friday": true,
+        "saturday": true,
+        "sunday": true
+      },
+      "address": "17 Grafton Street, City Centre, Dublin, D02 AF23",
+      "email": "dublin@blacksmiths.ie",
+      "cafe": true,
+      "floors": 4
+    },
+    {
+      "name": "Portsmouth",
+      "open": 6,
+      "close": 19,
+      "days": "1111110",
+      "daysOfWeek": {
+        "monday": true,
+        "tuesday": true,
+        "wednesday": true,
+        "thursday": true,
+        "friday": true,
+        "saturday": true,
+        "sunday": false
+      },
+      "address": "84 The Hard, Waterfront, Portsmouth, PO1 3PA",
+      "email": "portsmouth@blacksmiths.co.uk",
+      "cafe": false,
+      "floors": 2
+    }
+  ]
+}
