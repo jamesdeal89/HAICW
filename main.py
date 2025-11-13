@@ -22,7 +22,7 @@ CHECKLIST OF EXPECTED FEATURES:
 '''
 
 '''
-INITIAL IDEAS:
+IDEA:
 Book ordering system.
 Transaction: ordering books, scheduling pickup/delivery.
 Q&A: book recomendations, location opening times.
@@ -47,6 +47,14 @@ What are stocks and bonds [answer from QA dataset]
 
 NOTE: For purposes of checkpoint, need to use *stocks QA dataset* provided, 
 for final submission can change.
+
+CHECKPOINT WAS COMPLETED AND BONUS MARKS RECEIVED.
+'''
+
+'''
+NOTE on Q&A dataset:
+Static dataset was partially genAI generated to bulk out examples. 
+NONE of the code, processing, etc are AI generated.
 '''
 
 def main():
