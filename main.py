@@ -116,6 +116,7 @@ def main():
         
     print("Goodbye!")
 
+import json
 from nltk.corpus import stopwords
 from nltk import download
 download('stopwords', quiet=True)
@@ -532,6 +533,7 @@ def readQaCsv():
 
 '''
 Use a slot filling approach.
+Once this handler is called, enter a loop which follows the flow described below.
 Flow:
 1. scan the directed initial prompt for any already provided information.
 2. for non-provided information, order of questions will be:
@@ -547,9 +549,57 @@ Flow:
         - confirm cost (book + postage)
 '''
 def order(prompt: str):
+    # declare slots as None for now, any left as None after initial scan of prompt will be ask for
+    book: str = None
+    quantity: int = None
+    pickup: bool = None
     # check for book in stock.json 
-    # use some basic fuzzy search
+    # use Levenshtein-based fuzzy search to ensure detected book title can match 
+    # to a specific title as per stock.json.
+
     pass
+
+'''
+Perform a fuzzy search for title using Levenshtein distance.
+Returns the true title per stock.json, or empty string if not found.
+'''
+def fuzzySearchTitle(title: str) -> str:
+    pass
+
+def getStockJSON():
+    with open('stock.json', 'r') as f:
+        data = json.load(f)
+    return data
+
+def getOrdersJSON():
+    if os.path.exists('orders.json'):
+        with open('orders.json', 'r') as f:
+            data = json.load(f)
+        return data
+    return None
+
+def storeOrder(title, isbn, quantity, pickup, address, date, time, cost, name):
+    orders = getOrdersJSON()
+    order = {
+        "title": title,
+        "ISBN": isbn,
+        "quantity": quantity,
+        "pickup": pickup,
+        "address": address,
+        "date": date,
+        "time": time,
+        "cost": cost,
+        "name": name
+    }
+    if orders:
+        orders['orders'].append(order)
+    else:
+        orders = {
+                "orders": [order]
+        }
+    ordersStr = json.dumps(orders, indent=4)
+    with open('orders.json', 'w') as f:
+        f.write(ordersStr)
 
 '''
 Returns the Levenshtein distance which can be used to implement a fuzzy search.
