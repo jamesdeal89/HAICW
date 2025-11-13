@@ -1,0 +1,435 @@
+{
+    "stock": [
+        {
+            "name": "The 3 Body Problem",
+            "author": "Cixin Liu",
+            "ISBN": 9781784971571,
+            "count": 25,
+            "pages": 448,
+            "price": 9.99,
+            "genre": "Science Fiction",
+            "available": [
+                "Nottingham",
+                "Oxford",
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Edinburgh",
+                "Bristol"
+            ]
+        },
+        {
+            "name": "Dune",
+            "author": "Frank Herbert",
+            "ISBN": 9780441172719,
+            "count": 18,
+            "pages": 688,
+            "price": 12.99,
+            "genre": "Science Fiction",
+            "available": [
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Bristol",
+                "Liverpool",
+                "Brighton"
+            ]
+        },
+        {
+            "name": "The Hobbit",
+            "author": "J.R.R. Tolkien",
+            "ISBN": 9780547928227,
+            "count": 32,
+            "pages": 310,
+            "price": 8.99,
+            "genre": "Fantasy",
+            "available": [
+                "Nottingham",
+                "London",
+                "Edinburgh",
+                "Oxford",
+                "Cambridge",
+                "York",
+                "Bath"
+            ]
+        },
+        {
+            "name": "Pride and Prejudice",
+            "author": "Jane Austen",
+            "ISBN": 9780141439518,
+            "count": 22,
+            "pages": 432,
+            "price": 7.99,
+            "genre": "Literary Fiction",
+            "available": [
+                "London",
+                "Oxford",
+                "Cambridge",
+                "Bath",
+                "Brighton",
+                "Dublin"
+            ]
+        },
+        {
+            "name": "The Great Gatsby",
+            "author": "F. Scott Fitzgerald",
+            "ISBN": 9780743273565,
+            "count": 19,
+            "pages": 180,
+            "price": 8.99,
+            "genre": "Literary Fiction",
+            "available": [
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Liverpool",
+                "Newcastle",
+                "Brighton"
+            ]
+        },
+        {
+            "name": "To Kill a Mockingbird",
+            "author": "Harper Lee",
+            "ISBN": 9780061120084,
+            "count": 28,
+            "pages": 324,
+            "price": 9.99,
+            "genre": "Literary Fiction",
+            "available": [
+                "Nottingham",
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Bristol",
+                "Edinburgh",
+                "Glasgow"
+            ]
+        },
+        {
+            "name": "1984",
+            "author": "George Orwell",
+            "ISBN": 9780451524935,
+            "count": 24,
+            "pages": 328,
+            "price": 10.99,
+            "genre": "Dystopian",
+            "available": [
+                "London",
+                "Oxford",
+                "Cambridge",
+                "Manchester",
+                "Leeds",
+                "Sheffield"
+            ]
+        },
+        {
+            "name": "The Catcher in the Rye",
+            "author": "J.D. Salinger",
+            "ISBN": 9780316769174,
+            "count": 15,
+            "pages": 277,
+            "price": 9.99,
+            "genre": "Literary Fiction",
+            "available": [
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Oxford",
+                "Cambridge",
+                "Brighton"
+            ]
+        },
+        {
+            "name": "Neuromancer",
+            "author": "William Gibson",
+            "ISBN": 9780441569595,
+            "count": 12,
+            "pages": 271,
+            "price": 11.99,
+            "genre": "Cyberpunk",
+            "available": [
+                "London",
+                "Manchester",
+                "Sheffield",
+                "Leeds",
+                "Newcastle"
+            ]
+        },
+        {
+            "name": "The Midnight Library",
+            "author": "Matt Haig",
+            "ISBN": 9781786891609,
+            "count": 31,
+            "pages": 304,
+            "price": 9.99,
+            "genre": "Contemporary Fiction",
+            "available": [
+                "Nottingham",
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Bristol",
+                "Edinburgh",
+                "Liverpool",
+                "Brighton",
+                "Dublin"
+            ]
+        },
+        {
+            "name": "Sapiens",
+            "author": "Yuval Noah Harari",
+            "ISBN": 9780062316097,
+            "count": 20,
+            "pages": 476,
+            "price": 13.99,
+            "genre": "Non-Fiction",
+            "available": [
+                "London",
+                "Oxford",
+                "Cambridge",
+                "Manchester",
+                "Birmingham",
+                "Edinburgh",
+                "Glasgow"
+            ]
+        },
+        {
+            "name": "The Lord of the Rings",
+            "author": "J.R.R. Tolkien",
+            "ISBN": 9780544003415,
+            "count": 16,
+            "pages": 1178,
+            "price": 18.99,
+            "genre": "Fantasy",
+            "available": [
+                "London",
+                "Oxford",
+                "Edinburgh",
+                "Cambridge",
+                "Bath",
+                "York"
+            ]
+        },
+        {
+            "name": "Foundation",
+            "author": "Isaac Asimov",
+            "ISBN": 9780553293357,
+            "count": 14,
+            "pages": 255,
+            "price": 10.99,
+            "genre": "Science Fiction",
+            "available": [
+                "London",
+                "Manchester",
+                "Leeds",
+                "Sheffield",
+                "Newcastle",
+                "Cambridge"
+            ]
+        },
+        {
+            "name": "The Handmaid's Tale",
+            "author": "Margaret Atwood",
+            "ISBN": 9780385490818,
+            "count": 23,
+            "pages": 395,
+            "price": 11.99,
+            "genre": "Dystopian",
+            "available": [
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Bristol",
+                "Edinburgh",
+                "Liverpool",
+                "Brighton"
+            ]
+        },
+        {
+            "name": "Brave New World",
+            "author": "Aldous Huxley",
+            "ISBN": 9780060085260,
+            "count": 19,
+            "pages": 268,
+            "price": 9.99,
+            "genre": "Dystopian",
+            "available": [
+                "London",
+                "Oxford",
+                "Cambridge",
+                "Manchester",
+                "Bristol",
+                "Cardiff"
+            ]
+        },
+        {
+            "name": "The Name of the Wind",
+            "author": "Patrick Rothfuss",
+            "ISBN": 9780756404079,
+            "count": 21,
+            "pages": 662,
+            "price": 12.99,
+            "genre": "Fantasy",
+            "available": [
+                "Nottingham",
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Edinburgh",
+                "Liverpool",
+                "Dublin"
+            ]
+        },
+        {
+            "name": "American Gods",
+            "author": "Neil Gaiman",
+            "ISBN": 9780060530860,
+            "count": 17,
+            "pages": 635,
+            "price": 13.99,
+            "genre": "Fantasy",
+            "available": [
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Brighton",
+                "Sheffield",
+                "Leeds"
+            ]
+        },
+        {
+            "name": "Educated",
+            "author": "Tara Westover",
+            "ISBN": 9780399590504,
+            "count": 26,
+            "pages": 352,
+            "price": 12.99,
+            "genre": "Memoir",
+            "available": [
+                "Nottingham",
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Bristol",
+                "Edinburgh",
+                "Oxford",
+                "Cambridge"
+            ]
+        },
+        {
+            "name": "The Midnight Library",
+            "author": "Matt Haig",
+            "ISBN": 9781786891609,
+            "count": 31,
+            "pages": 304,
+            "price": 9.99,
+            "genre": "Contemporary Fiction",
+            "available": [
+                "Nottingham",
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Bristol",
+                "Edinburgh",
+                "Liverpool",
+                "Brighton",
+                "Dublin"
+            ]
+        },
+        {
+            "name": "The Silent Patient",
+            "author": "Alex Michaelides",
+            "ISBN": 9781250301697,
+            "count": 29,
+            "pages": 336,
+            "price": 10.99,
+            "genre": "Mystery Thriller",
+            "available": [
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Bristol",
+                "Liverpool",
+                "Brighton",
+                "Sheffield"
+            ]
+        },
+        {
+            "name": "It Ends with Us",
+            "author": "Colleen Hoover",
+            "ISBN": 9781492210672,
+            "count": 35,
+            "pages": 356,
+            "price": 10.99,
+            "genre": "Contemporary Fiction",
+            "available": [
+                "Nottingham",
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Bristol",
+                "Edinburgh",
+                "Liverpool",
+                "Newcastle",
+                "Brighton",
+                "Dublin"
+            ]
+        },
+        {
+            "name": "The Seven Husbands of Evelyn Hugo",
+            "author": "Taylor Jenkins Reid",
+            "ISBN": 9780399585814,
+            "count": 27,
+            "pages": 400,
+            "price": 11.99,
+            "genre": "Historical Fiction",
+            "available": [
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Bristol",
+                "Liverpool",
+                "Edinburgh",
+                "Brighton",
+                "Dublin"
+            ]
+        },
+        {
+            "name": "The Book Thief",
+            "author": "Markus Zusak",
+            "ISBN": 9780375842597,
+            "count": 24,
+            "pages": 552,
+            "price": 12.99,
+            "genre": "Historical Fiction",
+            "available": [
+                "Nottingham",
+                "London",
+                "Oxford",
+                "Manchester",
+                "Birmingham",
+                "Edinburgh",
+                "Bristol"
+            ]
+        },
+        {
+            "name": "Atomic Habits",
+            "author": "James Clear",
+            "ISBN": 9780735211292,
+            "count": 33,
+            "pages": 320,
+            "price": 12.99,
+            "genre": "Self-Help",
+            "available": [
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Liverpool",
+                "Newcastle",
+                "Leeds",
+                "Sheffield",
+                "Cambridge"
+            ]
+        }
+    ] 
+}
