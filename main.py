@@ -57,6 +57,11 @@ Static dataset was partially genAI generated to bulk out examples.
 NONE of the code, processing, etc are AI generated.
 '''
 
+confidenceThresholdQA = 0.6
+confidenceThresholdQAconfirm = 0.4
+confidenceThresholdIntent = 0.6
+confidenceThresholdIntentconfirm = 0.4
+
 def main():
     print("======== STARTING BOOKSTORE CHATBOT ========")
     # NOTE: below ASCII art was generated via https://patorjk.com/software/taag/
@@ -276,19 +281,41 @@ def searchIntent(inverted_index, query, vectoriser, tfidf, X_train_tf, intents):
         2. "question"
         3. "identity"
         4. "discover"
+        5. "order"
+        6. "address"
+        7. "facilities"
     '''
     similarity.sort(key = lambda x:x[1], reverse=True)
-    return similarity[0]
+    if similarity[0][1] > confidenceThresholdIntent:
+        return similarity[0]
+    elif similarity[0][1] > confidenceThresholdIntentconfirm:
+        print(f"To confirm, you're asking about {intents[similarity[0][0]]}?")
+        if confirmation(): 
+            return similarity[0]
+        else:
+            print("I'm sorry, I'm not sure what you mean then, please try re-wording your prompt or asking me 'what can you do' for specific examples.")
 
+'''
+Shared function for basic confirmation from the user.
+Simplifies code in other handlers.
+Returns simply true/false if they confirmed.
+'''
+def confirmation():
+    answer = input("Please enter your prompt (QUIT to exit): ")
+    if answer.lower() == "quit":
+        exit()
+    affirm = re.search(r"(?i)^\s*(?:yes|yep|yeah|y|sure|ok|okay|alright|affirmative|of course|definitely|certainly|sure thing|sounds good|roger)\b", answer) 
+    if affirm:
+        return True
+    return False
 
+'''
+Small talk approach is based on 'ELIZA' from the course's recomended reading:
+Pattern match prompt to identify keywords which can be saved and referred to in NLG template responses.
+If no match, resort to generic response like "Why do you say that?" or "Tell me more".
+Allow multiple matches from a single user prompt - gradually builds up a large response if the user's prompt was multi-faceted.
+'''
 def small(prompt):
-    # Pattern match prompt to identify keywords which can be saved and referred to in NLG responses.
-    # If no match, resort to generic response like 'Why do you say that?' or 'Tell me more'.
-
-    # Small talk should be multi-turn, as per ELIZA, but have a way to return to 'base path' if user wants to end small talk.
-    # I.E small() will enter a loop of small talk interactions, 
-    # but if no matches are detected / intent is no longer small talk, 
-    # break and refer to that intent's function.
 
     # List of regex patterns to match and capture specific keywords.
     # These keywords, depending on type, will be inserted into template responses. 
@@ -364,6 +391,10 @@ def small(prompt):
 
     return response
 
+'''
+Handler for when intent is detected to be 'discover' which means the user is asking about what the chatbot can do.
+Prints out a detailed explanation of capabilties to make the chatbot less of a 'black box'.
+'''
 def discover():
     print(
     "I can help with many things!\n",
@@ -405,11 +436,7 @@ def identity(prompt):
     elif forget:
         # Confirm user's intention to remove their data from memory
         print("You want me to forget your information I've saved up until now?")
-        answer = input("Please enter your prompt (QUIT to exit): ")
-        if answer.lower() == "quit":
-            exit()
-        affirm = re.search(r"(?i)^\s*(?:yes|yep|yeah|y|sure|ok|okay|alright|affirmative|of course|definitely|certainly|sure thing|sounds good|roger)\b", answer) 
-        if affirm:
+        if confirmation():
             resetSession()
             return "Okay I've forgotten any information I remembered about you."
         else:
@@ -465,6 +492,7 @@ def question(qa, question, vectoriser, tfidf, X_train_tf):
     similarity.sort(key = lambda x:x[1], reverse=True)
     if qa[similarity[0][0]][1] == "Answer":
         return "I'm sorry I'm not able to answer that with my current knowledge. \nMaybe try re-wording your question?"
+    
     return qa[similarity[0][0]][1]
 
 def readQaCsv():
