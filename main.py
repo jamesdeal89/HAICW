@@ -136,6 +136,10 @@ def readIntentsCsv():
     2. "question"
     3. "identity"
     4. "discover"
+    5. "order"
+    6. "location"
+    7. "check"
+    8. "thank"
     '''
     # If we have the intents object saved to disk, just load and return that
     if os.path.exists('intents.pickle'):
@@ -289,7 +293,7 @@ def searchIntent(inverted_index, query, vectoriser, tfidf, X_train_tf, intents):
     if similarity[0][1] > confidenceThresholdIntent:
         return similarity[0]
     elif similarity[0][1] > confidenceThresholdIntentconfirm:
-        print(f"To confirm, you're asking about {intents[similarity[0][0]]}?")
+        print(f"To confirm, you're asking about something {intents[similarity[0][0]][1]} related?")
         if confirmation(): 
             return similarity[0]
         else:
@@ -297,8 +301,8 @@ def searchIntent(inverted_index, query, vectoriser, tfidf, X_train_tf, intents):
 
 '''
 Shared function for basic confirmation from the user.
-Simplifies code in other handlers.
-Returns simply true/false if they confirmed.
+Simplifies code in other handlers by providing a global abstracted function.
+Returns simply True if they confirmed, False is they did not (assume False if no affirmation detected for safety.)
 '''
 def confirmation():
     answer = input("Please enter your prompt (QUIT to exit): ")
@@ -308,6 +312,15 @@ def confirmation():
     if affirm:
         return True
     return False
+
+'''
+Simple handler for when the user thanks the chatbot
+'''
+def thank():
+    if readName():
+        print(f"You are very welcome, {readName()}! Glad to help.")
+    else:
+        print(f"You're welcome! Glad to help.")
 
 '''
 Small talk approach is based on 'ELIZA' from the course's recomended reading:
@@ -514,6 +527,70 @@ def readQaCsv():
         pickle.dump(qa, f)
 
     return qa
+
+# ------ Orders/Transactions ------
+
+'''
+Use a slot filling approach.
+Flow:
+1. scan the directed initial prompt for any already provided information.
+2. for non-provided information, order of questions will be:
+    - book 
+    - quantity
+    - pickup or delivery
+    - for pickup:
+        - ask location (check against actual locations)
+        - ask pickup date and time (check against location opening hours and days)
+        - confirm cost
+    - for delivery:
+        - ask address (check against some verification, plus provide a structure to use)
+        - confirm cost (book + postage)
+'''
+def order(prompt: str):
+    # check for book in stock.json 
+    # use some basic fuzzy search
+    pass
+
+'''
+Returns the Levenshtein distance which can be used to implement a fuzzy search.
+(To be applied to matching a user's desired book title, even if slightly off, to the name in the stock.json dataset.)
+
+Core concept of Levenshtein distance:
+- Measures difference between 2 strings,
+- by counting how many single character edits are needed to reach one from the other.
+Operations include:
+- Insertion (add char)
+- Deletion (remove char)
+- Substitution (replace a char with another)
+
+Below implementation uses a recursive approach:
+
+'m' and 'n' are the current lengths being considered for each string respectively.
+Initialised to len(a) and len(b).
+
+If m is 0, the distance is the remaining chars in the other string (as we'd need n insertions.)
+If n is 0, the distance is the number of remaining chars in the other string (as we'd need m deletions.)
+
+If last characters match (a[m-1] == b[n-1]) then no need to edit that char, recurse on prefixes.
+
+If last characters differ, recur with all 3 potential operations to match the chars.
+'''
+def levenshteinDistance(a: str, b: str, m: int, n: int):
+    if m == 0:
+        return n
+    if n == 0:
+        return m
+    if a[m-1] == b[n-1]:
+        return levenshteinDistance(a, b, m-1, n-1)
+    return 1 + min(
+        # insert
+        levenshteinDistance(a, b, m, n-1),
+        # remove
+        levenshteinDistance(a, b, m-1, n),
+        # replace
+        levenshteinDistance(a, b, m-1, n-1)
+    )
+
 
 if __name__ == "__main__":
     main()
