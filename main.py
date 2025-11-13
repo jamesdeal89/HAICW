@@ -471,7 +471,7 @@ def readQaCsv():
         r = csv.reader(f, delimiter=',')
         for row in r:
             # format: ["question","intent"]
-            qa.append(row[1:3])
+            qa.append(row)
     
     # Save to disk for next time
     with open(f"qa.pickle", "wb") as f:
