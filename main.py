@@ -532,6 +532,36 @@ def readQaCsv():
 # ------ Orders/Transactions ------
 
 '''
+Handles when the user wants a reccomendation for a book.
+'''
+def reccomend():
+    pass
+
+'''
+Handles when the user's intent is to check their existing orders.
+'''
+def check():
+    pass
+
+'''
+Handles when a user's intent is to query about openining times / dates.
+'''
+def opening():
+    pass
+
+'''
+Handles when a user's intent is to query about the bookstore's address.
+'''
+def address():
+    pass
+
+'''
+Handles when a user's intent is to query about a location's facilities.
+'''
+def facilities():
+    pass
+
+'''
 Use a slot filling approach.
 Once this handler is called, enter a loop which follows the flow described below.
 Flow:
@@ -553,6 +583,10 @@ def order(prompt: str):
     book: str = None
     quantity: int = None
     pickup: bool = None
+
+    # extract the book title they want to order
+    reExtractions = r"(?i)\b.*(?:order|buy|get|purchase)\s(.{3,})(?:(?:\.|\?|,|;!|.)?|\s(?:for|to be)\s(delivered|picked up|pickup)|.*)"
+
     # check for book in stock.json 
     # use Levenshtein-based fuzzy search to ensure detected book title can match 
     # to a specific title as per stock.json.
