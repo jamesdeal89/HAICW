@@ -564,12 +564,27 @@ Perform a fuzzy search for title using Levenshtein distance.
 Returns the true title per stock.json, or empty string if not found.
 '''
 def fuzzySearchTitle(title: str) -> str:
-    pass
+    titleNorm = title.lower().strip()
+    levenshteinDistances = []
+    for book in getStockJSON()['stock']:
+        bookNorm = book['name'].lower().strip()
+        # calculate distance between user title and the stored book title
+        levenshteinDistances.append((book['name'],levenshteinDistance(bookNorm, titleNorm, len(bookNorm), len(titleNorm))))
+        print(levenshteinDistances[-1])
+    # sort ascending, first index will be the most similar / least distance
+    levenshteinDistances.sort(key=lambda entry: entry[1])
+    # tolerance is a levenshtein distance of 1/3rd of the user's desired title
+    if levenshteinDistances and levenshteinDistances[0][1] < len(title)//3:
+        return levenshteinDistances[0][0]
+    else:
+        return ""
+
 
 def getStockJSON():
     with open('stock.json', 'r') as f:
         data = json.load(f)
     return data
+
 
 def getOrdersJSON():
     if os.path.exists('orders.json'):
@@ -626,21 +641,40 @@ If last characters match (a[m-1] == b[n-1]) then no need to edit that char, recu
 If last characters differ, recur with all 3 potential operations to match the chars.
 '''
 def levenshteinDistance(a: str, b: str, m: int, n: int):
-    if m == 0:
-        return n
-    if n == 0:
-        return m
-    if a[m-1] == b[n-1]:
-        return levenshteinDistance(a, b, m-1, n-1)
-    return 1 + min(
-        # insert
-        levenshteinDistance(a, b, m, n-1),
-        # remove
-        levenshteinDistance(a, b, m-1, n),
-        # replace
-        levenshteinDistance(a, b, m-1, n-1)
-    )
+    # Using a dynamic programming approach for efficiency.
+    # O(m*n) time complexity.
+    # How it works is by building up a 2D array where each entry dp[i][j] represents the Levenshtein distance
+    # between the first i characters of string a and the first j characters of string b.
+    # this means that we can build up the solution for larger substrings based on the solutions for smaller substrings.
 
+    # Create a 2D array to store distances between prefixes of the strings.
+    dp = [[0] * (n + 1) for _ in range(m + 1)]
+    # Initialize base cases
+    for i in range(m + 1):
+        dp[i][0] = i
+    for j in range(n + 1):
+        dp[0][j] = j
+    # Fill dp array 
+    for i in range(1, m + 1):
+        # Current character of a
+        ai = a[i - 1]
+        # Iterate through each character of b
+        for j in range(1, n + 1):
+            bj = b[j - 1]
+            # Cost of substitution
+            cost = 0 if ai == bj else 1
+            # Compute minimum cost possible between: deletion, insertion, substitution
+            dp[i][j] = min(
+                # deletion
+                dp[i - 1][j] + 1,      
+                # insertion
+                dp[i][j - 1] + 1,      
+                # substitution
+                dp[i - 1][j - 1] + cost  
+            )
+    # The bottom right of the 2D DP array contains the Levenshtein distance built up
+    return dp[m][n]
 
 if __name__ == "__main__":
+    print(fuzzySearchTitle('The Three Body Problem'))
     main()
