@@ -570,7 +570,6 @@ def fuzzySearchTitle(title: str) -> str:
         bookNorm = book['name'].lower().strip()
         # calculate distance between user title and the stored book title
         levenshteinDistances.append((book['name'],levenshteinDistance(bookNorm, titleNorm, len(bookNorm), len(titleNorm))))
-        print(levenshteinDistances[-1])
     # sort ascending, first index will be the most similar / least distance
     levenshteinDistances.sort(key=lambda entry: entry[1])
     # tolerance is a levenshtein distance of 1/3rd of the user's desired title
@@ -676,5 +675,4 @@ def levenshteinDistance(a: str, b: str, m: int, n: int):
     return dp[m][n]
 
 if __name__ == "__main__":
-    print(fuzzySearchTitle('The Three Body Problem'))
     main()
