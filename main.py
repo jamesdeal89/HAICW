@@ -585,7 +585,7 @@ def order(prompt: str):
     pickup: bool = None
 
     # extract the book title they want to order
-    reExtractions = r"(?i)\b.*(?:order|buy|get|purchase)\s(.{3,})(?:(?:\.|\?|,|;!|.)?|\s(?:for|to be)\s(delivered|picked up|pickup)|.*)"
+    reExtractions = r"(?i)\b(?:order|buy|get|purchase|place)\b.*?\b([A-Za-z0-9'’:,&() ]{3,}?)\b(?=(?:\s+(?:for|from|to|at|in|pickup|delivery|delivered|store)\b|[.?!,;]|$))"
 
     # check for book in stock.json 
     # use Levenshtein-based fuzzy search to ensure detected book title can match 
