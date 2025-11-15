@@ -649,6 +649,8 @@ def storeOrder(title, isbn, quantity, pickup, address, date, time, cost, name):
     with open('orders.json', 'w') as f:
         f.write(ordersStr)
 
+# TODO add genre to stocks to allow genre based recomendations.
+
 '''
 Returns the Levenshtein distance which can be used to implement a fuzzy search.
 (To be applied to matching a user's desired book title, even if slightly off, to the name in the stock.json dataset.)
