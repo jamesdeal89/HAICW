@@ -123,6 +123,7 @@ def main():
         
     print("Goodbye!")
 
+import datetime
 import json
 from nltk.corpus import stopwords
 from nltk import download
@@ -624,7 +625,8 @@ def order(prompt: str):
                         sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|million)\b|\b(\d+)\b"
     numbers = re.search(reQuantityExtract, prompt)
     # Extract if it's for pickup for delivery.
-    rePickupExtract = r"\b(pick-?up|delivery|drop-?off)\b"
+    rePickupExtract = r"\b(pick-?up|drop-?off)\b"
+    reDeliveryExtract = r"\b(delivery|home)\b"
     reDateExtractions = [
         # MM/DD 
         r'\b(\d{1,2}/\d{1,2})\b',                  
@@ -636,6 +638,7 @@ def order(prompt: str):
         r'\b(\d{1,2}[-/]\d{1,2}[-/]\d{2,4})\b'    
     ]
     pickupMatch = re.search(rePickupExtract, prompt)
+    deliveryMatch = re.search(reDeliveryExtract, prompt)
     dateMatch = re.search(('|').join(reDateExtractions), prompt)
 
     # Check for book in stock.json 
@@ -716,11 +719,78 @@ def order(prompt: str):
     
     if quantity and book:
         if pickupMatch:
-            print("FOR PICKUP")
+            # Keyword for pickup detected, but need to confirm.
+            print("You would like to pick-up from one of our locations, right?")
+            if confirmation():
+                pickup = True
+        elif deliveryMatch:
+            # Keyword for delivery detected, but need to confirm.
+            print("You would like this order to be for home delivery, right?")
+            if confirmation():
+                pickup = False
+        else:
+            # No decision is clear in the initial prompt, ask directly
+            print("For pickup or delivery? (type pickup/delivery)")
+            answer = input("Please enter your prompt (QUIT to exit): ")
+            if answer.lower() == "quit":
+                exit()
+            elif answer.find("delivery") != -1:
+                pickup = False
+            else:
+                pickup = True
+        # Based on pickup boolean, get home address details or get store location.
+        if pickup:
+            print("Which BlackSmith™'s store location would you like to pick-up your order from? (type 'list' to get a list of all locations)")
+            answer = input("Please enter your prompt (QUIT to exit): ")
+            if answer.lower() == "quit":
+                exit()
+            elif answer.lower().find("list") != -1:
+                print("Our bookstores can be found in the following locations:")
+                for location in getAllLocations():
+                    print(f"Location: {location[0]}, Address: {location[1]}")
+        else:
+            pass
 
+'''
+Returns a list of all location names and addresses in the locations.json dataset.
+'''
+def getAllLocations() -> list[list[str]]:
+    locations = getLocationsJSON()
+    allLocs = []
+    for location in locations['locations']:
+        loc = []
+        loc.append(location['name'])
+        loc.append(location['address'])
+        allLocs.append(loc)
+    return allLocs
 
+'''
+Returns the JSON data for bookstore locations.
+'''
+def getLocationsJSON():
+    with open('locations.json', 'r') as f:
+        data = json.load(f)
+    return data
 
+'''
+Takes day, month, year of a date.
+Returns the integer Unix epoch timestamp.
+For simple storage and standardised data representation.
+'''
+def getUnixEpochTimestamp(dd: int,mm: int,yyyy: int)-> int:
+    date_obj = datetime.datetime(yyyy, mm, dd)
+    return int(date_obj.timestamp())
 
+'''
+Convert Unix epoch timestamp into datetime object for easy printing when user queries their order.
+'''
+def getDateFromUnix(timestamp: int):
+    date_obj = datetime.datetime.fromtimestamp(timestamp)
+    return date_obj
+
+'''
+Resolves words for numbers a user may enter into their integer form for easy processing.
+'''
 def wordToInt(word) -> int:
     wordToInt = {
         'one': 1,
