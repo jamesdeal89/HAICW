@@ -113,6 +113,8 @@ def main():
                 print(question(qa, prompt, countQa, tfidfQa, XtrainTfQa))
             elif intent == "identity":
                 print(identity(prompt))
+            elif intent == "order":
+                order(prompt)
             else:
                 print("I'm not sure I understand. Could you try re-wording that?")
         else:
@@ -600,7 +602,7 @@ def order(prompt: str):
     if exactTitle:
         # Extracted a title from the prompt and able to fuzzy find it in the stock dataset.
         # Set the book slot to the exact title.
-        print("Okay! So you'd like to order: {exactTitle}?")
+        print(f"Okay! So you'd like to order: {exactTitle}?")
         if confirmation():
             book = exactTitle
     elif title and not exactTitle:
@@ -610,13 +612,11 @@ def order(prompt: str):
         if answer.lower() == "quit":
             exit()
         while True:
-            exactTitle = fuzzySearchTitle(answer):
+            exactTitle = fuzzySearchTitle(answer)
             if exactTitle: 
-                print("Okay! So you'd like to order: {exactTitle}?")
+                print(f"Okay! So you'd like to order: {exactTitle}?")
                 if confirmation():
                     book = exactTitle
-
-
 
 
 '''
