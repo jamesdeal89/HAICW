@@ -634,7 +634,6 @@ def order(prompt: str):
             if not attempts < 4:
                 print("Sorry, we don't stock that book.")
 
-
     if numbers and book:
         # Detected a numerical value in the user's prompt.
         # Confirm with user if this is the quantity they want to order.
@@ -666,7 +665,6 @@ def order(prompt: str):
                         break
 
         print(f"Ordering {quantity} copies of {book}...")
-
 
 def wordToInt(word) -> int:
     wordToInt = {
@@ -706,9 +704,6 @@ def wordToInt(word) -> int:
     else:
         return -1
 
-
-
-
 '''
 Perform a fuzzy search for title using Levenshtein distance.
 Returns the true title per stock.json, or empty string if not found.
@@ -728,12 +723,10 @@ def fuzzySearchTitle(title: str) -> str:
     else:
         return ""
 
-
 def getStockJSON():
     with open('stock.json', 'r') as f:
         data = json.load(f)
     return data
-
 
 def getOrdersJSON():
     if os.path.exists('orders.json'):
