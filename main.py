@@ -422,7 +422,7 @@ def discover():
     "Let me walk you through my features:\n"
     "   1. Book orders - I can help you order a book and set a delivery or pick-up time.\n",
     "   2. Book information - if you're not sure what you want to order, you can ask me about genres and authors and I'll recommend you a book.\n",
-    "   3. Memory - I will remeber your name and address you as such if you inform me of it!\n",
+    "   3. Memory - I will remember your name and address you as such if you inform me of it!\n",
     "   4. Small talk - I can handle basic small talk if you'd like to chat.\n",
     "I hope this helps you converse with me effectively!")
 
@@ -542,7 +542,31 @@ def readQaCsv():
 Handles when the user wants a reccomendation for a book.
 '''
 def reccomend():
-    pass
+    # Get list of genres actually in the stock list
+    genres = getGenres()
+    
+
+
+'''
+Get all book JSONs of books in stock.json dataset.
+'''
+def getGenreBooks(genre: str) -> list:
+    stock = getStockJSON()
+    books = []
+    for book in stock['stock']:
+        if book['genre'] == genre:
+            books.append(book)
+    return books
+
+'''
+Get all genres of books in stock.json dataset.
+'''
+def getGenres() -> list[str]:
+    stock = getStockJSON()
+    genres = set()
+    for book in stock['stock']:
+        genres.add(book['genre'])
+    return genres
 
 '''
 Handles when the user's intent is to check their existing orders.
@@ -599,6 +623,18 @@ def order(prompt: str):
     reQuantityExtract = r"(?i)\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen| \
                         sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|million)\b|\b(\d+)\b"
     numbers = re.search(reQuantityExtract, prompt)
+    # Extract if it's for pickup for delivery.
+    rePickupExtract = r"\b(pick-?up|delivery|drop-?off)\b"
+    reDateExtractions = [
+        # MM/DD 
+        r'\b(\d{1,2}/\d{1,2})\b',                  
+        # 10th of December
+        r'\b(\d{1,2}(?:st|nd|rd|th)\s+of\s+\w+)\b',  
+        # December 10th
+        r'\b(\w+\s+\d{1,2}(?:st|nd|rd|th)?)\b',    
+        # DD/MM/YY
+        r'\b(\d{1,2}[-/]\d{1,2}[-/]\d{2,4})\b'    
+    ]
 
     # Check for book in stock.json 
     # Use Levenshtein-based fuzzy search to ensure detected book title can match 
@@ -663,8 +699,11 @@ def order(prompt: str):
                     if confirmation():
                         quantity = quant
                         break
+    
+    if pickupMatch and quantity and book:
 
-        print(f"Ordering {quantity} copies of {book}...")
+
+
 
 def wordToInt(word) -> int:
     wordToInt = {
