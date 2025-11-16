@@ -635,10 +635,13 @@ def order(prompt: str):
         # DD/MM/YY
         r'\b(\d{1,2}[-/]\d{1,2}[-/]\d{2,4})\b'    
     ]
+    pickupMatch = re.search(rePickupExtract, prompt)
+    dateMatch = re.search(('|').join(reDateExtractions), prompt)
 
     # Check for book in stock.json 
     # Use Levenshtein-based fuzzy search to ensure detected book title can match 
     # to a specific title as per stock.json.
+    exactTitle = None
     if title:
         exactTitle = fuzzySearchTitle(title.group(1))
     if exactTitle:
@@ -647,7 +650,7 @@ def order(prompt: str):
         print(f"Okay! So you'd like to order: {exactTitle}?")
         if confirmation():
             book = exactTitle
-    elif title and not exactTitle:
+    elif not exactTitle:
         # Extracted a title from the prompt, but unable to find it in the stock dataset.
         print("You'd like to place an order for which book? (please enter just the title)")
         answer = input("Please enter your prompt (QUIT to exit): ")
@@ -655,7 +658,7 @@ def order(prompt: str):
             exit()
         attempts = 0
         # Allow 3 re-entry attempts, if still no match, display list of titles in stock
-        while attempts < 4:
+        while True:
             exactTitle = fuzzySearchTitle(answer)
             if exactTitle: 
                 print(f"Okay! So you'd like to order: {exactTitle}?")
@@ -666,25 +669,36 @@ def order(prompt: str):
                     answer = input("Please enter your prompt (QUIT to exit): ")
                     if answer.lower() == "quit":
                         exit()
+            else:
+                print("Sorry that didn't match any titles in our stock database, try again")
+                answer = input("Please enter your prompt (QUIT to exit): ")
+                if answer.lower() == "quit":
+                    exit()
             attempts += 1
-            if not attempts < 4:
+            if not (attempts > 3):
                 print("Sorry, we don't stock that book.")
+                break
 
-    if numbers and book:
-        # Detected a numerical value in the user's prompt.
-        # Confirm with user if this is the quantity they want to order.
-        
-        # Need to convert word for number into number.
-        if numbers.group(1):
-            quant = wordToInt(numbers.group(1))
-        else:
-            quant = numbers.group(2)
+    skip = False
+    if book:
+        if numbers:
+            # Detected a numerical value in the user's prompt.
+            # Confirm with user if this is the quantity they want to order.
+            
+            # Need to convert word for number into number.
+            if numbers.group(1):
+                quant = wordToInt(numbers.group(1).lower())
+            else:
+                quant = numbers.group(2)
 
-        print(f"To confirm, you'd like to order {quant} copies?")
-        if confirmation():
-            quantity = quant
-        else:
-            print("Sorry for the misunderstanding, how many copies would you like?")
+            print(f"To confirm, you'd like to order {quant} copies?")
+            if confirmation():
+                quantity = quant
+                skip = True
+            else:
+                print("Sorry for the misunderstanding, ", end='')
+        if not skip:
+            print("How many copies would you like?")
             answer = input("Please enter your prompt (QUIT to exit): ")
             if answer.lower() == "quit":
                 exit()
@@ -700,7 +714,9 @@ def order(prompt: str):
                         quantity = quant
                         break
     
-    if pickupMatch and quantity and book:
+    if quantity and book:
+        if pickupMatch:
+            print("FOR PICKUP")
 
 
 
