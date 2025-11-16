@@ -586,14 +586,20 @@ Flow:
         - confirm cost (book + postage)
 '''
 def order(prompt: str):
-    # declare slots as None for now, any left as None after initial scan of prompt will be ask for
+    # Declare slots as None for now, any left as None after initial scan of prompt will be ask for
     book: str = None
     quantity: int = None
     pickup: bool = None
 
-    # Extract the book title they want to order
+    # Extract the book title they want to order.
     reTitleExtract = r"(?i)\b(?:order|buy|get|purchase|place)\b.*?\b([A-Za-z0-9'’:,&() ]{3,}?)\b(?=(?:\s+(?:for|from|to|at|in|pickup|delivery|delivered|store)\b|[.?!,;]|$))"
     title = re.search(reTitleExtract, prompt)
+    # Extract the quantity they want to order.
+    # Matches both numerical words and digits.
+    reQuantityExtract = r"(?i)\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen| \
+                        sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|million)\b|\b(\d+)\b"
+    numbers = re.search(reQuantityExtract, prompt)
+
     # Check for book in stock.json 
     # Use Levenshtein-based fuzzy search to ensure detected book title can match 
     # to a specific title as per stock.json.
@@ -617,6 +623,84 @@ def order(prompt: str):
                 print(f"Okay! So you'd like to order: {exactTitle}?")
                 if confirmation():
                     book = exactTitle
+                    break
+                else:
+                    answer = input("Please enter your prompt (QUIT to exit): ")
+                    if answer.lower() == "quit":
+                        exit()
+
+    if numbers:
+        # Detected a numerical value in the user's prompt.
+        # Confirm with user if this is the quantity they want to order.
+        
+        # Need to convert word for number into number.
+        if numbers.group(1):
+            quant = wordToInt(numbers.group(1))
+        else:
+            quant = numbers.group(2)
+
+        print(f"To confirm, you'd like to order {quant} copies?")
+        if confirmation():
+            quantity = quant
+        else:
+            print("Sorry for the misunderstanding, how many copies would you like?")
+            answer = input("Please enter your prompt (QUIT to exit): ")
+            if answer.lower() == "quit":
+                exit()
+            while True:
+                numbers = re.search(reQuantityExtract, answer)
+                if numbers:
+                    if numbers.group(1):
+                        quant = wordToInt(numbers.group(1))
+                    else:
+                        quant = numbers.group(2)
+                    print(f"To confirm, you'd like to order {quant} copies?")
+                    if confirmation():
+                        quantity = quant
+                        break
+
+    print(f"Ordering {quantity} copies of {book}...")
+
+
+def wordToInt(word) -> int:
+    wordToInt = {
+        'one': 1,
+        'two': 2,
+        'three': 3,
+        'four': 4,
+        'five': 5,
+        'six': 6,
+        'seven': 7,
+        'eight': 8,
+        'nine': 9,
+        'ten': 10,
+        'eleven': 11,
+        'twelve': 12,
+        'thirteen': 13,
+        'fourteen': 14,
+        'fifteen': 15,
+        'sixteen': 16,
+        'seventeen': 17,
+        'eighteen': 18,
+        'nineteen': 19,
+        'twenty': 20,
+        'thirty': 30,
+        'forty': 40,
+        'fifty': 50,
+        'sixty': 60, 
+        'seventy': 70,
+        'eighty': 80,
+        'ninety': 90,
+        'hundred': 100,
+        'thousand': 1000,
+        'million': 1000000
+    }
+    if word in wordToInt:
+        return wordToInt[word]
+    else:
+        return -1
+
+
 
 
 '''
