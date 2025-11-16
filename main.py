@@ -617,7 +617,9 @@ def order(prompt: str):
         answer = input("Please enter your prompt (QUIT to exit): ")
         if answer.lower() == "quit":
             exit()
-        while True:
+        attempts = 0
+        # Allow 3 re-entry attempts, if still no match, display list of titles in stock
+        while attempts < 4:
             exactTitle = fuzzySearchTitle(answer)
             if exactTitle: 
                 print(f"Okay! So you'd like to order: {exactTitle}?")
@@ -628,8 +630,12 @@ def order(prompt: str):
                     answer = input("Please enter your prompt (QUIT to exit): ")
                     if answer.lower() == "quit":
                         exit()
+            attempts += 1
+            if not attempts < 4:
+                print("Sorry, we don't stock that book.")
 
-    if numbers:
+
+    if numbers and book:
         # Detected a numerical value in the user's prompt.
         # Confirm with user if this is the quantity they want to order.
         
@@ -659,7 +665,7 @@ def order(prompt: str):
                         quantity = quant
                         break
 
-    print(f"Ordering {quantity} copies of {book}...")
+        print(f"Ordering {quantity} copies of {book}...")
 
 
 def wordToInt(word) -> int:
