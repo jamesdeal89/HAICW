@@ -59,8 +59,8 @@ NONE of the code, processing, etc are AI generated.
 
 confidenceThresholdQA = 0.6
 confidenceThresholdQAconfirm = 0.4
-confidenceThresholdIntent = 0.6
-confidenceThresholdIntentconfirm = 0.4
+confidenceThresholdIntent = 0.5
+confidenceThresholdIntentconfirm = 0.3
 
 def main():
     print("======== STARTING BOOKSTORE CHATBOT ========")
@@ -102,17 +102,22 @@ def main():
         prompt = input("Please enter your prompt (QUIT to exit): ")
         if prompt.lower() == "quit":
             break
-        intent = intents[searchIntent(invIdx, prompt, count, tfidf, XtrainTf, intents)[0]][1]
-        if intent == "discover":
-            discover()
-        elif intent == "small":
-            print(small(prompt))
-        elif intent == "question":
-            print(question(qa, prompt, countQa, tfidfQa, XtrainTfQa))
-        elif intent == "identity":
-            print(identity(prompt))
+        intentResult = searchIntent(invIdx, prompt, count, tfidf, XtrainTf, intents)
+        if intentResult:
+            intent = intents[intentResult[0]][1]
+            if intent == "discover":
+                discover()
+            elif intent == "small":
+                print(small(prompt))
+            elif intent == "question":
+                print(question(qa, prompt, countQa, tfidfQa, XtrainTfQa))
+            elif intent == "identity":
+                print(identity(prompt))
+            else:
+                print("I'm not sure I understand. Could you try re-wording that?")
         else:
             print("I'm not sure I understand. Could you try re-wording that?")
+
         
     print("Goodbye!")
 
@@ -584,14 +589,35 @@ def order(prompt: str):
     quantity: int = None
     pickup: bool = None
 
-    # extract the book title they want to order
-    reExtractions = r"(?i)\b(?:order|buy|get|purchase|place)\b.*?\b([A-Za-z0-9'’:,&() ]{3,}?)\b(?=(?:\s+(?:for|from|to|at|in|pickup|delivery|delivered|store)\b|[.?!,;]|$))"
-
-    # check for book in stock.json 
-    # use Levenshtein-based fuzzy search to ensure detected book title can match 
+    # Extract the book title they want to order
+    reTitleExtract = r"(?i)\b(?:order|buy|get|purchase|place)\b.*?\b([A-Za-z0-9'’:,&() ]{3,}?)\b(?=(?:\s+(?:for|from|to|at|in|pickup|delivery|delivered|store)\b|[.?!,;]|$))"
+    title = re.search(reTitleExtract, prompt)
+    # Check for book in stock.json 
+    # Use Levenshtein-based fuzzy search to ensure detected book title can match 
     # to a specific title as per stock.json.
+    if title:
+        exactTitle = fuzzySearchTitle(title.group(1))
+    if exactTitle:
+        # Extracted a title from the prompt and able to fuzzy find it in the stock dataset.
+        # Set the book slot to the exact title.
+        print("Okay! So you'd like to order: {exactTitle}?")
+        if confirmation():
+            book = exactTitle
+    elif title and not exactTitle:
+        # Extracted a title from the prompt, but unable to find it in the stock dataset.
+        print("You'd like to place an order for which book? (please enter just the title)")
+        answer = input("Please enter your prompt (QUIT to exit): ")
+        if answer.lower() == "quit":
+            exit()
+        while True:
+            exactTitle = fuzzySearchTitle(answer):
+            if exactTitle: 
+                print("Okay! So you'd like to order: {exactTitle}?")
+                if confirmation():
+                    book = exactTitle
 
-    pass
+
+
 
 '''
 Perform a fuzzy search for title using Levenshtein distance.
@@ -602,11 +628,11 @@ def fuzzySearchTitle(title: str) -> str:
     levenshteinDistances = []
     for book in getStockJSON()['stock']:
         bookNorm = book['name'].lower().strip()
-        # calculate distance between user title and the stored book title
+        # Calculate distance between user title and the stored book title
         levenshteinDistances.append((book['name'],levenshteinDistance(bookNorm, titleNorm, len(bookNorm), len(titleNorm))))
-    # sort ascending, first index will be the most similar / least distance
+    # Sort ascending, first index will be the most similar / least distance
     levenshteinDistances.sort(key=lambda entry: entry[1])
-    # tolerance is a levenshtein distance of 1/3rd of the user's desired title
+    # Tolerance is a levenshtein distance of 1/3rd of the user's desired title
     if levenshteinDistances and levenshteinDistances[0][1] < len(title)//3:
         return levenshteinDistances[0][0]
     else:
