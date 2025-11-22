@@ -357,12 +357,21 @@ def searchIntent(inverted_index, query, vectoriser, tfidf, X_train_tf, intents):
     if similarity[0][1] > confidenceThresholdIntent:
         return similarity[0]
     elif similarity[0][1] > confidenceThresholdIntentconfirm:
+        # TODO: make a clean mapping to translate arbitatry intent codes into more readable/natural wording.
         print(f"To confirm, you're asking about something {intents[similarity[0][0]][1]} related?")
         if confirmation():
-            # TODO if the user confirms, add their prompt + confirmed intent to the intents.csv dataset
+            # If the user confirms, add their prompt + confirmed intent to the intents.csv dataset
+            addIntentExample(query,intents[similarity[0][0]][1])
             return similarity[0]
         else:
             print("I'm sorry, I'm not sure what you mean then, please try re-wording your prompt or asking me 'what can you do' for specific examples.")
+
+'''
+Helper function for adding intent examples to the dataset.
+'''
+def addIntentExample(prompt, intent):
+    with open('intents.csv', 'a', encoding='utf-8') as f:
+        f.write(f'"{prompt}","{intent}"\n')
 
 '''
 Shared function for basic confirmation from the user.
