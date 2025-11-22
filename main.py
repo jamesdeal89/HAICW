@@ -237,9 +237,11 @@ def createFloatDict():
     return defaultdict(float)
 
 def generateInvertedIndex(count_vect, X_train_tf, pName):
+    # If a saved inverted index exists on disk, load and return it.
     if os.path.exists(pName):
         with open(pName, "rb") as f:
             return pickle.load(f)
+
     # Format: {term: {docId: tfidfScore}}
     inverted_index = defaultdict(createFloatDict)
 
@@ -249,10 +251,29 @@ def generateInvertedIndex(count_vect, X_train_tf, pName):
     for docId, termId, score in zip(tfid_matrix.row, tfid_matrix.col, tfid_matrix.data):
         term = feature_names[termId]
         inverted_index[term][docId] = score
-    # Save to disk for next time
+
+    # Precompute per-document l2 norms so cosine similarity can be computed quickly
+    # Use dense conversion here; for typical coursework datasets this is fine.
+    # If memory is a concern for larger collections, compute norms from sparse directly.
+    try:
+        dVecs = X_train_tf.toarray()
+        # list of floats: norm of each document vector
+        doc_norms = [float(norm(dVec)) for dVec in dVecs]
+    except Exception:
+        # fallback: compute norms from sparse representation
+        sq = X_train_tf.multiply(X_train_tf).sum(axis=1)
+        # sq is a matrix; convert each to float and sqrt
+        doc_norms = [float(sq[i, 0]) ** 0.5 for i in range(sq.shape[0])]
+
+    index_obj = {
+        'index': inverted_index,
+        'doc_norms': doc_norms
+    }
+
+    # Save to disk for next time (store both index and doc norms)
     with open(pName, "wb") as f:
-        pickle.dump(inverted_index, f)
-    return inverted_index
+        pickle.dump(index_obj, f)
+    return index_obj
 
 # 'Postings' => list of docs that contain each term, alongside the term's importance in those docs.
 # inverted_index resolves a term in the vocab to it's respective postings.
@@ -277,36 +298,68 @@ def getCosineSimilarity(query_doc, doc):
     return dot(query_doc, doc) / (norm(query_doc) * norm(doc))
 
 def searchIntent(inverted_index, query, vectoriser, tfidf, X_train_tf, intents):
-    # Vectorise the query 
+    # Vectorise the query
     qCounts = vectoriser.transform([query])
     qTfidf = tfidf.transform(qCounts)
-    # Convert to dense arrays for consistent dimensions
+
+    # Attempt to use the inverted index to compute dot-products efficiently.
+    # inverted_index may be either the saved index object (with 'index' and 'doc_norms')
+    # or the raw inverted index dict (backward-compat). Handle both.
+    if isinstance(inverted_index, dict) and 'index' in inverted_index and 'doc_norms' in inverted_index:
+        index = inverted_index['index']
+        doc_norms = inverted_index['doc_norms']
+    else:
+        # Backwards compatibility: treat the passed value as the index and compute norms from X_train_tf
+        index = inverted_index
+        try:
+            dVecs = X_train_tf.toarray()
+            doc_norms = [float(norm(dVec)) for dVec in dVecs]
+        except Exception:
+            sq = X_train_tf.multiply(X_train_tf).sum(axis=1)
+            doc_norms = [float(sq[i, 0]) ** 0.5 for i in range(sq.shape[0])]
+
+    # Now compute dot-products only for documents that share at least one query term.
+    q_coo = qTfidf.tocoo()
+    # precompute query norm
     qVec = qTfidf.toarray().flatten()
-    dVecs = X_train_tf.toarray()
+    q_norm = norm(qVec)
+
+    # accumulators for docId -> dot(query, doc)
+    accum = defaultdict(float)
+    feature_names = vectoriser.get_feature_names_out()
+    for termId, q_weight in zip(q_coo.col, q_coo.data):
+        term = feature_names[termId]
+        postings = index.get(term)
+        if not postings:
+            continue
+        for docId, d_weight in postings.items():
+            accum[docId] += q_weight * d_weight
 
     similarity = []
-    # Calculate cosine similarity to each doc's vector
-    for docId in range(len(intents)):
-        dVec = dVecs[docId]
-        similarity.append((docId,getCosineSimilarity(qVec, dVec)))
+    # If accum is empty (no overlapping terms) fall back to dense cosine across all docs
+    if not accum:
+        # dense fallback (same as before)
+        dVecs = X_train_tf.toarray()
+        for docId in range(len(intents)):
+            dVec = dVecs[docId]
+            similarity.append((docId, getCosineSimilarity(qVec, dVec)))
+    else:
+        # compute cosine similarity for docs in accumulator
+        for docId, dotprod in accum.items():
+            denom = q_norm * (doc_norms[docId] if docId < len(doc_norms) else 0)
+            score = dotprod / denom if denom != 0 else 0.0
+            similarity.append((docId, score))
+
     # Return the most likely intent
-    # TODO: check why inverted index is not used here
-    '''
-    Intent can be one of:
-        1. "small"
-        2. "question"
-        3. "identity"
-        4. "discover"
-        5. "order"
-        6. "address"
-        7. "facilities"
-    '''
-    similarity.sort(key = lambda x:x[1], reverse=True)
+    similarity.sort(key=lambda x: x[1], reverse=True)
+    if not similarity:
+        return None
     if similarity[0][1] > confidenceThresholdIntent:
         return similarity[0]
     elif similarity[0][1] > confidenceThresholdIntentconfirm:
         print(f"To confirm, you're asking about something {intents[similarity[0][0]][1]} related?")
-        if confirmation(): 
+        if confirmation():
+            # TODO if the user confirms, add their prompt + confirmed intent to the intents.csv dataset
             return similarity[0]
         else:
             print("I'm sorry, I'm not sure what you mean then, please try re-wording your prompt or asking me 'what can you do' for specific examples.")
