@@ -93,18 +93,18 @@ def main():
     # intent matching initialisations
     intents = readIntentsCsv()
     XtrainTf, count, tfidf = stemVectorWeight(intents, False, "XtrainTf.pickle", "count.pickle", "tfidf.pickle")
-    invIdx = generateInvertedIndex(count, XtrainTf, "invIdx.pickle")
+    invIdxIntents = generateInvertedIndex(count, XtrainTf, "invIdx.pickle")
 
     # QA search initialisations
     qa = readQaCsv()
     XtrainTfQa, countQa, tfidfQa = stemVectorWeight(qa, True, "XtrainTfQa.pickle", "countQa.pickle", "tfidfQa.pickle")
-    invIdx = generateInvertedIndex(countQa, XtrainTfQa, "invIdxQa.pickle")
+    invIdxQa = generateInvertedIndex(countQa, XtrainTfQa, "invIdxQa.pickle")
 
     while True:
         prompt = input("Please enter your prompt (QUIT to exit): ")
         if prompt.lower() == "quit":
             break
-        intentResult = searchIntent(invIdx, prompt, count, tfidf, XtrainTf, intents)
+        intentResult = searchIntent(invIdxIntents, prompt, count, tfidf, XtrainTf, intents)
         if intentResult:
             intent = intents[intentResult[0]][1]
             if intent == "discover":
@@ -112,7 +112,7 @@ def main():
             elif intent == "small":
                 print(small(prompt))
             elif intent == "question":
-                print(question(qa, prompt, countQa, tfidfQa, XtrainTfQa))
+                print(question(qa, prompt, countQa, tfidfQa, XtrainTfQa, invIdxQa))
             elif intent == "identity":
                 print(identity(prompt))
             elif intent == "order":
@@ -553,24 +553,65 @@ def resetSession():
     # Delete session JSON on disk
     os.remove("session.json")
 
-def question(qa, question, vectoriser, tfidf, X_train_tf):
-    # Vectorise the query 
-    qCounts = vectoriser.transform([question])
+def question(qa, question_text, vectoriser, tfidf, X_train_tf, inv_index=None):
+    """
+    Search QA using cosine similarity. If an inverted-index object (`inv_index`) is
+    provided (the structure returned by `generateInvertedIndex`), use the postings
+    to compute dot-products sparsely and then divide by stored norms. Otherwise
+    fall back to the dense approach.
+    """
+    # Vectorise the query
+    qCounts = vectoriser.transform([question_text])
     qTfidf = tfidf.transform(qCounts)
-    # Convert to dense arrays for consistent dimensions
-    qVec = qTfidf.toarray().flatten()
-    dVecs = X_train_tf.toarray()
 
-    similarity = []
-    # Calculate cosine similarity to each doc's vector
-    for docId in range(len(qa)):
-        dVec = dVecs[docId]
-        similarity.append((docId,getCosineSimilarity(qVec, dVec)))
+    # If an inverted index object is provided, use it for sparse scoring
+    if inv_index is not None and isinstance(inv_index, dict) and 'index' in inv_index and 'doc_norms' in inv_index:
+        index = inv_index['index']
+        doc_norms = inv_index['doc_norms']
+
+        q_coo = qTfidf.tocoo()
+        qVec = qTfidf.toarray().flatten()
+        q_norm = norm(qVec)
+
+        accum = defaultdict(float)
+        feature_names = vectoriser.get_feature_names_out()
+        for termId, q_weight in zip(q_coo.col, q_coo.data):
+            term = feature_names[termId]
+            postings = index.get(term)
+            if not postings:
+                continue
+            for docId, d_weight in postings.items():
+                accum[docId] += q_weight * d_weight
+
+        similarity = []
+        if not accum:
+            # fallback to dense
+            dVecs = X_train_tf.toarray()
+            qVec = qTfidf.toarray().flatten()
+            for docId in range(len(qa)):
+                dVec = dVecs[docId]
+                similarity.append((docId, getCosineSimilarity(qVec, dVec)))
+        else:
+            for docId, dotprod in accum.items():
+                denom = q_norm * (doc_norms[docId] if docId < len(doc_norms) else 0)
+                score = dotprod / denom if denom != 0 else 0.0
+                similarity.append((docId, score))
+
+    else:
+        # No inverted index supplied: dense scoring over all QA docs
+        qVec = qTfidf.toarray().flatten()
+        dVecs = X_train_tf.toarray()
+        similarity = []
+        for docId in range(len(qa)):
+            dVec = dVecs[docId]
+            similarity.append((docId, getCosineSimilarity(qVec, dVec)))
+
     # Return the most likely answer
-    similarity.sort(key = lambda x:x[1], reverse=True)
+    similarity.sort(key=lambda x: x[1], reverse=True)
+    if not similarity:
+        return "I'm sorry I'm not able to answer that with my current knowledge. \nMaybe try re-wording your question?"
     if qa[similarity[0][0]][1] == "Answer":
         return "I'm sorry I'm not able to answer that with my current knowledge. \nMaybe try re-wording your question?"
-    
     return qa[similarity[0][0]][1]
 
 def readQaCsv():
