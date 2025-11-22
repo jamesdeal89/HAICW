@@ -28,6 +28,8 @@ Transaction: ordering books, scheduling pickup/delivery.
 Q&A: book recomendations, location opening times.
 '''
 
+# TODO: recomendations based on cosine similarity to book description
+
 '''
 FOR THE CHECKPOINT:
 Requirements:
@@ -288,6 +290,7 @@ def searchIntent(inverted_index, query, vectoriser, tfidf, X_train_tf, intents):
         dVec = dVecs[docId]
         similarity.append((docId,getCosineSimilarity(qVec, dVec)))
     # Return the most likely intent
+    # TODO: check why inverted index is not used here
     '''
     Intent can be one of:
         1. "small"
