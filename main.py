@@ -914,16 +914,40 @@ def order(prompt: str):
             print(f"I've set the name for your order as {name}")
     
     if book and pickup and quantity and price and address and name:
-        storeOrder(book, getISBN(book), quantity, pickup, address, None, None, price, name)
+        # TODO: Decrement stock count after order placed successfully.
+        storeOrder(book, getISBNbyTitle(book), quantity, pickup, address, None, None, price, name)
 
-def getISBN(book: str) -> str:
-    pass
+def getISBNbyTitle(title: str) -> str:
+    titleNorm = title.lower().strip()
+    for book in getStockJSON()['stock']:
+        if book['name'].lower().strip() == titleNorm:
+            return book['isbn']
 
 def getPickupDate():
+    # Dates will be based on a unix epoch timestamp for simple storage.
     pass
+
     
 def getPickupTime():
+    # Time will be stored in 24 hour format with no minutes.
+    # If the user enters a time which is not a round hour, truncate.
     pass
+
+'''
+Returns True if a specific bookstore location is open on a given date.
+False otherwise.
+Input is the unix epoch timestamp for that date as an integer. 
+'''
+def isLocOpenOnDate(loc: str, date: int) -> bool:
+    dt = datetime.datetime.fromtimestamp(date)
+    weekday = dt.weekday()
+    openings = None
+    for loc in getLocationsJSON['locations']:
+        if loc['name'] == loc:
+            openings = loc['days'] 
+    if openings[weekday] == 0:
+        return False
+    return True
 
 '''
 Returns the float price for a book based on it's title.
