@@ -723,6 +723,7 @@ def order(prompt: str):
     pickup: bool = None
     address: str = None
     price: float = None
+    name: str = None
 
     # Extract the book title they want to order.
     reTitleExtract = r"(?i)\b(?:order|buy|get|purchase|place)\b.*?\b([A-Za-z0-9'’:,&() ]{3,}?)\b(?=(?:\s+(?:for|from|to|at|in|pickup|delivery|delivered|store)\b|[.?!,;]|$))"
@@ -885,11 +886,42 @@ def order(prompt: str):
                                 print("Okay! I'll keep trying!")
                                 attempts = 0
                             else:
+                                print("Okay, I'm sorry I failed to understand your desired location. \nI have cancelled this order.")
+                                # TODO: Feedback mechanism - ask for user feedback (rating + open feedback) and store for developer use.
                                 break
-
+            if address:
+                # If the user successfully selected a pickup location, 
+                # Need to select a pick-up date and timeslot.
+                # Need to prevent selecting a date when the specific location is closed, 
+                # or a time when the location is closed.
+                # TODO get date and time implementation
+                date = getPickupDate()
+                time = getPickupTime()
 
         else:
             pass
+        
+    if address:
+        # Check if we know the user's name, if we do not, ask for the order and save for later too.
+        # If we do, just use that for the order name.
+        nameSaved = readName()
+        if nameSaved:
+            name = nameSaved
+        else:
+            # TODO: ask for users name and save + set as order name slot.
+            pass
+    
+    if book and pickup and quantity and price and address and name:
+        storeOrder(book, getISBN(book), quantity, pickup, address, None, None, price, name)
+
+def getISBN(book: str) -> str:
+    pass
+
+def getPickupDate():
+    pass
+    
+def getPickupTime():
+    pass
 
 '''
 Returns the float price for a book based on it's title.
