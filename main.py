@@ -721,6 +721,8 @@ def order(prompt: str):
     book: str = None
     quantity: int = None
     pickup: bool = None
+    address: str = None
+    price: float = None
 
     # Extract the book title they want to order.
     reTitleExtract = r"(?i)\b(?:order|buy|get|purchase|place)\b.*?\b([A-Za-z0-9'’:,&() ]{3,}?)\b(?=(?:\s+(?:for|from|to|at|in|pickup|delivery|delivered|store)\b|[.?!,;]|$))"
@@ -824,6 +826,8 @@ def order(prompt: str):
                         break
     
     if quantity and book:
+        # Now have all the information needed to set the price for this order.
+        price = getPrice(book) * quantity
         if pickupMatch:
             # Keyword for pickup detected, but need to confirm.
             print("You would like to pick-up from one of our locations, right?")
@@ -846,16 +850,91 @@ def order(prompt: str):
                 pickup = True
         # Based on pickup boolean, get home address details or get store location.
         if pickup:
-            print("Which BlackSmith™'s store location would you like to pick-up your order from? (type 'list' to get a list of all locations)")
-            answer = input("Please enter your prompt (QUIT to exit): ")
-            if answer.lower() == "quit":
-                exit()
-            elif answer.lower().find("list") != -1:
-                print("Our bookstores can be found in the following locations:")
-                for location in getAllLocations():
-                    print(f"Location: {location[0]}, Address: {location[1]}")
+            attempts = 0
+            while attempts < 4:
+                print("Which BlackSmith™'s store location would you like to pick-up your order from? (type 'list' to get a list of all locations)")
+                answer = input("Please enter your prompt (QUIT to exit): ")
+                if answer.lower() == "quit":
+                    exit()
+                elif answer.lower().find("list") != -1:
+                    # Help the user discover what locations exist.
+                    print("Our bookstores can be found in the following locations:")
+                    for location in getAllLocations():
+                        print(f"Location: {location[0]}, Address: {location[1]}")
+                else:
+                    # Search for the location they specified.
+                    # After 3 fails to recognise a location name, print out the list of locations even if the user didn't ask.
+                    location = extractLocation(answer)
+                    if location:
+                        print(f'Okay! I have set your order to be picked up from the BlackSmith store in {location}!')
+                        address = location
+                        break
+                    else:
+                        attempts += 1
+                        if attempts == 2:
+                            # Help the user discover what locations exist.
+                            # Elaborate on the expected format of the response from the user.
+                            print("If you are entering the address and I'm failing to recognise it, I am just looking for the general location, e.g: 'London'.")
+                            print("For your reference, our bookstores can be found in the following locations:")
+                            for location in getAllLocations():
+                                print(f"Location: {location[0]}, Address: {location[1]}")
+                        if attempts > 3:
+                            print("I'm sorry I'm unable to understand which location you'd like to pickup from.\n" \
+                            "Would you like to cancel this order? If not, I'll keep trying to understand which location you'd prefer.")
+                            if confirmation():
+                                print("Okay! I'll keep trying!")
+                                attempts = 0
+                            else:
+                                break
+
+
         else:
             pass
+
+'''
+Returns the float price for a book based on it's title.
+If name is not found, returns -1
+'''
+def getPrice(title: str) -> float:
+    titleNorm = title.lower().strip()
+    for book in getStockJSON['stock']:
+        if book['name'].lower().strip() == titleNorm:
+            return book['price']
+    return -1
+
+'''
+Attempts to extract a location from the prompt which matches one in the locations.json dataset.
+If fail to extract or match, returns the empty string.
+'''
+def extractLocation(prompt: str) -> str:
+    locations = getAllLocations()
+    # Use a map to just have a 1-D list of locations, removing address.
+    locations = list(map(lambda x: x[0].lower(), locations))
+
+    # Tokenise into words and lowercase.
+    tokens = re.findall(r'\b\w+\b', prompt.lower())
+    stopWords = stopwords.words('english')
+    # Remove all stopwords from the tokenized prompt.
+    filteredTokens = [t for t in tokens if t not in stopWords]
+
+    if not filteredTokens:
+        # Means empty prompt or all stop words
+        # As a fallback, attempt to directly match locations in the raw, unfiltered prompt
+        promptLower = prompt.lower()
+        for loc in locations:
+            if re.search(r'\b' + re.escape(loc) + r'\b', promptLower):
+                return loc
+        return ''
+    
+    # Maximum number of words in any stored location name
+    maxLenLoc = max(len(loc) for loc in locations)
+    # Try the longest n-grams first for multiple word location names 
+    for n in range(maxLenLoc, 0, -1):
+        for i in range(len(filteredTokens) - n + 1):
+            gram = ' '.join(filteredTokens[i:i+n])
+            if gram in locations:
+                return gram
+    return ''
 
 '''
 Returns a list of all location names and addresses in the locations.json dataset.
