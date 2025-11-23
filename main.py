@@ -828,7 +828,7 @@ def order(prompt: str):
     
     if quantity and book:
         # Now have all the information needed to set the price for this order.
-        price = getPrice(book) * quantity
+        price = getPrice(book) * float(quantity)
         if pickupMatch:
             # Keyword for pickup detected, but need to confirm.
             print("You would like to pick-up from one of our locations, right?")
@@ -908,8 +908,10 @@ def order(prompt: str):
         if nameSaved:
             name = nameSaved
         else:
-            # TODO: ask for users name and save + set as order name slot.
-            pass
+            # Force the identity function to ask the user for their name and save it.
+            identity("What is my name")
+            name = readName()
+            print(f"I've set the name for your order as {name}")
     
     if book and pickup and quantity and price and address and name:
         storeOrder(book, getISBN(book), quantity, pickup, address, None, None, price, name)
@@ -929,7 +931,7 @@ If name is not found, returns -1
 '''
 def getPrice(title: str) -> float:
     titleNorm = title.lower().strip()
-    for book in getStockJSON['stock']:
+    for book in getStockJSON()['stock']:
         if book['name'].lower().strip() == titleNorm:
             return book['price']
     return -1
