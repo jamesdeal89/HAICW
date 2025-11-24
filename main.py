@@ -131,6 +131,7 @@ from nltk.corpus import stopwords
 from nltk import download
 download('stopwords', quiet=True)
 from sklearn.feature_extraction.text import CountVectorizer
+from typing import Tuple, Optional
 
 # ------ Pre-processing ------
 
@@ -651,8 +652,6 @@ Handles when the user wants a reccomendation for a book.
 def reccomend():
     # Get list of genres actually in the stock list
     genres = getGenres()
-    
-
 
 '''
 Get all book JSONs of books in stock.json dataset.
@@ -923,9 +922,10 @@ def getISBNbyTitle(title: str) -> str:
         if book['name'].lower().strip() == titleNorm:
             return book['isbn']
 
-def getPickupDate():
+def getPickupDate(location: str):
     # Dates will be based on a unix epoch timestamp for simple storage.
     # TODO implement date extract
+    date = None
     while True:
         print("On what date would you like to pickup from this store?")
         answer = input("Please enter your prompt (QUIT to exit): ")
@@ -953,6 +953,24 @@ def getPickupDate():
         #   group3: December 10, Dec 10th, etc.
         #   group4: 06/07/2025, 05-09-25, etc.
         dateExtract = r"(?i)\b(?:0?[1-9]|[12][0-9]|3[01])[/-](?:0?[1-9]|1[0-2])(?:[/-](?:\d{2}|\d{4}))?\b"
+        dateResult = re.findall(dateExtract, answer)
+        if relResult.groups(0):
+            # group1: 5/9, 05/09, etc
+            # Split into day and month independently.
+            dayMonth = relResult.groups(0).split("-") if '-' in relResult.groups(0) else relResult.groups(0).split('/')
+            date = datetime.datetime(datetime.date.today().year,dayMonth[1], dayMonth[0])
+
+        if date:
+            open, openings = isLocOpenOnDate(getUnixEpochTimestamp(date.day, date.month, date.year))
+            if isLocOpenOnDate():
+                return date
+            else:
+                print("Please select a different date, the location you chose is not open on that date.")
+                print(f"The {location} location is not open on {date.weekday()}, but is open on:")
+                weekdayIter = 0
+                for char in openings:
+                    # openings is a string where each weekday is 1-hot encoded for open or not.
+                    weekdayIter+=1
     
 def getPickupTime():
     # Time will be stored in 24 hour format with no minutes.
@@ -965,16 +983,16 @@ Returns True if a specific bookstore location is open on a given date.
 False otherwise.
 Input is the unix epoch timestamp for that date as an integer. 
 '''
-def isLocOpenOnDate(loc: str, date: int) -> bool:
+def isLocOpenOnDate(loc: str, date: int) -> Tuple[bool,str]:
     dt = datetime.datetime.fromtimestamp(date)
     weekday = dt.weekday()
     openings = None
     for loc in getLocationsJSON['locations']:
         if loc['name'] == loc:
             openings = loc['days'] 
-    if openings[weekday] == 0:
-        return False
-    return True
+    if openings[weekday] == '0':
+        return False, openings
+    return True, ""
 
 '''
 Returns the float price for a book based on it's title.
