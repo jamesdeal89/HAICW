@@ -734,8 +734,8 @@ def order(prompt: str):
                         sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|million)\b|\b(\d+)\b"
     numbers = re.search(reQuantityExtract, prompt)
     # Extract if it's for pickup for delivery.
-    rePickupExtract = r"\b(pick-?up|drop-?off)\b"
-    reDeliveryExtract = r"\b(delivery|home)\b"
+    rePickupExtract = r"(?i)\b(pick-?up|drop-?off)\b"
+    reDeliveryExtract = r"(?i)\b(delivery|home)\b"
     reDateExtractions = [
         # MM/DD 
         r'\b(\d{1,2}/\d{1,2})\b',                  
@@ -925,12 +925,39 @@ def getISBNbyTitle(title: str) -> str:
 
 def getPickupDate():
     # Dates will be based on a unix epoch timestamp for simple storage.
-    pass
-
+    # TODO implement date extract
+    while True:
+        print("On what date would you like to pickup from this store?")
+        answer = input("Please enter your prompt (QUIT to exit): ")
+        if answer.lower() == "quit":
+            exit()
+        
+        # Extractions for when the user has said a relative date. E.g: 'tomorrow', 'day after tomorrow', etc.
+        relativeExtract = r"(?i)\b((today)|(day\wafter\wtomrrow)|(tomorrow))\b"
+        relResult = re.findall(relativeExtract, answer)
+        if relResult.groups(0):
+            print("I'm sorry, but we do not support same-day pickup. Please select a future date.")
+        elif relResult.groups(1):
+            # Get todays date from the system time.
+            today = datetime.date.today()
+            # Set to day after tomorrow.
+            date = today + datetime.timedelta(days=2)
+        elif relResult.groups(2):
+            # Set to tomorrow
+            today = datetime.date.today()
+            date = today + datetime.timedelta(days=1)
+        
+        # Extractions for when the user enters a date in formats:
+        #   group1: 5/9, 05/09, etc
+        #   group2: 10th of December, 17th of August, etc.
+        #   group3: December 10, Dec 10th, etc.
+        #   group4: 06/07/2025, 05-09-25, etc.
+        dateExtract = r"(?i)\b(?:0?[1-9]|[12][0-9]|3[01])[/-](?:0?[1-9]|1[0-2])(?:[/-](?:\d{2}|\d{4}))?\b"
     
 def getPickupTime():
     # Time will be stored in 24 hour format with no minutes.
     # If the user enters a time which is not a round hour, truncate.
+    # TODO implement time extract
     pass
 
 '''
@@ -1085,6 +1112,7 @@ def fuzzySearchTitle(title: str) -> str:
         levenshteinDistances.append((book['name'],levenshteinDistance(bookNorm, titleNorm, len(bookNorm), len(titleNorm))))
     # Sort ascending, first index will be the most similar / least distance
     levenshteinDistances.sort(key=lambda entry: entry[1])
+    # TODO: return both the title and the distance, allows for confidence based checks, if low dist, no need to confirm. Also return top 3 so if they do not confirm, iterate.
     # Tolerance is a levenshtein distance of 1/3rd of the user's desired title
     if levenshteinDistances and levenshteinDistances[0][1] < len(title)//3:
         return levenshteinDistances[0][0]
