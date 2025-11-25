@@ -1023,6 +1023,7 @@ def getPickupTime(location):
     }
     attempts = 0
     while True:
+        print(f"What time would you like to pick up your order from the {location} location?")
         answer = input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): ")
         if answer.lower() == "quit":
             exit()
