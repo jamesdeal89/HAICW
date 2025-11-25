@@ -735,19 +735,8 @@ def order(prompt: str):
     # Extract if it's for pickup for delivery.
     rePickupExtract = r"(?i)\b(pick-?up|drop-?off)\b"
     reDeliveryExtract = r"(?i)\b(delivery|home)\b"
-    reDateExtractions = [
-        # MM/DD 
-        r'\b(\d{1,2}/\d{1,2})\b',                  
-        # 10th of December
-        r'\b(\d{1,2}(?:st|nd|rd|th)\s+of\s+\w+)\b',  
-        # December 10th
-        r'\b(\w+\s+\d{1,2}(?:st|nd|rd|th)?)\b',    
-        # DD/MM/YY
-        r'\b(\d{1,2}[-/]\d{1,2}[-/]\d{2,4})\b'    
-    ]
     pickupMatch = re.search(rePickupExtract, prompt)
     deliveryMatch = re.search(reDeliveryExtract, prompt)
-    dateMatch = re.search(('|').join(reDateExtractions), prompt)
 
     # Check for book in stock.json 
     # Use Levenshtein-based fuzzy search to ensure detected book title can match 
@@ -809,11 +798,13 @@ def order(prompt: str):
             else:
                 print("Sorry for the misunderstanding, ", end='')
         if not skip:
-            print("How many copies would you like?")
-            answer = input("Please enter your prompt (QUIT to exit): ")
-            if answer.lower() == "quit":
-                exit()
             while True:
+                print("How many copies would you like?")
+                answer = input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): ")
+                if answer.lower() == "quit":
+                    exit()
+                elif 'cancel' in answer.lower():
+                    return
                 numbers = re.search(reQuantityExtract, answer)
                 if numbers:
                     if numbers.group(1):
@@ -822,8 +813,13 @@ def order(prompt: str):
                         quant = numbers.group(2)
                     print(f"To confirm, you'd like to order {quant} copies?")
                     if confirmation():
-                        quantity = quant
-                        break
+                        # Perform a stock check
+                        inStock, available = stockCheck(book, int(quant))
+                        if not inStock:
+                            print(f"Unfortunately, we don't have {quant} available. There are only {available} copies in stock.")
+                        else:
+                            quantity = int(quant)
+                            break
     
     if quantity and book:
         # Now have all the information needed to set the price for this order.
@@ -893,13 +889,18 @@ def order(prompt: str):
                 # Need to select a pick-up date and timeslot.
                 # Need to prevent selecting a date when the specific location is closed, 
                 # or a time when the location is closed.
-                # TODO get date and time implementation
                 date = getPickupDate(address)
-                time = getPickupTime()
-
+                print(f"Okay! I've set the date for pickup to {date.day:02d}/{date.month:02d}/{date.year:02d}")
+                # -1 means the user cancelled the order in the handlers
+                if date == -1:
+                    return
+                time = getPickupTime(address)
+                # -1 means the user cancelled the order in the handlers
+                if time == -1:
+                    return
         else:
             pass
-        
+
     if address:
         # Check if we know the user's name, if we do not, ask for the order and save for later too.
         # If we do, just use that for the order name.
@@ -913,7 +914,6 @@ def order(prompt: str):
             print(f"I've set the name for your order as {name}")
     
     if book and pickup and quantity and price and address and name:
-        # TODO: Decrement stock count after order placed successfully.
         storeOrder(book, getISBNbyTitle(book), quantity, pickup, address, getUnixEpochTimestamp(date), time, price, name)
 
 def getISBNbyTitle(title: str) -> str:
@@ -927,24 +927,26 @@ def getPickupDate(location: str):
     date = None
     while True:
         print("On what date would you like to pickup from this store?")
-        answer = input("Please enter your prompt (QUIT to exit): ")
+        answer = input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): ")
         if answer.lower() == "quit":
             exit()
-        
+        if 'cancel' in answer.lower():
+            return -1
         # Extractions for when the user has said a relative date. E.g: 'tomorrow', 'day after tomorrow', etc.
-        relativeExtract = r"(?i)\b((today)|(day\wafter\wtomorrow)|(tomorrow))\b"
+        relativeExtract = r"(?i)\b(?:(today)|(day\wafter\wtomorrow)|(tomorrow))\b"
         relResult = re.search(relativeExtract, answer)
-        if relResult.groups(0):
-            print("I'm sorry, but we do not support same-day pickup. Please select a future date.")
-        elif relResult.groups(1):
-            # Get todays date from the system time.
+        if relResult:
+            token = relResult.group(0).lower()
             today = datetime.date.today()
-            # Set to day after tomorrow.
-            date = today + datetime.timedelta(days=2)
-        elif relResult.groups(2):
-            # Set to tomorrow
-            today = datetime.date.today()
-            date = today + datetime.timedelta(days=1)
+            if token == "today":
+                print("I'm sorry, but we do not support same-day pickup. Please select a future date.")
+                continue
+            elif token == "tomorrow":
+                date = today + datetime.timedelta(days=1)
+            else:
+                # Set to day after tomorrow
+                today = datetime.date.today()
+                date = today + datetime.timedelta(days=2)
         
         # Extractions for when the user enters a date in formats:
         #   group1: 5/9, 05/09, etc
@@ -953,14 +955,38 @@ def getPickupDate(location: str):
         #   group4: 06/07/2025, 05-09-25, etc.
         dateExtract = r"(?i)\b(?:0?[1-9]|[12][0-9]|3[01])[/-](?:0?[1-9]|1[0-2])(?:[/-](?:\d{2}|\d{4}))?\b"
         dateResult = re.search(dateExtract, answer)
-        if dateResult.groups(0):
-            # group1: 5/9, 05/09, etc
+        if dateResult:
             # Split into day and month independently.
-            dayMonth = dateResult.groups(0).split("-") if '-' in dateResult.groups(0) else dateResult.groups(0).split('/')
-            date = datetime.datetime(datetime.date.today().year,dayMonth[1], dayMonth[0])
-
+            dayMonth = dateResult.group(0).split("-") if '-' in dateResult.group(0) else dateResult.group(0).split('/')
+            try:
+                day = int(dayMonth[0])
+                month = int(dayMonth[1])
+                today = datetime.date.today()
+                if len(dayMonth) == 3:
+                    # means the user included a year
+                    year = int(dayMonth[2])
+                    if year < 100:
+                        # to account for when they truncate the year to 2 digits.
+                        year += 2000
+                else:
+                    year = today.year
+                    try:
+                        # if no year was provided and the date desired has already passed, assume next year
+                        cand = datetime.date(year, month, day)
+                        if cand < today:
+                            year += 1
+                    except ValueError:
+                        # when invalid day or month
+                        # raise this error so the outer except catches it
+                        raise
+                date = datetime.date(year, month, day)
+            except Exception:
+                date = None
         if date:
-            open, openings = isLocOpenOnDate(getUnixEpochTimestamp(date.day, date.month, date.year))
+            if date < datetime.date.today():
+                print("Date cannot be in the past. Please select a future date.")
+                continue
+            open, openings = isLocOpenOnDate(location, getUnixEpochTimestamp(date.day, date.month, date.year))
             if open:
                 return date
             else:
@@ -974,7 +1000,8 @@ def getPickupDate(location: str):
                         print(daysOfWeek[weekdayIter],end='')
                     weekdayIter+=1
                 print('')
-
+        else:
+            print("I was unable to recognise which date you intended, please try again.")
     
 '''
 Prompts user in a loop to get the desired time for the pickup.
@@ -985,7 +1012,6 @@ If failed, returns -1.
 def getPickupTime(location):
     # Time will be stored in 24 hour format with no minutes.
     # If the user enters a time which is not a round hour, truncate.
-    # TODO implement time extract
     time = None
     genTimesMap = {
         'noon': 12,
@@ -997,7 +1023,7 @@ def getPickupTime(location):
     }
     attempts = 0
     while True:
-        answer = input("Please enter your prompt (QUIT to exit): ")
+        answer = input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): ")
         if answer.lower() == "quit":
             exit()
         if "cancel" in answer.lower():
@@ -1017,53 +1043,54 @@ def getPickupTime(location):
             )
         """
         timeRes = re.search(answer,timeExtract)
-        if timeRes.groups(0):
-            # Extracted 12 hour hour
-            if timeRes.groups(1):
-                if timeRes.groups(1) in ['pm','p.m.']:
-                    time = int(timeRes.group(0) + 12)
+        if timeRes:
+            if timeRes.groups(0):
+                # Extracted 12 hour hour
+                if timeRes.group(1):
+                    if timeRes.groups(1) in ['pm','p.m.']:
+                        time = int(timeRes.group(0) + 12)
+                    else:
+                        # Assume it's AM.
+                        time = int(timeRes.group(0))
                 else:
-                    # Assume it's AM.
-                    time = int(timeRes.group(0))
+                    print(f"Is that {timeRes.groups(0)} am or pm?")
+                    answer = input("Please enter your prompt (QUIT to exit): ")
+                    if answer.lower() == "quit":
+                        exit()
+                    if 'pm' in answer.lower() or 'afternoon' in answer.lower():
+                        time = int(timeRes.group(0)) + 12
+                    else:
+                        time = int(timeRes.group(0))
+            elif timeRes.group(2):
+                # Extracted a 24 hour time, i.e it's above 12 for the hour.
+                time = int(timeRes.groups(2))
+            elif timeRes.group(3):
+                # Extracted a general timing, e.g: lunchtime.
+                time = genTimesMap[timeRes.groups(3)]
             else:
-                print(f"Is that {timeRes.groups(0)} am or pm?")
-                answer = input("Please enter your prompt (QUIT to exit): ")
-                if answer.lower() == "quit":
-                    exit()
-                if 'pm' in answer.lower() or 'afternoon' in answer.lower():
-                    time = int(timeRes.group(0)) + 12
+                if attempts > 2:
+                    # If above 2 attempts, suggest an available time for this location.
+                    print("I was unable to understand your desired time.")
+                    # Suggest 10am as a default if location is open for it.
+                    suggested = 10
+                    isOpen, open, close = isLocOpenAtTime(location, suggested)
+                    if not isOpen:
+                        # Suggest 2 hours after known opening time if not open at 10.
+                        suggested = open + 2
+                    print("I can suggest {suggested} as an available time for the {location} location. Do you want to accept?")
+                    if confirmation():
+                        return suggested
+                    else:
+                        print("What time would you prefer, instead?")
+                elif attempts > 3:
+                    # If above 3 attempts, suggest cancelling the order to give the user a way to escape the transaction flow.
+                    print("I apologise, I was unable to understand you. \n" \
+                    "You can include 'cancel' in your response to cancel this order, or you can keep trying and enter another time.")
                 else:
-                    time = int(timeRes.group(0))
-        elif timeRes.groups(2):
-            # Extracted a 24 hour time, i.e it's above 12 for the hour.
-            time = int(timeRes.groups(2))
-        elif timeRes.group(3):
-            # Extracted a general timing, e.g: lunchtime.
-            time = genTimesMap[timeRes.groups(3)]
-        else:
-            if attempts > 2:
-                # If above 2 attempts, suggest an available time for this location.
-                print("I was unable to understand your desired time.")
-                # Suggest 10am as a default if location is open for it.
-                suggested = 10
-                isOpen, open, close = isLocOpenAtTime(location, suggested)
-                if not isOpen:
-                    # Suggest 2 hours after known opening time if not open at 10.
-                    suggested = open + 2
-                print("I can suggest {suggested} as an available time for the {location} location. Do you want to accept?")
-                if confirmation():
-                    return suggested
-                else:
-                    print("What time would you prefer, instead?")
-            elif attempts > 3:
-                # If above 3 attempts, suggest cancelling the order to give the user a way to escape the transaction flow.
-                print("I apologise, I was unable to understand you. \n" \
-                "You can include 'cancel' in your response to cancel this order, or you can keep trying and enter another time.")
-            else:
-                # Encourage the user to use a simple time format which system is able to extract.
-                print("I'm sorry, I dont understand what time you'd like.\n" \
-                "For example, please enter '10am'.")
-            attempts += 1
+                    # Encourage the user to use a simple time format which system is able to extract.
+                    print("I'm sorry, I dont understand what time you'd like.\n" \
+                    "For example, please enter '10am'.")
+                attempts += 1
         if time:
             isOpen, open, close = isLocOpenAtTime(location, time)
             if isOpen:
@@ -1095,12 +1122,30 @@ def isLocOpenOnDate(loc: str, date: int) -> Tuple[bool,str]:
     dt = datetime.datetime.fromtimestamp(date)
     weekday = dt.weekday()
     openings = None
-    for loc in getLocationsJSON['locations']:
+    for loc in getLocationsJSON()['locations']:
         if loc['name'] == loc:
             openings = loc['days'] 
-    if openings[weekday] == '0':
+            break
+    if openings and openings[weekday] == '0':
         return False, openings
     return True, ""
+
+'''
+Check if desired stock amount is possible to order.
+Returns bool and either: 
+    -1 if True as exact number not needed by the caller in this case, 
+or: 
+    the integer number in stock if False, as caller needs to inform user.
+'''
+def stockCheck(title: str, quantity: int) -> Tuple[bool,int]:
+    titleNorm = title.lower().strip()
+    for book in getStockJSON()['stock']:
+        if book['name'].lower().strip() == titleNorm:
+            if book['count'] >= quantity:
+                return True, -1
+            else:
+                return False, book['count']
+    return False
 
 '''
 Returns the float price for a book based on it's title.
@@ -1257,6 +1302,11 @@ def getOrdersJSON():
         return data
     return None
 
+'''
+Places the order as per data collected and slots filled in order().
+Will decrement the stock count in stock.json.
+Will update orders.json with these details.
+'''
 def storeOrder(title, isbn, quantity, pickup, address, date, time, cost, name):
     orders = getOrdersJSON()
     order = {
@@ -1279,6 +1329,13 @@ def storeOrder(title, isbn, quantity, pickup, address, date, time, cost, name):
     ordersStr = json.dumps(orders, indent=4)
     with open('orders.json', 'w') as f:
         f.write(ordersStr)
+    stock = getStockJSON()
+    for book in stock['stock']:
+        if book['name'].lower().strip() == title:
+            book['count'] -= quantity
+    stockStr = json.dumps(stock, indent=4)
+    with open('stock.json', 'w') as f:
+        f.write(stockStr)
 
 # TODO add genre to stocks to allow genre based recomendations.
 
