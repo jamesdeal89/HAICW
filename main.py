@@ -976,7 +976,13 @@ def getPickupDate(location: str):
                 print('')
 
     
-def getPickupTime():
+'''
+Prompts user in a loop to get the desired time for the pickup.
+Returns standardised hour of pickup in 24 hour format integer.
+E.g: 1pm -> returns int 13.
+If failed, returns -1.
+'''
+def getPickupTime(location):
     # Time will be stored in 24 hour format with no minutes.
     # If the user enters a time which is not a round hour, truncate.
     # TODO implement time extract
@@ -994,6 +1000,8 @@ def getPickupTime():
         answer = input("Please enter your prompt (QUIT to exit): ")
         if answer.lower() == "quit":
             exit()
+        if "cancel" in answer.lower():
+            return -1
         timeExtract = r"""
             (?i)                        
             \b(?:at|around|about|for|in\sthe)?\s*   # leading word
@@ -1013,34 +1021,71 @@ def getPickupTime():
             # Extracted 12 hour hour
             if timeRes.groups(1):
                 if timeRes.groups(1) in ['pm','p.m.']:
-                    return int(timeRes.group(0) + 12)
+                    time = int(timeRes.group(0) + 12)
                 else:
-                    # Assume it's am.
-                    return int(timeRes.group(0))
+                    # Assume it's AM.
+                    time = int(timeRes.group(0))
             else:
                 print(f"Is that {timeRes.groups(0)} am or pm?")
                 answer = input("Please enter your prompt (QUIT to exit): ")
                 if answer.lower() == "quit":
                     exit()
                 if 'pm' in answer.lower() or 'afternoon' in answer.lower():
-                    return int(timeRes.group(0)) + 12
+                    time = int(timeRes.group(0)) + 12
                 else:
-                    return int(timeRes.group(0))
+                    time = int(timeRes.group(0))
         elif timeRes.groups(2):
             # Extracted a 24 hour time, i.e it's above 12 for the hour.
-            return int(timeRes.groups(2))
+            time = int(timeRes.groups(2))
         elif timeRes.group(3):
             # Extracted a general timing, e.g: lunchtime.
-            return genTimesMap[timeRes.groups(3)]
+            time = genTimesMap[timeRes.groups(3)]
         else:
-            print("I'm sorry, I dont understand what time you'd like.\n" \
-            "For example, please enter '10am'.")
-            # TODO: If above 2 attempts, suggest an available time for this location.
+            if attempts > 2:
+                # If above 2 attempts, suggest an available time for this location.
+                print("I was unable to understand your desired time.")
+                # Suggest 10am as a default if location is open for it.
+                suggested = 10
+                isOpen, open, close = isLocOpenAtTime(location, suggested)
+                if not isOpen:
+                    # Suggest 2 hours after known opening time if not open at 10.
+                    suggested = open + 2
+                print("I can suggest {suggested} as an available time for the {location} location. Do you want to accept?")
+                if confirmation():
+                    return suggested
+                else:
+                    print("What time would you prefer, instead?")
+            elif attempts > 3:
+                # If above 3 attempts, suggest cancelling the order to give the user a way to escape the transaction flow.
+                print("I apologise, I was unable to understand you. \n" \
+                "You can include 'cancel' in your response to cancel this order, or you can keep trying and enter another time.")
+            else:
+                # Encourage the user to use a simple time format which system is able to extract.
+                print("I'm sorry, I dont understand what time you'd like.\n" \
+                "For example, please enter '10am'.")
+            attempts += 1
+        if time:
+            isOpen, open, close = isLocOpenAtTime(location, time)
+            if isOpen:
+                return time
+            else:
+                print(f"I apologise, the {location} location is not open at {time}.\n" \
+                        f"It is open from {open}:00 to {close}:00.")
 
-
-        
-
-
+'''
+Returns True and -1,-1 if a specific bookstore location is open at a given time.
+False and that locations opening and closing ints otherwise.
+Time is stored as a 24 hour int for simplicity.
+time passed as a parameter should follow this.
+location should be passed as the exact location name as per the locations.json datatset.
+'''
+def isLocOpenAtTime(location: str, time: int):
+    for loc in getLocationsJSON['locations']:
+        if loc['open'] <= time and loc['close'] > time:
+            return True, -1, -1
+        else:
+            return False, loc['open'], loc['close']
+    
 '''
 Returns True if a specific bookstore location is open on a given date.
 False otherwise.
