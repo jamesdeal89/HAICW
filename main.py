@@ -894,7 +894,7 @@ def order(prompt: str):
                 # Need to prevent selecting a date when the specific location is closed, 
                 # or a time when the location is closed.
                 # TODO get date and time implementation
-                date = getPickupDate()
+                date = getPickupDate(address)
                 time = getPickupTime()
 
         else:
@@ -914,7 +914,7 @@ def order(prompt: str):
     
     if book and pickup and quantity and price and address and name:
         # TODO: Decrement stock count after order placed successfully.
-        storeOrder(book, getISBNbyTitle(book), quantity, pickup, address, None, None, price, name)
+        storeOrder(book, getISBNbyTitle(book), quantity, pickup, address, getUnixEpochTimestamp(date), time, price, name)
 
 def getISBNbyTitle(title: str) -> str:
     titleNorm = title.lower().strip()
@@ -924,7 +924,6 @@ def getISBNbyTitle(title: str) -> str:
 
 def getPickupDate(location: str):
     # Dates will be based on a unix epoch timestamp for simple storage.
-    # TODO implement date extract
     date = None
     while True:
         print("On what date would you like to pickup from this store?")
@@ -933,8 +932,8 @@ def getPickupDate(location: str):
             exit()
         
         # Extractions for when the user has said a relative date. E.g: 'tomorrow', 'day after tomorrow', etc.
-        relativeExtract = r"(?i)\b((today)|(day\wafter\wtomrrow)|(tomorrow))\b"
-        relResult = re.findall(relativeExtract, answer)
+        relativeExtract = r"(?i)\b((today)|(day\wafter\wtomorrow)|(tomorrow))\b"
+        relResult = re.search(relativeExtract, answer)
         if relResult.groups(0):
             print("I'm sorry, but we do not support same-day pickup. Please select a future date.")
         elif relResult.groups(1):
@@ -953,30 +952,94 @@ def getPickupDate(location: str):
         #   group3: December 10, Dec 10th, etc.
         #   group4: 06/07/2025, 05-09-25, etc.
         dateExtract = r"(?i)\b(?:0?[1-9]|[12][0-9]|3[01])[/-](?:0?[1-9]|1[0-2])(?:[/-](?:\d{2}|\d{4}))?\b"
-        dateResult = re.findall(dateExtract, answer)
-        if relResult.groups(0):
+        dateResult = re.search(dateExtract, answer)
+        if dateResult.groups(0):
             # group1: 5/9, 05/09, etc
             # Split into day and month independently.
-            dayMonth = relResult.groups(0).split("-") if '-' in relResult.groups(0) else relResult.groups(0).split('/')
+            dayMonth = dateResult.groups(0).split("-") if '-' in dateResult.groups(0) else dateResult.groups(0).split('/')
             date = datetime.datetime(datetime.date.today().year,dayMonth[1], dayMonth[0])
 
         if date:
             open, openings = isLocOpenOnDate(getUnixEpochTimestamp(date.day, date.month, date.year))
-            if isLocOpenOnDate():
+            if open:
                 return date
             else:
                 print("Please select a different date, the location you chose is not open on that date.")
-                print(f"The {location} location is not open on {date.weekday()}, but is open on:")
+                print(f"The {location} location is not open on {date.strftime("%A %d %B %Y")}, but is open on every:")
                 weekdayIter = 0
+                daysOfWeek = ['Monday, ','Tuesday, ','Wednesday, ','Thursday, ','Friday, ','Saturday, ','Sunday, ']
                 for char in openings:
                     # openings is a string where each weekday is 1-hot encoded for open or not.
+                    if char == '1':
+                        print(daysOfWeek[weekdayIter],end='')
                     weekdayIter+=1
+                print('')
+
     
 def getPickupTime():
     # Time will be stored in 24 hour format with no minutes.
     # If the user enters a time which is not a round hour, truncate.
     # TODO implement time extract
-    pass
+    time = None
+    genTimesMap = {
+        'noon': 12,
+        'midnight': 00,
+        'lunchtime': 13,
+        'morning': 10,
+        'afternoon': 15,
+        'evening': 18,
+    }
+    attempts = 0
+    while True:
+        answer = input("Please enter your prompt (QUIT to exit): ")
+        if answer.lower() == "quit":
+            exit()
+        timeExtract = r"""
+            (?i)                        
+            \b(?:at|around|about|for|in\sthe)?\s*   # leading word
+            (?:
+            (\d{1,2})            # 12 hour hour
+                (?::([0-5]\d))?    # optional minutes
+                \s*(am|pm|a\.m\.|p\.m\.)\b
+            |
+            ([01]\d|2[0-3])     # 24 hour hour
+                (?::([0-5]\d))\b  # minutes (allow 1430 or 14:30)
+            |
+            (noon|midnight|lunchtime|morning|afternoon|evening)\b # general timings
+            )
+        """
+        timeRes = re.search(answer,timeExtract)
+        if timeRes.groups(0):
+            # Extracted 12 hour hour
+            if timeRes.groups(1):
+                if timeRes.groups(1) in ['pm','p.m.']:
+                    return int(timeRes.group(0) + 12)
+                else:
+                    # Assume it's am.
+                    return int(timeRes.group(0))
+            else:
+                print(f"Is that {timeRes.groups(0)} am or pm?")
+                answer = input("Please enter your prompt (QUIT to exit): ")
+                if answer.lower() == "quit":
+                    exit()
+                if 'pm' in answer.lower() or 'afternoon' in answer.lower():
+                    return int(timeRes.group(0)) + 12
+                else:
+                    return int(timeRes.group(0))
+        elif timeRes.groups(2):
+            # Extracted a 24 hour time, i.e it's above 12 for the hour.
+            return int(timeRes.groups(2))
+        elif timeRes.group(3):
+            # Extracted a general timing, e.g: lunchtime.
+            return genTimesMap[timeRes.groups(3)]
+        else:
+            print("I'm sorry, I dont understand what time you'd like.\n" \
+            "For example, please enter '10am'.")
+            # TODO: If above 2 attempts, suggest an available time for this location.
+
+
+        
+
 
 '''
 Returns True if a specific bookstore location is open on a given date.
