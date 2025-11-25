@@ -16,7 +16,7 @@ NOTE: Allowed libraries include:
 CHECKLIST OF EXPECTED FEATURES:
 1. Intent matching. [x]
 2. Identity management. [x]
-3. Transactions. [ ]
+3. Transactions. [x]
 4. Information retrieval & Question answering. [x]
 5. Small talk. [x]
 '''
@@ -57,6 +57,11 @@ CHECKPOINT WAS COMPLETED AND BONUS MARKS RECEIVED.
 NOTE on Q&A dataset:
 Static dataset was partially genAI generated to bulk out examples. 
 NONE of the code, processing, etc are AI generated.
+NOTE on intents dataset:
+Based on boostrapped manual examples,
+Bulked out using confirmation:
+    - if the user confirms a low confidence intent match, 
+        - add their prompt and the confirmed intent to dataset.
 '''
 
 confidenceThresholdQA = 0.6
@@ -131,7 +136,7 @@ from nltk.corpus import stopwords
 from nltk import download
 download('stopwords', quiet=True)
 from sklearn.feature_extraction.text import CountVectorizer
-from typing import Tuple, Optional
+from typing import Tuple
 
 # ------ Pre-processing ------
 
@@ -716,6 +721,7 @@ Flow:
         - confirm cost (book + postage)
 '''
 def order(prompt: str):
+    # TODO: Even in the middle of a transaction - 'how are you' should work and activate small talk intent. Must fix this.
     # Declare slots as None for now, any left as None after initial scan of prompt will be ask for
     book: str = None
     quantity: int = None
@@ -914,7 +920,7 @@ def order(prompt: str):
             print(f"I've set the name for your order as {name}")
     
     if book and pickup and quantity and price and address and name:
-        storeOrder(book, getISBNbyTitle(book), quantity, pickup, address, getUnixEpochTimestamp(date), time, price, name)
+        storeOrder(book, getISBNbyTitle(book), quantity, pickup, address, getUnixEpochTimestamp(date.day, date.month, date.year), time, price, name)
 
 def getISBNbyTitle(title: str) -> str:
     titleNorm = title.lower().strip()
@@ -933,7 +939,7 @@ def getPickupDate(location: str):
         if 'cancel' in answer.lower():
             return -1
         # Extractions for when the user has said a relative date. E.g: 'tomorrow', 'day after tomorrow', etc.
-        relativeExtract = r"(?i)\b(?:(today)|(day\wafter\wtomorrow)|(tomorrow))\b"
+        relativeExtract = r"(?i)\b(?:today|day\wafter\wtomorrow|tomorrow)\b"
         relResult = re.search(relativeExtract, answer)
         if relResult:
             token = relResult.group(0).lower()
@@ -949,10 +955,8 @@ def getPickupDate(location: str):
                 date = today + datetime.timedelta(days=2)
         
         # Extractions for when the user enters a date in formats:
-        #   group1: 5/9, 05/09, etc
-        #   group2: 10th of December, 17th of August, etc.
-        #   group3: December 10, Dec 10th, etc.
-        #   group4: 06/07/2025, 05-09-25, etc.
+        #   5/9, 05/09, etc
+        #   06/07/2025, 05-09-25, etc.
         dateExtract = r"(?i)\b(?:0?[1-9]|[12][0-9]|3[01])[/-](?:0?[1-9]|1[0-2])(?:[/-](?:\d{2}|\d{4}))?\b"
         dateResult = re.search(dateExtract, answer)
         if dateResult:
@@ -1045,29 +1049,29 @@ def getPickupTime(location):
         """
         timeRes = re.search(answer,timeExtract)
         if timeRes:
-            if timeRes.groups(0):
+            if timeRes.group(1):
                 # Extracted 12 hour hour
                 if timeRes.group(1):
-                    if timeRes.groups(1) in ['pm','p.m.']:
-                        time = int(timeRes.group(0) + 12)
+                    if timeRes.groups(3) in ['pm','p.m.']:
+                        time = int(timeRes.group(1) + 12)
                     else:
                         # Assume it's AM.
-                        time = int(timeRes.group(0))
+                        time = int(timeRes.group(1))
                 else:
-                    print(f"Is that {timeRes.groups(0)} am or pm?")
+                    print(f"Is that {timeRes.groups(1)} am or pm?")
                     answer = input("Please enter your prompt (QUIT to exit): ")
                     if answer.lower() == "quit":
                         exit()
                     if 'pm' in answer.lower() or 'afternoon' in answer.lower():
-                        time = int(timeRes.group(0)) + 12
+                        time = int(timeRes.group(1)) + 12
                     else:
-                        time = int(timeRes.group(0))
-            elif timeRes.group(2):
+                        time = int(timeRes.group(1))
+            elif timeRes.group(4):
                 # Extracted a 24 hour time, i.e it's above 12 for the hour.
-                time = int(timeRes.groups(2))
-            elif timeRes.group(3):
+                time = int(timeRes.groups(4))
+            elif timeRes.group(6):
                 # Extracted a general timing, e.g: lunchtime.
-                time = genTimesMap[timeRes.groups(3)]
+                time = genTimesMap[timeRes.groups(6)]
             else:
                 if attempts > 2:
                     # If above 2 attempts, suggest an available time for this location.
@@ -1109,10 +1113,15 @@ location should be passed as the exact location name as per the locations.json d
 '''
 def isLocOpenAtTime(location: str, time: int):
     for loc in getLocationsJSON['locations']:
-        if loc['open'] <= time and loc['close'] > time:
-            return True, -1, -1
-        else:
-            return False, loc['open'], loc['close']
+        if loc['name'] == location:
+            if loc['open'] <= time and loc['close'] > time:
+                # location found and open.
+                return True, -1, -1
+            else:
+                # Location found and not open.
+                return False, loc['open'], loc['close']
+    # Location not found
+    return False, -1, -1
     
 '''
 Returns True if a specific bookstore location is open on a given date.
