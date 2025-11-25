@@ -458,3 +458,4 @@ PROMPT, INTENT
 "How to find books with unreliable child narrators?","question"
 "lovely weather we're having","small"
 "I feel upset that you don't understand me","small"
+"I'd like to order 3 copies of Dune for pickup","order"
