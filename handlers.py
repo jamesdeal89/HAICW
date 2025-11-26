@@ -9,10 +9,28 @@ from utils import confirmation
 Simple handler for when the user thanks the chatbot
 '''
 def thank():
-    if readName():
-        print(f"You are very welcome, {readName()}! Glad to help.")
+    import random
+    
+    name = readName()
+    
+    if name:
+        responses = [
+            f"You're very welcome, {name}! Happy to help.",
+            f"My pleasure, {name}! Let me know if you need anything else.",
+            f"Anytime, {name}! Glad I could assist.",
+            f"You're welcome, {name}! It's what I'm here for.",
+            f"No problem at all, {name}! Feel free to ask me anything else.",
+        ]
     else:
-        print(f"You're welcome! Glad to help.")
+        responses = [
+            "You're welcome! Happy to help.",
+            "My pleasure! Let me know if you need anything else.",
+            "Anytime! Glad I could assist.",
+            "You're welcome! It's what I'm here for.",
+            "No problem at all! Feel free to ask me anything else.",
+        ]
+    
+    return random.choice(responses)
 
 '''
 Small talk approach is based on 'ELIZA' from the course's recomended reading:

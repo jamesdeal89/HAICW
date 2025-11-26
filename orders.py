@@ -541,11 +541,13 @@ def getPickupTime(location):
             if timeRes.group(1):
                 # Extracted 12 hour hour
                 if timeRes.group(3):
+                    hour = int(timeRes.group(1))
                     if timeRes.group(3) in ['pm','p.m.']:
-                        time = int(timeRes.group(1)) + 12
+                        # 12pm is 12 (noon), 1-11pm add 12
+                        time = 12 if hour == 12 else hour + 12
                     else:
-                        # Assume it's AM.
-                        time = int(timeRes.group(1))
+                        # 12am is 0 (midnight), 1-11am stay same
+                        time = 0 if hour == 12 else hour
                 else:
                     print(f"Is that {timeRes.group(1)} am or pm?")
                     while True:
@@ -555,10 +557,11 @@ def getPickupTime(location):
                         break
                     if answer.lower() == "quit":
                         exit()
+                    hour = int(timeRes.group(1))
                     if 'pm' in answer.lower() or 'afternoon' in answer.lower():
-                        time = int(timeRes.group(1)) + 12
+                        time = 12 if hour == 12 else hour + 12
                     else:
-                        time = int(timeRes.group(1))
+                        time = 0 if hour == 12 else hour
             elif timeRes.group(4):
                 # Extracted a 24 hour time, i.e it's above 12 for the hour.
                 time = int(timeRes.group(4))
