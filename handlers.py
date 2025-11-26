@@ -154,11 +154,40 @@ def identity(prompt):
 
 '''
 Handles when the user wants a reccomendation for a book.
+Uses genre-based recommendations from the available stock.
 '''
 def reccomend():
     # Get list of genres actually in the stock list
-    from data_access import getGenres
+    from data_access import getGenres, getGenreBooks
+    import random
+    
     genres = getGenres()
+    print("What genre are you interested in?")
+    print(f"Available genres: {', '.join(genres)}")
+    
+    genreInput = input("Please enter your prompt (QUIT to exit): ")
+    if genreInput.lower() == "quit":
+        exit()
+    
+    # Find matching genre (case-insensitive partial match)
+    matchedGenre = None
+    for genre in genres:
+        if genre.lower() in genreInput.lower() or genreInput.lower() in genre.lower():
+            matchedGenre = genre
+            break
+    
+    if matchedGenre:
+        books = getGenreBooks(matchedGenre)
+        if books:
+            # Recommend a random book from the genre
+            recommended = random.choice(books)
+            print(f"\nI recommend '{recommended['name']}' by {recommended['author']}!")
+            print(f"It's a {matchedGenre} book with {recommended['pages']} pages, priced at £{recommended['price']:.2f}.")
+            print(f"We have {recommended['count']} copies in stock.")
+        else:
+            print(f"Sorry, we don't have any {matchedGenre} books in stock right now.")
+    else:
+        print("I couldn't find that genre. Please try again with one of the available genres.")
 
 '''
 Handles when a user's intent is to check their existing orders.

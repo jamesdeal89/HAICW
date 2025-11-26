@@ -54,16 +54,31 @@ def order(prompt: str):
     # Check for book in stock.json 
     # Use Levenshtein-based fuzzy search to ensure detected book title can match 
     # to a specific title as per stock.json.
-    exactTitle = None
+    matches = []
     if title:
-        exactTitle = fuzzySearchTitle(title.group(1))
-    if exactTitle:
+        matches = fuzzySearchTitle(title.group(1))
+    if matches:
         # Extracted a title from the prompt and able to fuzzy find it in the stock dataset.
-        # Set the book slot to the exact title.
-        print(f"Okay! So you'd like to order: {exactTitle}?")
-        if confirmation():
-            book = exactTitle
-    elif not exactTitle:
+        # If distance is very low (<=2), high confidence - no need to confirm
+        if matches[0][1] <= 2:
+            book = matches[0][0]
+            print(f"Ordering: {book}")
+        else:
+            # Lower confidence, confirm with user
+            print(f"Okay! So you'd like to order: {matches[0][0]}?")
+            if confirmation():
+                book = matches[0][0]
+            elif len(matches) > 1:
+                # User said no to first match, try second match
+                print(f"Did you mean: {matches[1][0]}?")
+                if confirmation():
+                    book = matches[1][0]
+                elif len(matches) > 2:
+                    # Try third match
+                    print(f"Or perhaps: {matches[2][0]}?")
+                    if confirmation():
+                        book = matches[2][0]
+    if not matches or not book:
         # Extracted a title from the prompt, but unable to find it in the stock dataset.
         print("You'd like to place an order for which book? (please enter just the title)")
         answer = input("Please enter your prompt (QUIT to exit): ")
@@ -72,13 +87,33 @@ def order(prompt: str):
         attempts = 0
         # Allow 3 re-entry attempts, if still no match, display list of titles in stock
         while True:
-            exactTitle = fuzzySearchTitle(answer)
-            if exactTitle: 
-                print(f"Okay! So you'd like to order: {exactTitle}?")
-                if confirmation():
-                    book = exactTitle
+            matches = fuzzySearchTitle(answer)
+            if matches:
+                # Try matches in order with confidence-based approach
+                if matches[0][1] <= 2:
+                    # High confidence match
+                    book = matches[0][0]
+                    print(f"Ordering: {book}")
                     break
                 else:
+                    # Ask for confirmation on first match
+                    print(f"Okay! So you'd like to order: {matches[0][0]}?")
+                    if confirmation():
+                        book = matches[0][0]
+                        break
+                    elif len(matches) > 1:
+                        # Try second match
+                        print(f"Did you mean: {matches[1][0]}?")
+                        if confirmation():
+                            book = matches[1][0]
+                            break
+                        elif len(matches) > 2:
+                            # Try third match
+                            print(f"Or perhaps: {matches[2][0]}?")
+                            if confirmation():
+                                book = matches[2][0]
+                                break
+                    # None of the matches were confirmed
                     answer = input("Please enter your prompt (QUIT to exit): ")
                     if answer.lower() == "quit":
                         exit()
@@ -88,7 +123,7 @@ def order(prompt: str):
                 if answer.lower() == "quit":
                     exit()
             attempts += 1
-            if not (attempts > 3):
+            if attempts > 3:
                 print("Sorry, we don't stock that book.")
                 break
 

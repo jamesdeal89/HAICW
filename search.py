@@ -11,6 +11,19 @@ from numpy.linalg import norm
 from config import confidenceThresholdIntent, confidenceThresholdIntentconfirm
 from utils import confirmation
 
+# Mapping to translate intent codes into human-readable descriptions
+intentDescriptions = {
+    "small": "small talk",
+    "question": "questions about books",
+    "identity": "identity management",
+    "discover": "discovering features",
+    "order": "ordering books",
+    "location": "store locations",
+    "check": "checking orders",
+    "thank": "thanking",
+    "opening": "opening hours"
+}
+
 def getCosineSimilarity(query_doc, doc):
     # norm() gives the l2-norm of a vector:
     #   - square root of, the sum of, the squares of a vector's components.
@@ -82,8 +95,9 @@ def searchIntent(inverted_index, query, vectoriser, tfidf, X_train_tf, intents):
     if similarity[0][1] > confidenceThresholdIntent:
         return similarity[0]
     elif similarity[0][1] > confidenceThresholdIntentconfirm:
-        # TODO: make a clean mapping to translate arbitatry intent codes into more readable/natural wording.
-        print(f"To confirm, you're asking about something {intents[similarity[0][0]][1]} related?")
+        intentCode = intents[similarity[0][0]][1]
+        intentDesc = intentDescriptions.get(intentCode, intentCode)
+        print(f"To confirm, you're asking about {intentDesc}?")
         if confirmation():
             # If the user confirms, add their prompt + confirmed intent to the intents.csv dataset
             addIntentExample(query,intents[similarity[0][0]][1])

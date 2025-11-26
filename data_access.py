@@ -156,23 +156,23 @@ def getPrice(title: str) -> float:
 
 '''
 Perform a fuzzy search for title using Levenshtein distance.
-Returns the true title per stock.json, or empty string if not found.
+Returns list of top 3 matches as tuples (title, distance), or empty list if no reasonable matches found.
+Tolerance is a levenshtein distance of 1/3rd of the user's desired title for inclusion.
 '''
-def fuzzySearchTitle(title: str) -> str:
+def fuzzySearchTitle(title: str) -> list[Tuple[str, int]]:
     titleNorm = title.lower().strip()
     levenshteinDistances = []
     for book in getStockJSON()['stock']:
         bookNorm = book['name'].lower().strip()
         # Calculate distance between user title and the stored book title
-        levenshteinDistances.append((book['name'],levenshteinDistance(bookNorm, titleNorm, len(bookNorm), len(titleNorm))))
+        levenshteinDistances.append((book['name'], levenshteinDistance(bookNorm, titleNorm, len(bookNorm), len(titleNorm))))
     # Sort ascending, first index will be the most similar / least distance
     levenshteinDistances.sort(key=lambda entry: entry[1])
-    # TODO: return both the title and the distance, allows for confidence based checks, if low dist, no need to confirm. Also return top 3 so if they do not confirm, iterate.
-    # Tolerance is a levenshtein distance of 1/3rd of the user's desired title
-    if levenshteinDistances and levenshteinDistances[0][1] < len(title)//3:
-        return levenshteinDistances[0][0]
-    else:
-        return ""
+    
+    # Return top 3 matches that are within tolerance threshold
+    tolerance = len(title) // 3
+    matches = [match for match in levenshteinDistances[:3] if match[1] <= tolerance]
+    return matches
 
 def getISBNbyTitle(title: str) -> str:
     titleNorm = title.lower().strip()
