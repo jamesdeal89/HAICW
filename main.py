@@ -121,7 +121,8 @@ def main():
             elif intent == "identity":
                 print(identity(prompt))
             elif intent == "order":
-                order(prompt)
+                order(prompt, intents, count, tfidf, XtrainTf, invIdxIntents, 
+                      qa, countQa, tfidfQa, XtrainTfQa, invIdxQa)
             else:
                 print("I'm not sure I understand. Could you try re-wording that?")
         else:

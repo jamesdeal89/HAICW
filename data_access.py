@@ -178,7 +178,7 @@ def getISBNbyTitle(title: str) -> str:
     titleNorm = title.lower().strip()
     for book in getStockJSON()['stock']:
         if book['name'].lower().strip() == titleNorm:
-            return book['isbn']
+            return book['ISBN']
 
 '''
 Returns True and -1,-1 if a specific bookstore location is open at a given time.
@@ -188,8 +188,8 @@ time passed as a parameter should follow this.
 location should be passed as the exact location name as per the locations.json datatset.
 '''
 def isLocOpenAtTime(location: str, time: int):
-    for loc in getLocationsJSON['locations']:
-        if loc['name'] == location:
+    for loc in getLocationsJSON()['locations']:
+        if loc['name'].lower() == location.lower():
             if loc['open'] <= time and loc['close'] > time:
                 # location found and open.
                 return True, -1, -1

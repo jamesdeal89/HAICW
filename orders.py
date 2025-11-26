@@ -8,7 +8,114 @@ from data_access import (
     isLocOpenOnDate, isLocOpenAtTime, storeOrder, getISBNbyTitle, readName
 )
 from utils import confirmation, wordToInt, getUnixEpochTimestamp
-from handlers import identity
+from handlers import identity, small, discover, thank
+from search import searchIntent, question
+
+# Global variables for intent matching during transactions
+# These will be set by order() function from main's context
+_intents = None
+_count = None
+_tfidf = None
+_XtrainTf = None
+_invIdxIntents = None
+_qa = None
+_countQa = None
+_tfidfQa = None
+_XtrainTfQa = None
+_invIdxQa = None
+
+def handleInputWithIntents(userInput: str, expectedType: str = None):
+    '''
+    Intercepts user input during transactions.
+    First tries to process as transaction data (based on expectedType).
+    Only if input doesn't make sense for the transaction, check for non-order intents.
+    
+    expectedType can be: 'book', 'quantity', 'location', 'date', 'time', 'pickup_delivery', 'general'
+    
+    Returns: (processed_input, should_retry)
+    - If transaction-relevant: (userInput, False) 
+    - If intent handled: (None, True) - signals to re-ask
+    - If quit/cancel: (userInput, False) - let caller handle
+    '''
+    if not userInput:
+        return userInput, False
+    
+    # Always allow quit and cancel
+    if userInput.lower() in ['quit', 'cancel'] or 'cancel' in userInput.lower():
+        return userInput, False
+    
+    # Check if input seems transaction-relevant based on context
+    isTransactionRelevant = False
+    
+    if expectedType == 'quantity':
+        # Check if it contains numbers or number words
+        if re.search(r'\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve', userInput, re.IGNORECASE):
+            isTransactionRelevant = True
+    elif expectedType == 'book':
+        # If it's a reasonable length for a book title (more than 2 chars)
+        if len(userInput.strip()) > 2 and not re.match(r'^(yes|no|yeah|nope|yep)$', userInput, re.IGNORECASE):
+            isTransactionRelevant = True
+    elif expectedType == 'location':
+        # Check if 'list' command or if it might be a location name
+        if 'list' in userInput.lower() or len(userInput.split()) <= 3:
+            isTransactionRelevant = True
+    elif expectedType == 'pickup_delivery':
+        # Check for pickup/delivery keywords
+        if re.search(r'pickup|pick-up|delivery|deliver|home|store', userInput, re.IGNORECASE):
+            isTransactionRelevant = True
+    elif expectedType == 'date':
+        # Check for date-related content
+        if re.search(r'\d+|today|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday|january|february|march|april|may|june|july|august|september|october|november|december', userInput, re.IGNORECASE):
+            isTransactionRelevant = True
+    elif expectedType == 'time':
+        # Check for time-related content
+        if re.search(r'\d+|am|pm|noon|midnight|morning|afternoon|evening|lunchtime', userInput, re.IGNORECASE):
+            isTransactionRelevant = True
+    elif expectedType == 'general':
+        # For yes/no confirmations, always process as transaction
+        if re.match(r'^(yes|no|yeah|nope|yep|y|n)$', userInput, re.IGNORECASE):
+            isTransactionRelevant = True
+    
+    # If input seems transaction-relevant, return it for normal processing
+    if isTransactionRelevant:
+        return userInput, False
+    
+    # Input doesn't seem transaction-relevant, check if it matches an intent
+    if not _intents:
+        return userInput, False
+        
+    intentResult = searchIntent(_invIdxIntents, userInput, _count, _tfidf, _XtrainTf, _intents)
+    
+    if intentResult:
+        intent = _intents[intentResult[0]][1]
+        
+        # Handle intents that can be processed mid-transaction
+        if intent == "small":
+            print(small(userInput))
+            print("\nNow, back to your order...")
+            return None, True  # Signal to re-ask the question
+        elif intent == "discover":
+            discover()
+            print("\nNow, back to your order...")
+            return None, True
+        elif intent == "identity":
+            print(identity(userInput))
+            print("\nNow, back to your order...")
+            return None, True
+        elif intent == "thank":
+            print(thank())
+            print("\nNow, back to your order...")
+            return None, True
+        elif intent == "question":
+            # Handle Q&A during transaction
+            if _qa:
+                print(question(_qa, userInput, _countQa, _tfidfQa, _XtrainTfQa, _invIdxQa))
+                print("\nNow, back to your order...")
+                return None, True
+        # For "order" intent, don't interrupt - treat as normal input (avoid nested orders)
+    
+    # Didn't match any special intent, return for normal processing
+    return userInput, False
 
 '''
 Use a slot filling approach.
@@ -27,8 +134,22 @@ Flow:
         - ask address (check against some verification, plus provide a structure to use)
         - confirm cost (book + postage)
 '''
-def order(prompt: str):
-    # TODO: Even in the middle of a transaction - 'how are you' should work and activate small talk intent. Must fix this.
+def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invIdxIntents=None, 
+          qa=None, countQa=None, tfidfQa=None, XtrainTfQa=None, invIdxQa=None):
+    # Set global variables for intent matching during transaction
+    global _intents, _count, _tfidf, _XtrainTf, _invIdxIntents
+    global _qa, _countQa, _tfidfQa, _XtrainTfQa, _invIdxQa
+    _intents = intents
+    _count = count
+    _tfidf = tfidf
+    _XtrainTf = XtrainTf
+    _invIdxIntents = invIdxIntents
+    _qa = qa
+    _countQa = countQa
+    _tfidfQa = tfidfQa
+    _XtrainTfQa = XtrainTfQa
+    _invIdxQa = invIdxQa
+    
     # Declare slots as None for now, any left as None after initial scan of prompt will be ask for
     book: str = None
     quantity: int = None
@@ -81,9 +202,13 @@ def order(prompt: str):
     if not matches or not book:
         # Extracted a title from the prompt, but unable to find it in the stock dataset.
         print("You'd like to place an order for which book? (please enter just the title)")
-        answer = input("Please enter your prompt (QUIT to exit): ")
-        if answer.lower() == "quit":
-            exit()
+        while True:
+            answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit): "), 'book')
+            if shouldRetry:
+                continue  # Intent was handled, ask again
+            if answer.lower() == "quit":
+                exit()
+            break
         attempts = 0
         # Allow 3 re-entry attempts, if still no match, display list of titles in stock
         while True:
@@ -114,14 +239,22 @@ def order(prompt: str):
                                 book = matches[2][0]
                                 break
                     # None of the matches were confirmed
-                    answer = input("Please enter your prompt (QUIT to exit): ")
-                    if answer.lower() == "quit":
-                        exit()
+                    while True:
+                        answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit): "), 'book')
+                        if shouldRetry:
+                            continue
+                        if answer.lower() == "quit":
+                            exit()
+                        break
             else:
                 print("Sorry that didn't match any titles in our stock database, try again")
-                answer = input("Please enter your prompt (QUIT to exit): ")
-                if answer.lower() == "quit":
-                    exit()
+                while True:
+                    answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit): "), 'book')
+                    if shouldRetry:
+                        continue
+                    if answer.lower() == "quit":
+                        exit()
+                    break
             attempts += 1
             if attempts > 3:
                 print("Sorry, we don't stock that book.")
@@ -148,7 +281,11 @@ def order(prompt: str):
         if not skip:
             while True:
                 print("How many copies would you like?")
-                answer = input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): ")
+                while True:
+                    answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): "), 'quantity')
+                    if shouldRetry:
+                        continue
+                    break
                 if answer.lower() == "quit":
                     exit()
                 elif 'cancel' in answer.lower():
@@ -185,7 +322,11 @@ def order(prompt: str):
         else:
             # No decision is clear in the initial prompt, ask directly
             print("For pickup or delivery? (type pickup/delivery)")
-            answer = input("Please enter your prompt (QUIT to exit): ")
+            while True:
+                answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit): "), 'pickup_delivery')
+                if shouldRetry:
+                    continue
+                break
             if answer.lower() == "quit":
                 exit()
             elif answer.find("delivery") != -1:
@@ -197,7 +338,11 @@ def order(prompt: str):
             attempts = 0
             while attempts < 4:
                 print("Which BlackSmith™'s store location would you like to pick-up your order from? (type 'list' to get a list of all locations)")
-                answer = input("Please enter your prompt (QUIT to exit): ")
+                while True:
+                    answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit): "), 'location')
+                    if shouldRetry:
+                        continue
+                    break
                 if answer.lower() == "quit":
                     exit()
                 elif answer.lower().find("list") != -1:
@@ -269,7 +414,11 @@ def getPickupDate(location: str):
     date = None
     while True:
         print("On what date would you like to pickup from this store?")
-        answer = input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): ")
+        while True:
+            answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): "), 'date')
+            if shouldRetry:
+                continue
+            break
         if answer.lower() == "quit":
             exit()
         if 'cancel' in answer.lower():
@@ -364,7 +513,11 @@ def getPickupTime(location):
     attempts = 0
     while True:
         print(f"What time would you like to pick up your order from the {location} location?")
-        answer = input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): ")
+        while True:
+            answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): "), 'time')
+            if shouldRetry:
+                continue
+            break
         if answer.lower() == "quit":
             exit()
         if "cancel" in answer.lower():
@@ -383,19 +536,23 @@ def getPickupTime(location):
             (noon|midnight|lunchtime|morning|afternoon|evening)\b # general timings
             )
         """
-        timeRes = re.search(answer,timeExtract)
+        timeRes = re.search(timeExtract, answer, re.VERBOSE)
         if timeRes:
             if timeRes.group(1):
                 # Extracted 12 hour hour
-                if timeRes.group(1):
-                    if timeRes.groups(3) in ['pm','p.m.']:
-                        time = int(timeRes.group(1) + 12)
+                if timeRes.group(3):
+                    if timeRes.group(3) in ['pm','p.m.']:
+                        time = int(timeRes.group(1)) + 12
                     else:
                         # Assume it's AM.
                         time = int(timeRes.group(1))
                 else:
-                    print(f"Is that {timeRes.groups(1)} am or pm?")
-                    answer = input("Please enter your prompt (QUIT to exit): ")
+                    print(f"Is that {timeRes.group(1)} am or pm?")
+                    while True:
+                        answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit): "), 'general')
+                        if shouldRetry:
+                            continue
+                        break
                     if answer.lower() == "quit":
                         exit()
                     if 'pm' in answer.lower() or 'afternoon' in answer.lower():
@@ -404,10 +561,10 @@ def getPickupTime(location):
                         time = int(timeRes.group(1))
             elif timeRes.group(4):
                 # Extracted a 24 hour time, i.e it's above 12 for the hour.
-                time = int(timeRes.groups(4))
+                time = int(timeRes.group(4))
             elif timeRes.group(6):
                 # Extracted a general timing, e.g: lunchtime.
-                time = genTimesMap[timeRes.groups(6)]
+                time = genTimesMap[timeRes.group(6)]
             else:
                 if attempts > 2:
                     # If above 2 attempts, suggest an available time for this location.
