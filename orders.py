@@ -117,6 +117,34 @@ def handleInputWithIntents(userInput: str, expectedType: str = None):
     # Didn't match any special intent, return for normal processing
     return userInput, False
 
+def collectFeedback(lastPrompt=""):
+    print("\nWe'd appreciate your feedback to help us improve!")
+    print("On a scale of 1-5, how would you rate your experience? (1=poor, 5=excellent)")
+    while True:
+        ratingInput = input("Please enter your prompt (QUIT to exit): ")
+        if ratingInput.lower() == "quit":
+            exit()
+        try:
+            rating = int(ratingInput)
+            if 1 <= rating <= 5:
+                break
+            else:
+                print("Please enter a number between 1 and 5.")
+        except ValueError:
+            print("Please enter a valid number between 1 and 5.")
+    
+    print("Would you like to provide additional comments about your experience? (yes/no)")
+    if confirmation():
+        print("Please share your feedback:")
+        comments = input("Please enter your prompt (QUIT to exit): ")
+        if comments.lower() == "quit":
+            exit()
+    else:
+        comments = ""
+    
+    storeFeedback(rating, comments, lastPrompt)
+    print("Thank you for your feedback!")
+
 '''
 Use a slot filling approach.
 Once this handler is called, enter a loop which follows the flow described below.
@@ -372,32 +400,7 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
                             "Would you like to cancel this order? If not, I'll keep trying to understand which location you'd prefer.")
                             if confirmation():
                                 print("Okay, I'm sorry I failed to understand your desired location. \nI have cancelled this order.")
-                                print("\nWe'd appreciate your feedback to help us improve!")
-                                print("On a scale of 1-5, how would you rate your experience? (1=poor, 5=excellent)")
-                                while True:
-                                    ratingInput = input("Please enter your prompt (QUIT to exit): ")
-                                    if ratingInput.lower() == "quit":
-                                        exit()
-                                    try:
-                                        rating = int(ratingInput)
-                                        if 1 <= rating <= 5:
-                                            break
-                                        else:
-                                            print("Please enter a number between 1 and 5.")
-                                    except ValueError:
-                                        print("Please enter a valid number between 1 and 5.")
-                                
-                                print("Would you like to provide additional comments about your experience?")
-                                if confirmation():
-                                    print("Please share your feedback:")
-                                    comments = input("Please enter your prompt (QUIT to exit): ")
-                                    if comments.lower() == "quit":
-                                        exit()
-                                else:
-                                    comments = ""
-                                
-                                storeFeedback(rating, comments)
-                                print("Thank you for your feedback!")
+                                collectFeedback(answer)
                                 break
                             else:
                                 print("Okay! I'll keep trying!")
@@ -444,6 +447,7 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
                         "Would you like to cancel this order? If not, I'll keep trying to understand your address.")
                         if confirmation():
                             print("Okay, I'm sorry I failed to understand your delivery address. \nI have cancelled this order.")
+                            collectFeedback(addressInput)
                             return
                         else:
                             print("Okay! I'll keep trying!")
@@ -463,6 +467,7 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
                         "Would you like to cancel this order? If not, I'll keep trying to understand your address.")
                         if confirmation():
                             print("Okay, I'm sorry I failed to understand your delivery address. \nI have cancelled this order.")
+                            collectFeedback(addressInput)
                             return
                         else:
                             print("Okay! I'll keep trying!")
@@ -482,6 +487,7 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
                         "Would you like to cancel this order? If not, I'll keep trying to understand your address.")
                         if confirmation():
                             print("Okay, I'm sorry I failed to understand your delivery address. \nI have cancelled this order.")
+                            collectFeedback(addressInput)
                             return
                         else:
                             print("Okay! I'll keep trying!")
@@ -507,6 +513,7 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
                         "Would you like to cancel this order? If not, I'll keep trying to understand your address.")
                         if confirmation():
                             print("Okay, I'm sorry I failed to understand your delivery address. \nI have cancelled this order.")
+                            collectFeedback(addressInput)
                             return
                         else:
                             print("Okay! I'll keep trying!")

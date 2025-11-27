@@ -251,7 +251,7 @@ def storeOrder(title, isbn, quantity, pickup, address, date, time, cost, name):
     with open('stock.json', 'w') as f:
         f.write(stockStr)
 
-def storeFeedback(rating, comments):
+def storeFeedback(rating, comments, lastPrompt=""):
     if os.path.exists('feedback.json'):
         with open('feedback.json', 'r') as f:
             feedback = json.load(f)
@@ -261,6 +261,7 @@ def storeFeedback(rating, comments):
     feedbackEntry = {
         "rating": rating,
         "comments": comments,
+        "lastPrompt": lastPrompt,
         "timestamp": int(datetime.datetime.now().timestamp())
     }
     
