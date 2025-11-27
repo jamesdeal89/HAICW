@@ -170,8 +170,8 @@ def question(qa, question_text, vectoriser, tfidf, X_train_tf, inv_index=None):
     similarity.sort(key=lambda x: x[1], reverse=True)
     if not similarity:
         error = generateContextualError('generic')
-        return addDiscourseMarker('clarification', f"{error} I don't have enough information to answer that question.")
+        return f"{error} I don't have enough information to answer that question."
     if qa[similarity[0][0]][1] == "Answer":
         error = generateContextualError('generic')
-        return addDiscourseMarker('clarification', f"{error} Try rephrasing your question or asking something else.")
+        return f"{error} Try rephrasing your question or asking something else."
     return qa[similarity[0][0]][1]

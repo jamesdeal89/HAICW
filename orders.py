@@ -446,10 +446,10 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
                 # Simple length check to filter out clearly incorrect responses. 
                 if len(addressInput) < 10:
                     error = generateContextualError('address_invalid')
-                    print(addDiscourseMarker('clarification', f"{error} Please provide a complete address including postcode."))
+                    print(f"{error} Please provide a complete address including postcode.")
                     attempts += 1
                     if attempts > 3:
-                        print(addDiscourseMarker('clarification', "Would you like to cancel this order? If not, I'll keep trying."))
+                        print("Would you like to cancel this order? If not, I'll keep trying.")
                         if confirmation():
                             print(addDiscourseMarker('result', "I've cancelled this order."))
                             collectFeedback(addressInput)
@@ -465,10 +465,10 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
                 
                 if not postcodeMatch:
                     error = generateContextualError('address_invalid')
-                    print(addDiscourseMarker('clarification', f"{error}\nUK postcodes should look like: SW1A 1AA, M1 1AE, B33 8TH, etc."))
+                    print(f"{error}\nUK postcodes should look like: SW1A 1AA, M1 1AE, B33 8TH, etc.")
                     attempts += 1
                     if attempts > 3:
-                        print(addDiscourseMarker('clarification', "Would you like to cancel this order? If not, I'll keep trying."))
+                        print("Would you like to cancel this order? If not, I'll keep trying.")
                         if confirmation():
                             print(addDiscourseMarker('result', "I've cancelled this order."))
                             collectFeedback(addressInput)
@@ -488,7 +488,7 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
                     attempts += 1
                     if attempts > 3:
                         error = generateContextualError('address_invalid')
-                        print(addDiscourseMarker('clarification', f"{error}\nWould you like to cancel this order? If not, I'll keep trying."))
+                        print(f"{error}\nWould you like to cancel this order? If not, I'll keep trying.")
                         if confirmation():
                             print(addDiscourseMarker('result', "I've cancelled this order."))
                             collectFeedback(addressInput)
@@ -513,9 +513,8 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
                     validAddress = False
                     attempts += 1
                     if attempts > 3:
-                        print(addDiscourseMarker('clarification', 
-                            generateContextualError('address_invalid') + "\n" + \
-                            "Would you like to cancel this order? If not, I'll keep trying to understand your address."))
+                        print(generateContextualError('address_invalid') + "\n" + \
+                            "Would you like to cancel this order? If not, I'll keep trying to understand your address.")
                         if confirmation():
                             print(addDiscourseMarker('result', 
                                 "I've cancelled this order as I couldn't understand your delivery address."))
@@ -569,7 +568,7 @@ def getPickupDate(location: str):
             token = relResult.group(0).lower()
             today = datetime.date.today()
             if token == "today":
-                print(addDiscourseMarker('clarification', generateContextualError('date_invalid', 'same_day')))
+                print(generateContextualError('date_invalid', 'same_day'))
                 continue
             elif token == "tomorrow":
                 date = today + datetime.timedelta(days=1)
@@ -612,13 +611,13 @@ def getPickupDate(location: str):
                 date = None
         if date:
             if date < datetime.date.today():
-                print(addDiscourseMarker('clarification', generateContextualError('date_invalid', 'past')))
+                print(generateContextualError('date_invalid', 'past'))
                 continue
             open, openings = isLocOpenOnDate(location, getUnixEpochTimestamp(date.day, date.month, date.year))
             if open:
                 return date
             else:
-                print(addDiscourseMarker('clarification', generateContextualError('location_closed', location)))
+                print(generateContextualError('location_closed', location))
                 print(f"The {location} location is not open on {date.strftime("%A %d %B %Y")}, but is open on every:")
                 weekdayIter = 0
                 daysOfWeek = ['Monday, ','Tuesday, ','Wednesday, ','Thursday, ','Friday, ','Saturday, ','Sunday, ']
@@ -629,7 +628,7 @@ def getPickupDate(location: str):
                     weekdayIter+=1
                 print('')
         else:
-            print(addDiscourseMarker('clarification', generateContextualError('date_invalid', 'format')))
+            print(generateContextualError('date_invalid', 'format'))
     
 '''
 Prompts user in a loop to get the desired time for the pickup.
