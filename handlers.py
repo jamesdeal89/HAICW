@@ -224,14 +224,13 @@ Handles when a user's intent is to check their existing orders.
 def check():
     from data_access import getOrdersJSON, readName
     from datetime import datetime
-    from nlg import generateContextualError, aggregateOrderDetails
     
     updateContext('lastIntent', 'check')
     
     orders = getOrdersJSON()
     
     if not orders or not orders.get('orders'):
-        print(generateContextualError('generic', "There are no orders in the system yet."))
+        print("There are no orders in the system yet.")
         return
     
     userName = readName()
@@ -240,8 +239,7 @@ def check():
         filteredOrders = [order for order in orders['orders'] if order.get('name', '').lower() == userName.lower()]
         
         if not filteredOrders:
-            from nlg import generateContextualError
-            print(generateContextualError('generic', f"No orders found for {userName}."))
+            print(f"No orders found for {userName}.")
             return
         
         print(f"Orders for {userName}:")

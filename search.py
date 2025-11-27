@@ -105,6 +105,7 @@ def searchIntent(inverted_index, query, vectoriser, tfidf, X_train_tf, intents):
         else:
             error = generateContextualError('generic')
             print(addDiscourseMarker('clarification', f"{error} Try asking me 'what can you do' for specific examples."))
+            return None
 
 '''
 Helper function for adding intent examples to the dataset.
