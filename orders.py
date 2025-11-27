@@ -5,7 +5,7 @@ import datetime
 
 from data_access import (
     fuzzySearchTitle, stockCheck, getPrice, getAllLocations, extractLocation,
-    isLocOpenOnDate, isLocOpenAtTime, storeOrder, getISBNbyTitle, readName
+    isLocOpenOnDate, isLocOpenAtTime, storeOrder, getISBNbyTitle, readName, storeFeedback
 )
 from utils import confirmation, wordToInt, getUnixEpochTimestamp
 from handlers import identity, small, discover, thank
@@ -371,12 +371,37 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
                             print("I'm sorry I'm unable to understand which location you'd like to pickup from.\n" \
                             "Would you like to cancel this order? If not, I'll keep trying to understand which location you'd prefer.")
                             if confirmation():
+                                print("Okay, I'm sorry I failed to understand your desired location. \nI have cancelled this order.")
+                                print("\nWe'd appreciate your feedback to help us improve!")
+                                print("On a scale of 1-5, how would you rate your experience? (1=poor, 5=excellent)")
+                                while True:
+                                    ratingInput = input("Please enter your prompt (QUIT to exit): ")
+                                    if ratingInput.lower() == "quit":
+                                        exit()
+                                    try:
+                                        rating = int(ratingInput)
+                                        if 1 <= rating <= 5:
+                                            break
+                                        else:
+                                            print("Please enter a number between 1 and 5.")
+                                    except ValueError:
+                                        print("Please enter a valid number between 1 and 5.")
+                                
+                                print("Would you like to provide additional comments about your experience?")
+                                if confirmation():
+                                    print("Please share your feedback:")
+                                    comments = input("Please enter your prompt (QUIT to exit): ")
+                                    if comments.lower() == "quit":
+                                        exit()
+                                else:
+                                    comments = ""
+                                
+                                storeFeedback(rating, comments)
+                                print("Thank you for your feedback!")
+                                break
+                            else:
                                 print("Okay! I'll keep trying!")
                                 attempts = 0
-                            else:
-                                print("Okay, I'm sorry I failed to understand your desired location. \nI have cancelled this order.")
-                                # TODO: Feedback mechanism - ask for user feedback (rating + open feedback) and store for developer use.
-                                break
             if address:
                 # If the user successfully selected a pickup location, 
                 # Need to select a pick-up date and timeslot.
@@ -415,16 +440,14 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
                     print("That address seems too short. Please provide a complete address including postcode.")
                     attempts += 1
                     if attempts > 3:
-                        # User has made 3 attempts and failed to have their address recognised.
-                        # Give them the opportunity to cancel the order, or continue trying.
                         print("I'm sorry I'm unable to understand your delivery address.\n" \
                         "Would you like to cancel this order? If not, I'll keep trying to understand your address.")
                         if confirmation():
-                            print("Okay! I'll keep trying!")
-                            attempts = 0
-                        else:
                             print("Okay, I'm sorry I failed to understand your delivery address. \nI have cancelled this order.")
                             return
+                        else:
+                            print("Okay! I'll keep trying!")
+                            attempts = 0
                     continue
                 
                 # Basic UK postcode verification.
@@ -439,11 +462,11 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
                         print("I'm sorry I'm unable to understand your delivery address.\n" \
                         "Would you like to cancel this order? If not, I'll keep trying to understand your address.")
                         if confirmation():
-                            print("Okay! I'll keep trying!")
-                            attempts = 0
-                        else:
                             print("Okay, I'm sorry I failed to understand your delivery address. \nI have cancelled this order.")
                             return
+                        else:
+                            print("Okay! I'll keep trying!")
+                            attempts = 0
                     continue
                 
                 postcode = postcodeMatch.group(0).upper()
@@ -458,11 +481,11 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
                         print("I'm sorry I'm unable to understand your delivery address.\n" \
                         "Would you like to cancel this order? If not, I'll keep trying to understand your address.")
                         if confirmation():
-                            print("Okay! I'll keep trying!")
-                            attempts = 0
-                        else:
                             print("Okay, I'm sorry I failed to understand your delivery address. \nI have cancelled this order.")
                             return
+                        else:
+                            print("Okay! I'll keep trying!")
+                            attempts = 0
                     continue
                 
                 validAddress = True
@@ -477,19 +500,17 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
                     price += 4.99
                     print(f"Delivery will cost an additional £4.99. Your total is now £{price:.2f}")
                 else:
-                    # If they did not verify, reset the loop and continue trying.
                     validAddress = False
                     attempts += 1
                     if attempts > 3:
                         print("I'm sorry I'm unable to understand your delivery address.\n" \
                         "Would you like to cancel this order? If not, I'll keep trying to understand your address.")
                         if confirmation():
+                            print("Okay, I'm sorry I failed to understand your delivery address. \nI have cancelled this order.")
+                            return
+                        else:
                             print("Okay! I'll keep trying!")
                             attempts = 0
-                        else:
-                            print("Okay, I'm sorry I failed to understand your delivery address. \n" \
-                            "I have cancelled this order.")
-                            return
 
     if address:
         # Check if we know the user's name, if we do not, ask for the order and save for later too.

@@ -250,3 +250,23 @@ def storeOrder(title, isbn, quantity, pickup, address, date, time, cost, name):
     stockStr = json.dumps(stock, indent=4)
     with open('stock.json', 'w') as f:
         f.write(stockStr)
+
+def storeFeedback(rating, comments):
+    if os.path.exists('feedback.json'):
+        with open('feedback.json', 'r') as f:
+            feedback = json.load(f)
+    else:
+        feedback = {"feedback": []}
+    
+    feedbackEntry = {
+        "rating": rating,
+        "comments": comments,
+        "timestamp": int(datetime.datetime.now().timestamp())
+    }
+    
+    feedback['feedback'].append(feedbackEntry)
+    
+    feedbackStr = json.dumps(feedback, indent=4)
+    with open('feedback.json', 'w') as f:
+        f.write(feedbackStr)
+
