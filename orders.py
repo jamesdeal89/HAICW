@@ -392,7 +392,104 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
                 if time == -1:
                     return
         else:
-            pass
+            print("What is your delivery address?")
+            print("Please provide your full address in the format: House number, Street, City, Postcode")
+            # Encourage the user to follow a specific format of address to give the extraction the best chances of working.
+            validAddress = False
+            attempts = 0
+            # Keep trying until we get a valid extracted address.
+            while not validAddress:
+                while True:
+                    answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): "), 'general')
+                    if shouldRetry:
+                        continue
+                    break
+                if answer.lower() == "quit":
+                    exit()
+                elif 'cancel' in answer.lower():
+                    return
+                
+                addressInput = answer.strip()
+                # Simple length check to filter out clearly incorrect responses. 
+                if len(addressInput) < 10:
+                    print("That address seems too short. Please provide a complete address including postcode.")
+                    attempts += 1
+                    if attempts > 3:
+                        # User has made 3 attempts and failed to have their address recognised.
+                        # Give them the opportunity to cancel the order, or continue trying.
+                        print("I'm sorry I'm unable to understand your delivery address.\n" \
+                        "Would you like to cancel this order? If not, I'll keep trying to understand your address.")
+                        if confirmation():
+                            print("Okay! I'll keep trying!")
+                            attempts = 0
+                        else:
+                            print("Okay, I'm sorry I failed to understand your delivery address. \nI have cancelled this order.")
+                            return
+                    continue
+                
+                # Basic UK postcode verification.
+                postcodePattern = r'\b[A-Z]{1,2}\d{1,2}[A-Z]?\s?\d[A-Z]{2}\b'
+                postcodeMatch = re.search(postcodePattern, addressInput, re.IGNORECASE)
+                
+                if not postcodeMatch:
+                    print("I couldn't find a valid UK postcode in your address.")
+                    print("UK postcodes should look like: SW1A 1AA, M1 1AE, B33 8TH, etc.")
+                    attempts += 1
+                    if attempts > 3:
+                        print("I'm sorry I'm unable to understand your delivery address.\n" \
+                        "Would you like to cancel this order? If not, I'll keep trying to understand your address.")
+                        if confirmation():
+                            print("Okay! I'll keep trying!")
+                            attempts = 0
+                        else:
+                            print("Okay, I'm sorry I failed to understand your delivery address. \nI have cancelled this order.")
+                            return
+                    continue
+                
+                postcode = postcodeMatch.group(0).upper()
+                addressParts = addressInput.split(',')
+                
+                # Ensure the user inputs all 3 parts of the expected address.
+                if len(addressParts) < 3:
+                    print("Your address should have at least: Street, City, Postcode")
+                    print("Please separate parts with commas, for example: 123 High Street, London, SW1A 1AA")
+                    attempts += 1
+                    if attempts > 3:
+                        print("I'm sorry I'm unable to understand your delivery address.\n" \
+                        "Would you like to cancel this order? If not, I'll keep trying to understand your address.")
+                        if confirmation():
+                            print("Okay! I'll keep trying!")
+                            attempts = 0
+                        else:
+                            print("Okay, I'm sorry I failed to understand your delivery address. \nI have cancelled this order.")
+                            return
+                    continue
+                
+                validAddress = True
+
+                # Addresses are very sensitive and consequences of getting it wrong are them losing their order, 
+                # Therefore verify before setting slot.
+                print(f"To confirm, your delivery address is: {addressInput}?")
+                print(f"Postcode detected: {postcode}")
+                
+                if confirmation():
+                    address = addressInput
+                    price += 4.99
+                    print(f"Delivery will cost an additional £4.99. Your total is now £{price:.2f}")
+                else:
+                    # If they did not verify, reset the loop and continue trying.
+                    validAddress = False
+                    attempts += 1
+                    if attempts > 3:
+                        print("I'm sorry I'm unable to understand your delivery address.\n" \
+                        "Would you like to cancel this order? If not, I'll keep trying to understand your address.")
+                        if confirmation():
+                            print("Okay! I'll keep trying!")
+                            attempts = 0
+                        else:
+                            print("Okay, I'm sorry I failed to understand your delivery address. \n" \
+                            "I have cancelled this order.")
+                            return
 
     if address:
         # Check if we know the user's name, if we do not, ask for the order and save for later too.
@@ -406,8 +503,11 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
             name = readName()
             print(f"I've set the name for your order as {name}")
     
-    if book and pickup and quantity and price and address and name:
-        storeOrder(book, getISBNbyTitle(book), quantity, pickup, address, getUnixEpochTimestamp(date.day, date.month, date.year), time, price, name)
+    if book and quantity and price and address and name:
+        if pickup:
+            storeOrder(book, getISBNbyTitle(book), quantity, pickup, address, getUnixEpochTimestamp(date.day, date.month, date.year), time, price, name)
+        else:
+            storeOrder(book, getISBNbyTitle(book), quantity, pickup, address, None, None, price, name)
 
 def getPickupDate(location: str):
     # Dates will be based on a unix epoch timestamp for simple storage.
