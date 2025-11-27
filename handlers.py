@@ -190,10 +190,12 @@ def reccomend():
     if genreInput.lower() == "quit":
         exit()
     
-    # Find matching genre (case-insensitive partial match)
+    from context import resolveEllipsis
+    resolvedInput = resolveEllipsis(genreInput)
+    
     matchedGenre = None
     for genre in genres:
-        if genre.lower() in genreInput.lower() or genreInput.lower() in genre.lower():
+        if genre.lower() in resolvedInput.lower() or resolvedInput.lower() in genre.lower():
             matchedGenre = genre
             break
     
@@ -214,7 +216,7 @@ def reccomend():
     else:
         from nlg import generateContextualError
         error = generateContextualError('generic')
-        print(addDiscourseMarker('clarification', f"{error} Please try again with one of the available genres."))
+        print(f"{error} Please try again with one of the available genres.")
 
 '''
 Handles when a user's intent is to check their existing orders.

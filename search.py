@@ -11,7 +11,6 @@ from numpy.linalg import norm
 from config import confidenceThresholdIntent, confidenceThresholdIntentconfirm
 from utils import confirmation
 from nlg import generateContextualError, addDiscourseMarker
-from context import resolveEllipsis
 
 # Mapping to translate intent codes into human-readable descriptions
 intentDescriptions = {
@@ -38,9 +37,7 @@ def getCosineSimilarity(query_doc, doc):
     return dot(query_doc, doc) / (norm(query_doc) * norm(doc))
 
 def searchIntent(inverted_index, query, vectoriser, tfidf, X_train_tf, intents):
-    resolvedQuery = resolveEllipsis(query)
-    
-    qCounts = vectoriser.transform([resolvedQuery])
+    qCounts = vectoriser.transform([query])
     qTfidf = tfidf.transform(qCounts)
 
     # Attempt to use the inverted index to compute dot-products efficiently.

@@ -56,6 +56,11 @@ def resolveEllipsis(query):
                 return f"check {sessionContext['lastBook']} availability"
         return query
     
+    pronounInPhrase = re.search(r'\b(it|that|this)\b', queryLower)
+    if pronounInPhrase and sessionContext['lastBook']:
+        replaced = re.sub(r'\b(it|that|this)\b', sessionContext['lastBook'], queryLower, count=1)
+        return replaced
+    
     locationPattern = r'^(at|in|from)\s+(.+)'
     locationMatch = re.match(locationPattern, queryLower)
     if locationMatch:

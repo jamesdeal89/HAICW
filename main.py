@@ -66,6 +66,7 @@ from preprocessing import readIntentsCsv, stemVectorWeight, generateInvertedInde
 from search import searchIntent, question
 from handlers import discover, small, identity, thank, reccomend, check
 from orders import order
+from context import resolveEllipsis
 
 def main():
     print("======== STARTING BOOKSTORE CHATBOT ========")
@@ -107,17 +108,18 @@ def main():
         prompt = input("Please enter your prompt (QUIT to exit): ")
         if prompt.lower() == "quit":
             break
-        intentResult = searchIntent(invIdxIntents, prompt, count, tfidf, XtrainTf, intents)
+        resolvedPrompt = resolveEllipsis(prompt)
+        intentResult = searchIntent(invIdxIntents, resolvedPrompt, count, tfidf, XtrainTf, intents)
         if intentResult:
             intent = intents[intentResult[0]][1]
             if intent == "discover":
                 discover()
             elif intent == "small":
-                print(small(prompt))
+                print(small(resolvedPrompt))
             elif intent == "question":
-                print(question(qa, prompt, countQa, tfidfQa, XtrainTfQa, invIdxQa))
+                print(question(qa, resolvedPrompt, countQa, tfidfQa, XtrainTfQa, invIdxQa))
             elif intent == "identity":
-                print(identity(prompt))
+                print(identity(resolvedPrompt))
             elif intent == "thank":
                 print(thank())
             elif intent == "reccomend":
@@ -125,7 +127,7 @@ def main():
             elif intent == "check":
                 check()
             elif intent == "order":
-                order(prompt, intents, count, tfidf, XtrainTf, invIdxIntents, 
+                order(resolvedPrompt, intents, count, tfidf, XtrainTf, invIdxIntents, 
                       qa, countQa, tfidfQa, XtrainTfQa, invIdxQa)
             else:
                 print("I'm not sure I understand. Could you try re-wording that?")
