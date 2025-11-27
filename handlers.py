@@ -4,6 +4,7 @@ import json
 
 from data_access import readName, saveName, resetSession
 from utils import confirmation
+from nlg import getReferringExpression, addDiscourseMarker, generateSuggestion
 
 '''
 Simple handler for when the user thanks the chatbot
@@ -181,7 +182,7 @@ def reccomend():
     
     genres = getGenres()
     print("What genre are you interested in?")
-    print(f"Available genres: {', '.join(genres)}")
+    print(generateSuggestion('available_genres', genres))
     
     genreInput = input("Please enter your prompt (QUIT to exit): ")
     if genreInput.lower() == "quit":
@@ -199,13 +200,18 @@ def reccomend():
         if books:
             # Recommend a random book from the genre
             recommended = random.choice(books)
-            print(f"\nI recommend '{recommended['name']}' by {recommended['author']}!")
-            print(f"It's a {matchedGenre} book with {recommended['pages']} pages, priced at £{recommended['price']:.2f}.")
+            title = recommended['name']
+            print(f"\nI recommend '{title}' by {recommended['author']}!")
+            ref = getReferringExpression(title, 'book', False)
+            print(f"{ref.capitalize()} is a {matchedGenre} book with {recommended['pages']} pages, priced at £{recommended['price']:.2f}.")
             print(f"We have {recommended['count']} copies in stock.")
         else:
-            print(f"Sorry, we don't have any {matchedGenre} books in stock right now.")
+            from nlg import generateContextualError
+            print(generateContextualError('book_not_found', f"any {matchedGenre} books"))
     else:
-        print("I couldn't find that genre. Please try again with one of the available genres.")
+        from nlg import generateContextualError
+        error = generateContextualError('generic')
+        print(addDiscourseMarker('clarification', f"{error} Please try again with one of the available genres."))
 
 '''
 Handles when a user's intent is to check their existing orders.
@@ -213,11 +219,12 @@ Handles when a user's intent is to check their existing orders.
 def check():
     from data_access import getOrdersJSON, readName
     from datetime import datetime
+    from nlg import generateContextualError, aggregateOrderDetails
     
     orders = getOrdersJSON()
     
     if not orders or not orders.get('orders'):
-        print("There are no orders in the system yet.")
+        print(generateContextualError('generic', "There are no orders in the system yet."))
         return
     
     userName = readName()
@@ -226,7 +233,8 @@ def check():
         filteredOrders = [order for order in orders['orders'] if order.get('name', '').lower() == userName.lower()]
         
         if not filteredOrders:
-            print(f"No orders found for {userName}.")
+            from nlg import generateContextualError
+            print(generateContextualError('generic', f"No orders found for {userName}."))
             return
         
         print(f"Orders for {userName}:")

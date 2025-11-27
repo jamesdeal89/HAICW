@@ -10,6 +10,7 @@ from data_access import (
 from utils import confirmation, wordToInt, getUnixEpochTimestamp
 from handlers import identity, small, discover, thank
 from search import searchIntent, question
+from nlg import getReferringExpression, aggregateOrderDetails, generateContextualError, addDiscourseMarker, generateSuggestion
 
 # Global variables for intent matching during transactions
 # These will be set by order() function from main's context
@@ -275,7 +276,8 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
                             exit()
                         break
             else:
-                print("Sorry that didn't match any titles in our stock database, try again")
+                print(generateContextualError('book_not_found', answer))
+                print(addDiscourseMarker('continuation', "Please try again."))
                 while True:
                     answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit): "), 'book')
                     if shouldRetry:
@@ -329,7 +331,7 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
                         # Perform a stock check
                         inStock, available = stockCheck(book, int(quant))
                         if not inStock:
-                            print(f"Unfortunately, we don't have {quant} available. There are only {available} copies in stock.")
+                            print(generateContextualError('stock_insufficient', available))
                         else:
                             quantity = int(quant)
                             break
@@ -396,14 +398,14 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
                             for location in getAllLocations():
                                 print(f"Location: {location[0]}, Address: {location[1]}")
                         if attempts > 3:
-                            print("I'm sorry I'm unable to understand which location you'd like to pickup from.\n" \
-                            "Would you like to cancel this order? If not, I'll keep trying to understand which location you'd prefer.")
+                            error = generateContextualError('location_not_found', answer)
+                            print(addDiscourseMarker('clarification', f"{error}\nWould you like to cancel this order? If not, I'll keep trying."))
                             if confirmation():
-                                print("Okay, I'm sorry I failed to understand your desired location. \nI have cancelled this order.")
+                                print(addDiscourseMarker('result', "I've cancelled this order."))
                                 collectFeedback(answer)
                                 break
                             else:
-                                print("Okay! I'll keep trying!")
+                                print(addDiscourseMarker('continuation', "I'll keep trying!"))
                                 attempts = 0
             if address:
                 # If the user successfully selected a pickup location, 
@@ -440,17 +442,17 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
                 addressInput = answer.strip()
                 # Simple length check to filter out clearly incorrect responses. 
                 if len(addressInput) < 10:
-                    print("That address seems too short. Please provide a complete address including postcode.")
+                    error = generateContextualError('address_invalid')
+                    print(addDiscourseMarker('clarification', f"{error} Please provide a complete address including postcode."))
                     attempts += 1
                     if attempts > 3:
-                        print("I'm sorry I'm unable to understand your delivery address.\n" \
-                        "Would you like to cancel this order? If not, I'll keep trying to understand your address.")
+                        print(addDiscourseMarker('clarification', "Would you like to cancel this order? If not, I'll keep trying."))
                         if confirmation():
-                            print("Okay, I'm sorry I failed to understand your delivery address. \nI have cancelled this order.")
+                            print(addDiscourseMarker('result', "I've cancelled this order."))
                             collectFeedback(addressInput)
                             return
                         else:
-                            print("Okay! I'll keep trying!")
+                            print(addDiscourseMarker('continuation', "I'll keep trying!"))
                             attempts = 0
                     continue
                 
@@ -459,18 +461,17 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
                 postcodeMatch = re.search(postcodePattern, addressInput, re.IGNORECASE)
                 
                 if not postcodeMatch:
-                    print("I couldn't find a valid UK postcode in your address.")
-                    print("UK postcodes should look like: SW1A 1AA, M1 1AE, B33 8TH, etc.")
+                    error = generateContextualError('address_invalid')
+                    print(addDiscourseMarker('clarification', f"{error}\nUK postcodes should look like: SW1A 1AA, M1 1AE, B33 8TH, etc."))
                     attempts += 1
                     if attempts > 3:
-                        print("I'm sorry I'm unable to understand your delivery address.\n" \
-                        "Would you like to cancel this order? If not, I'll keep trying to understand your address.")
+                        print(addDiscourseMarker('clarification', "Would you like to cancel this order? If not, I'll keep trying."))
                         if confirmation():
-                            print("Okay, I'm sorry I failed to understand your delivery address. \nI have cancelled this order.")
+                            print(addDiscourseMarker('result', "I've cancelled this order."))
                             collectFeedback(addressInput)
                             return
                         else:
-                            print("Okay! I'll keep trying!")
+                            print(addDiscourseMarker('continuation', "I'll keep trying!"))
                             attempts = 0
                     continue
                 
@@ -483,14 +484,14 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
                     print("Please separate parts with commas, for example: 123 High Street, London, SW1A 1AA")
                     attempts += 1
                     if attempts > 3:
-                        print("I'm sorry I'm unable to understand your delivery address.\n" \
-                        "Would you like to cancel this order? If not, I'll keep trying to understand your address.")
+                        error = generateContextualError('address_invalid')
+                        print(addDiscourseMarker('clarification', f"{error}\nWould you like to cancel this order? If not, I'll keep trying."))
                         if confirmation():
-                            print("Okay, I'm sorry I failed to understand your delivery address. \nI have cancelled this order.")
+                            print(addDiscourseMarker('result', "I've cancelled this order."))
                             collectFeedback(addressInput)
                             return
                         else:
-                            print("Okay! I'll keep trying!")
+                            print(addDiscourseMarker('continuation', "I'll keep trying!"))
                             attempts = 0
                     continue
                 
@@ -504,19 +505,21 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
                 if confirmation():
                     address = addressInput
                     price += 4.99
-                    print(f"Delivery will cost an additional £4.99. Your total is now £{price:.2f}")
+                    print(addDiscourseMarker('confirmation', f"Delivery will cost an additional £4.99. Your total is now £{price:.2f}"))
                 else:
                     validAddress = False
                     attempts += 1
                     if attempts > 3:
-                        print("I'm sorry I'm unable to understand your delivery address.\n" \
-                        "Would you like to cancel this order? If not, I'll keep trying to understand your address.")
+                        print(addDiscourseMarker('clarification', 
+                            generateContextualError('address_invalid') + "\n" + \
+                            "Would you like to cancel this order? If not, I'll keep trying to understand your address."))
                         if confirmation():
-                            print("Okay, I'm sorry I failed to understand your delivery address. \nI have cancelled this order.")
+                            print(addDiscourseMarker('result', 
+                                "I've cancelled this order as I couldn't understand your delivery address."))
                             collectFeedback(addressInput)
                             return
                         else:
-                            print("Okay! I'll keep trying!")
+                            print(addDiscourseMarker('continuation', "I'll keep trying!"))
                             attempts = 0
 
     if address:
@@ -534,8 +537,13 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
     if book and quantity and price and address and name:
         if pickup:
             storeOrder(book, getISBNbyTitle(book), quantity, pickup, address, getUnixEpochTimestamp(date.day, date.month, date.year), time, price, name)
+            dateStr = date.strftime('%d/%m/%Y')
+            summary = aggregateOrderDetails(book, quantity, price, 'pickup', address, dateStr, time)
+            print(addDiscourseMarker('confirmation', f"Your order for {summary} has been placed!"))
         else:
             storeOrder(book, getISBNbyTitle(book), quantity, pickup, address, None, None, price, name)
+            summary = aggregateOrderDetails(book, quantity, price, 'delivery', address)
+            print(addDiscourseMarker('confirmation', f"Your order for {summary} has been placed!"))
 
 def getPickupDate(location: str):
     # Dates will be based on a unix epoch timestamp for simple storage.
@@ -558,7 +566,7 @@ def getPickupDate(location: str):
             token = relResult.group(0).lower()
             today = datetime.date.today()
             if token == "today":
-                print("I'm sorry, but we do not support same-day pickup. Please select a future date.")
+                print(addDiscourseMarker('clarification', generateContextualError('date_invalid', 'same_day')))
                 continue
             elif token == "tomorrow":
                 date = today + datetime.timedelta(days=1)
@@ -601,13 +609,13 @@ def getPickupDate(location: str):
                 date = None
         if date:
             if date < datetime.date.today():
-                print("Date cannot be in the past. Please select a future date.")
+                print(addDiscourseMarker('clarification', generateContextualError('date_invalid', 'past')))
                 continue
             open, openings = isLocOpenOnDate(location, getUnixEpochTimestamp(date.day, date.month, date.year))
             if open:
                 return date
             else:
-                print("Please select a different date, the location you chose is not open on that date.")
+                print(addDiscourseMarker('clarification', generateContextualError('location_closed', location)))
                 print(f"The {location} location is not open on {date.strftime("%A %d %B %Y")}, but is open on every:")
                 weekdayIter = 0
                 daysOfWeek = ['Monday, ','Tuesday, ','Wednesday, ','Thursday, ','Friday, ','Saturday, ','Sunday, ']
@@ -618,7 +626,7 @@ def getPickupDate(location: str):
                     weekdayIter+=1
                 print('')
         else:
-            print("I was unable to recognise which date you intended, please try again.")
+            print(addDiscourseMarker('clarification', generateContextualError('date_invalid', 'format')))
     
 '''
 Prompts user in a loop to get the desired time for the pickup.
@@ -704,26 +712,26 @@ def getPickupTime(location):
                     suggested = 10
                     isOpen, open, close = isLocOpenAtTime(location, suggested)
                     if not isOpen:
-                        # Suggest 2 hours after known opening time if not open at 10.
                         suggested = open + 2
-                    print("I can suggest {suggested} as an available time for the {location} location. Do you want to accept?")
+                    print(f"I can suggest {suggested} as an available time for the {location} location. Do you want to accept?")
                     if confirmation():
                         return suggested
                     else:
-                        print("What time would you prefer, instead?")
+                        print(addDiscourseMarker('continuation', "What time would you prefer, instead?"))
                 elif attempts > 3:
-                    # If above 3 attempts, suggest cancelling the order to give the user a way to escape the transaction flow.
-                    print("I apologise, I was unable to understand you. \n" \
-                    "You can include 'cancel' in your response to cancel this order, or you can keep trying and enter another time.")
+                    print(addDiscourseMarker('clarification', 
+                        "I'm having trouble understanding you. " + \
+                        "You can include 'cancel' in your response to cancel this order, or keep trying with another time."))
                 else:
-                    # Encourage the user to use a simple time format which system is able to extract.
-                    print("I'm sorry, I dont understand what time you'd like.\n" \
-                    "For example, please enter '10am'.")
+                    print(addDiscourseMarker('clarification', 
+                        generateContextualError('time_invalid') + " " + \
+                        "For example, please enter '10am'."))
                 attempts += 1
         if time:
             isOpen, open, close = isLocOpenAtTime(location, time)
             if isOpen:
                 return time
             else:
-                print(f"I apologise, the {location} location is not open at {time}.\n" \
-                        f"It is open from {open}:00 to {close}:00.")
+                print(addDiscourseMarker('clarification', 
+                    f"The {location} location is not open at {time}. " + \
+                    f"It's open from {open}:00 to {close}:00."))

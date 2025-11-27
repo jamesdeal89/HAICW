@@ -10,6 +10,7 @@ from numpy.linalg import norm
 
 from config import confidenceThresholdIntent, confidenceThresholdIntentconfirm
 from utils import confirmation
+from nlg import generateContextualError, addDiscourseMarker
 
 # Mapping to translate intent codes into human-readable descriptions
 intentDescriptions = {
@@ -103,7 +104,8 @@ def searchIntent(inverted_index, query, vectoriser, tfidf, X_train_tf, intents):
             addIntentExample(query,intents[similarity[0][0]][1])
             return similarity[0]
         else:
-            print("I'm sorry, I'm not sure what you mean then, please try re-wording your prompt or asking me 'what can you do' for specific examples.")
+            error = generateContextualError('generic')
+            print(addDiscourseMarker('clarification', f"{error} Try asking me 'what can you do' for specific examples."))
 
 '''
 Helper function for adding intent examples to the dataset.
@@ -168,7 +170,9 @@ def question(qa, question_text, vectoriser, tfidf, X_train_tf, inv_index=None):
     # Return the most likely answer
     similarity.sort(key=lambda x: x[1], reverse=True)
     if not similarity:
-        return "I'm sorry I'm not able to answer that with my current knowledge. \nMaybe try re-wording your question?"
+        error = generateContextualError('generic')
+        return addDiscourseMarker('clarification', f"{error} I don't have enough information to answer that question.")
     if qa[similarity[0][0]][1] == "Answer":
-        return "I'm sorry I'm not able to answer that with my current knowledge. \nMaybe try re-wording your question?"
+        error = generateContextualError('generic')
+        return addDiscourseMarker('clarification', f"{error} Try rephrasing your question or asking something else.")
     return qa[similarity[0][0]][1]
