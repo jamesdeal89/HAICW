@@ -64,7 +64,7 @@ Bulked out using confirmation:
 # Import from refactored modules
 from preprocessing import readIntentsCsv, stemVectorWeight, generateInvertedIndex, readQaCsv
 from search import searchIntent, question
-from handlers import discover, small, identity, thank, reccomend
+from handlers import discover, small, identity, thank, reccomend, check
 from orders import order
 
 def main():
@@ -122,6 +122,8 @@ def main():
                 print(thank())
             elif intent == "reccomend":
                 reccomend()
+            elif intent == "check":
+                check()
             elif intent == "order":
                 order(prompt, intents, count, tfidf, XtrainTf, invIdxIntents, 
                       qa, countQa, tfidfQa, XtrainTfQa, invIdxQa)

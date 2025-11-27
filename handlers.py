@@ -211,7 +211,60 @@ def reccomend():
 Handles when a user's intent is to check their existing orders.
 '''
 def check():
-    pass
+    from data_access import getOrdersJSON, readName
+    from datetime import datetime
+    
+    orders = getOrdersJSON()
+    
+    if not orders or not orders.get('orders'):
+        print("There are no orders in the system yet.")
+        return
+    
+    userName = readName()
+    
+    if userName:
+        filteredOrders = [order for order in orders['orders'] if order.get('name', '').lower() == userName.lower()]
+        
+        if not filteredOrders:
+            print(f"No orders found for {userName}.")
+            return
+        
+        print(f"Orders for {userName}:")
+        for i, order in enumerate(filteredOrders, 1):
+            print(f"\nOrder {i}:")
+            print(f"  Book: {order['title']}")
+            print(f"  Quantity: {order['quantity']}")
+            print(f"  Cost: £{order['cost']:.2f}")
+            
+            if order.get('pickup'):
+                print(f"  Pickup Location: {order['address']}")
+                if order.get('date'):
+                    orderDate = datetime.fromtimestamp(order['date'])
+                    print(f"  Pickup Date: {orderDate.strftime('%d/%m/%Y')}")
+                if order.get('time') is not None:
+                    hour = order['time']
+                    print(f"  Pickup Time: {hour:02d}:00")
+            else:
+                print(f"  Delivery Address: {order['address']}")
+    else:
+        print("All orders in the system:")
+        for i, order in enumerate(orders['orders'], 1):
+            print(f"\nOrder {i}:")
+            print(f"  Customer: {order.get('name', 'Unknown')}")
+            print(f"  Book: {order['title']}")
+            print(f"  Quantity: {order['quantity']}")
+            print(f"  Cost: £{order['cost']:.2f}")
+            
+            if order.get('pickup'):
+                print(f"  Pickup Location: {order['address']}")
+                if order.get('date'):
+                    orderDate = datetime.fromtimestamp(order['date'])
+                    print(f"  Pickup Date: {orderDate.strftime('%d/%m/%Y')}")
+                if order.get('time') is not None:
+                    hour = order['time']
+                    print(f"  Pickup Time: {hour:02d}:00")
+            else:
+                print(f"  Delivery Address: {order['address']}")
 
 '''
 Handles when a user's intent is to query about openining times / dates.
