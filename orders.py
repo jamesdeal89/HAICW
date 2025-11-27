@@ -11,6 +11,7 @@ from utils import confirmation, wordToInt, getUnixEpochTimestamp
 from handlers import identity, small, discover, thank
 from search import searchIntent, question
 from nlg import getReferringExpression, aggregateOrderDetails, generateContextualError, addDiscourseMarker, generateSuggestion
+from context import updateContext
 
 # Global variables for intent matching during transactions
 # These will be set by order() function from main's context
@@ -165,7 +166,6 @@ Flow:
 '''
 def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invIdxIntents=None, 
           qa=None, countQa=None, tfidfQa=None, XtrainTfQa=None, invIdxQa=None):
-    # Set global variables for intent matching during transaction
     global _intents, _count, _tfidf, _XtrainTf, _invIdxIntents
     global _qa, _countQa, _tfidfQa, _XtrainTfQa, _invIdxQa
     _intents = intents
@@ -178,6 +178,8 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
     _tfidfQa = tfidfQa
     _XtrainTfQa = XtrainTfQa
     _invIdxQa = invIdxQa
+    
+    updateContext('lastIntent', 'order')
     
     # Declare slots as None for now, any left as None after initial scan of prompt will be ask for
     book: str = None
@@ -212,6 +214,7 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
         # If distance is very low (<=2), high confidence - no need to confirm
         if matches[0][1] <= 2:
             book = matches[0][0]
+            updateContext('lastBook', book)
             print(f"Ordering: {book}")
         else:
             # Lower confidence, confirm with user

@@ -5,6 +5,7 @@ import json
 from data_access import readName, saveName, resetSession
 from utils import confirmation
 from nlg import getReferringExpression, addDiscourseMarker, generateSuggestion
+from context import updateContext
 
 '''
 Simple handler for when the user thanks the chatbot
@@ -176,9 +177,10 @@ Handles when the user wants a reccomendation for a book.
 Uses genre-based recommendations from the available stock.
 '''
 def reccomend():
-    # Get list of genres actually in the stock list
     from data_access import getGenres, getGenreBooks
     import random
+    
+    updateContext('lastIntent', 'recommend')
     
     genres = getGenres()
     print("What genre are you interested in?")
@@ -196,11 +198,12 @@ def reccomend():
             break
     
     if matchedGenre:
+        updateContext('lastGenre', matchedGenre)
         books = getGenreBooks(matchedGenre)
         if books:
-            # Recommend a random book from the genre
             recommended = random.choice(books)
             title = recommended['name']
+            updateContext('lastBook', title)
             print(f"\nI recommend '{title}' by {recommended['author']}!")
             ref = getReferringExpression(title, 'book', False)
             print(f"{ref.capitalize()} is a {matchedGenre} book with {recommended['pages']} pages, priced at £{recommended['price']:.2f}.")
@@ -220,6 +223,8 @@ def check():
     from data_access import getOrdersJSON, readName
     from datetime import datetime
     from nlg import generateContextualError, aggregateOrderDetails
+    
+    updateContext('lastIntent', 'check')
     
     orders = getOrdersJSON()
     
