@@ -123,11 +123,14 @@ Prints out a detailed explanation of capabilties to make the chatbot less of a '
 def discover():
     print(
     "I can help with many things!\n",
-    "Let me walk you through my features:\n"
-    "   1. Book orders - I can help you order a book and set a delivery or pick-up time.\n",
-    "   2. Book information - if you're not sure what you want to order, you can ask me about genres and authors and I'll recommend you a book.\n",
-    "   3. Memory - I will remember your name and address you as such if you inform me of it!\n",
-    "   4. Small talk - I can handle basic small talk if you'd like to chat.\n",
+    "Let me walk you through my features:\n\n"
+    "    1. Book orders - I can help you order a book for either home delivery or pick-up from one of our locations.\n\n",
+    "   2. Book reccomendation - if you're not sure what you want to order, you can ask me about genres and authors and I'll explain their work.\n\n",
+    "   3. Location information - I can list all our locations, describe the facilties of specific stores and let you know their opening times.\n\n",
+    "   4. Book and literary information QA - you can ask me about writing, literature, and authors and I'll explain them.\n\n",
+    "   5. Memory - I will remember your name and address you as such if you inform me of it!\n\n",
+    "   6. Order tracking - you can ask me to check on your previous orders to see the book, quantities, when you need to pick them up, or how much you paid.\n\n"
+    "    7. Small talk - I can handle basic small talk if you'd like to chat.\n\n",
     "I hope this helps you converse with me effectively!")
 
 def identity(prompt):
@@ -156,7 +159,7 @@ def identity(prompt):
                 saveName(answer.strip())
             else:
                 saveName(uName.group(1))
-            return f"Thanks for letting me know your name, {readName()}. I'll remember that."
+            return f"Thanks for letting me know your name, {readName()}. I'll remember that. If you'd like to find out more about what I can do, ask 'what can you do?'"
 
     elif forget:
         # Confirm user's intention to remove their data from memory
@@ -280,19 +283,137 @@ def check():
                 print(f"  Delivery Address: {order['address']}")
 
 '''
+Handles when a user's intent is to query about available locations.
+'''
+def locations():
+    from data_access import getAllLocations
+    
+    print("Our bookstores can be found in the following locations:")
+    for location in getAllLocations():
+        print(f"Location: {location[0]}, Address: {location[1]}")
+
+'''
 Handles when a user's intent is to query about openining times / dates.
 '''
-def opening():
-    pass
+def opening(prompt=None):
+    from data_access import getLocationsJSON, extractLocation
+    from context import resolveEllipsis, updateContext
+    
+    updateContext('lastIntent', 'opening')
+    
+    locations = getLocationsJSON()
+    
+    location = None
+    if prompt:
+        location = extractLocation(prompt)
+    
+    if not location:
+        print("Which location would you like to know the opening hours for?")
+        locationInput = input("Please enter your prompt (QUIT to exit): ")
+        if locationInput.lower() == "quit":
+            exit()
+        
+        resolvedInput = resolveEllipsis(locationInput)
+        location = extractLocation(resolvedInput)
+    
+    if location:
+        for loc in locations['locations']:
+            if loc['name'].lower() == location.lower():
+                updateContext('lastLocation', loc['name'])
+                days = loc['days']
+                dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+                openDays = [dayNames[i] for i, d in enumerate(days) if d == '1']
+                
+                print(f"\n{loc['name']} location:")
+                print(f"Opening hours: {loc['open']}:00 - {loc['close']}:00")
+                if openDays:
+                    print(f"Open on: {', '.join(openDays)}")
+                return
+    
+    print("I couldn't find that location. Here are our locations:")
+    for loc in locations['locations']:
+        print(f"  - {loc['name']}: {loc['address']}")
 
 '''
 Handles when a user's intent is to query about the bookstore's address.
 '''
-def address():
-    pass
+def address(prompt=None):
+    from data_access import getLocationsJSON, extractLocation
+    from context import resolveEllipsis, updateContext
+    
+    updateContext('lastIntent', 'address')
+    
+    locations = getLocationsJSON()
+    
+    location = None
+    if prompt:
+        location = extractLocation(prompt)
+    
+    if not location:
+        print("Which location's address would you like?")
+        locationInput = input("Please enter your prompt (QUIT to exit): ")
+        if locationInput.lower() == "quit":
+            exit()
+        
+        resolvedInput = resolveEllipsis(locationInput)
+        location = extractLocation(resolvedInput)
+    
+    if location:
+        for loc in locations['locations']:
+            if loc['name'].lower() == location.lower():
+                updateContext('lastLocation', loc['name'])
+                print(f"\n{loc['name']} location:")
+                print(f"Address: {loc['address']}")
+                if 'email' in loc:
+                    print(f"Email: {loc['email']}")
+                return
+    
+    print("I couldn't find that location. Here are all our locations:")
+    for loc in locations['locations']:
+        print(f"\n{loc['name']}:")
+        print(f"  Address: {loc['address']}")
+        if 'email' in loc:
+            print(f"  Email: {loc['email']}")
 
 '''
 Handles when a user's intent is to query about a location's facilities.
 '''
-def facilities():
-    pass
+def facilities(prompt=None):
+    from data_access import getLocationsJSON, extractLocation
+    from context import resolveEllipsis, updateContext
+    
+    updateContext('lastIntent', 'facilities')
+    
+    locations = getLocationsJSON()
+    
+    location = None
+    if prompt:
+        location = extractLocation(prompt)
+    
+    if not location:
+        print("Which location's facilities would you like to know about?")
+        locationInput = input("Please enter your prompt (QUIT to exit): ")
+        if locationInput.lower() == "quit":
+            exit()
+        
+        resolvedInput = resolveEllipsis(locationInput)
+        location = extractLocation(resolvedInput)
+    
+    if location:
+        for loc in locations['locations']:
+            if loc['name'].lower() == location.lower():
+                updateContext('lastLocation', loc['name'])
+                print(f"\n{loc['name']} location facilities:")
+                if 'cafe' in loc and loc['cafe']:
+                    print("- Cafe available")
+                if 'floors' in loc:
+                    print(f"- {loc['floors']} floors")
+                return
+    
+    print("I couldn't find that location. Here are our locations:")
+    for loc in locations['locations']:
+        print(f"\n{loc['name']}:")
+        if 'cafe' in loc and loc['cafe']:
+            print("- Cafe available")
+        if 'floors' in loc:
+            print(f"- {loc['floors']} floors")

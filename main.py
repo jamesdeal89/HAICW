@@ -64,7 +64,7 @@ Bulked out using confirmation:
 # Import from refactored modules
 from preprocessing import readIntentsCsv, stemVectorWeight, generateInvertedIndex, readQaCsv
 from search import searchIntent, question
-from handlers import discover, small, identity, thank, reccomend, check
+from handlers import discover, small, identity, thank, reccomend, check, opening, address, facilities, locations
 from orders import order
 from context import resolveEllipsis
 
@@ -129,6 +129,14 @@ def main():
             elif intent == "order":
                 order(resolvedPrompt, intents, count, tfidf, XtrainTf, invIdxIntents, 
                       qa, countQa, tfidfQa, XtrainTfQa, invIdxQa)
+            elif intent == "opening":
+                opening(resolvedPrompt)
+            elif intent == "address":
+                address(resolvedPrompt)
+            elif intent == "facilities":
+                facilities(resolvedPrompt)
+            elif intent == "locations":
+                locations()
             else:
                 print("I'm not sure I understand. Could you try re-wording that?")
         else:
