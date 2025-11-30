@@ -106,7 +106,7 @@ def extractLocation(prompt: str) -> str:
     return ''
 
 '''
-Get all book JSONs of books in stock.json dataset.
+Get all book JSONs of books in stock.json dataset that matches a particular genre.
 '''
 def getGenreBooks(genre: str) -> list:
     stock = getStockJSON()
@@ -153,6 +153,15 @@ def getPrice(title: str) -> float:
         if book['name'].lower().strip() == titleNorm:
             return book['price']
     return -1
+
+'''
+Returns a list of location names from the stock.json data where a particular book is available.
+'''
+def getLocationsAvailable(title: str) -> list[str]:
+    titleNorm = title.lower().strip()
+    for book in getStockJSON()['stock']:
+        if book['name'].lower().strip() == titleNorm:
+            return book['available']
 
 '''
 Perform a fuzzy search for title using Levenshtein distance.

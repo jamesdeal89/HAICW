@@ -1,0 +1,21 @@
+{
+    "feedback": [
+        {
+            "rating": 1,
+            "comments": "",
+            "timestamp": 1764239847
+        },
+        {
+            "rating": 1,
+            "comments": "",
+            "lastPrompt": "dfbfb",
+            "timestamp": 1764240047
+        },
+        {
+            "rating": 2,
+            "comments": "very bad i do not like it",
+            "lastPrompt": "sdsg",
+            "timestamp": 1764240139
+        }
+    ]
+}

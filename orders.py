@@ -5,12 +5,12 @@ import datetime
 
 from data_access import (
     fuzzySearchTitle, stockCheck, getPrice, getAllLocations, extractLocation,
-    isLocOpenOnDate, isLocOpenAtTime, storeOrder, getISBNbyTitle, readName, storeFeedback
+    isLocOpenOnDate, isLocOpenAtTime, storeOrder, getISBNbyTitle, readName, storeFeedback, getLocationsAvailable
 )
 from utils import confirmation, wordToInt, getUnixEpochTimestamp
 from handlers import identity, small, discover, thank
 from search import searchIntent, question
-from nlg import getReferringExpression, aggregateOrderDetails, generateContextualError, addDiscourseMarker, generateSuggestion
+from nlg import aggregateOrderDetails, generateContextualError, addDiscourseMarker
 from context import updateContext
 
 # Global variables for intent matching during transactions
@@ -235,11 +235,13 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
         # Extracted a title from the prompt, but unable to find it in the stock dataset.
         print("You'd like to place an order for which book? (please enter just the title)")
         while True:
-            answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit): "), 'book')
+            answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): "), 'book')
             if shouldRetry:
                 continue  # Intent was handled, ask again
             if answer.lower() == "quit":
                 exit()
+            if 'cancel' in answer.lower():
+                return
             break
         attempts = 0
         # Allow 3 re-entry attempts, if still no match, display list of titles in stock
@@ -272,21 +274,25 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
                                 break
                     # None of the matches were confirmed
                     while True:
-                        answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit): "), 'book')
+                        answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): "), 'book')
                         if shouldRetry:
                             continue
                         if answer.lower() == "quit":
                             exit()
+                        if 'cancel' in answer.lower():
+                            return
                         break
             else:
                 print(generateContextualError('book_not_found', answer))
                 print(addDiscourseMarker('continuation', "Please try again."))
                 while True:
-                    answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit): "), 'book')
+                    answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): "), 'book')
                     if shouldRetry:
                         continue
                     if answer.lower() == "quit":
                         exit()
+                    if 'cancel' in answer.lower():
+                        return
                     break
             attempts += 1
             if attempts > 3:
@@ -356,12 +362,14 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
             # No decision is clear in the initial prompt, ask directly
             print("For pickup or delivery? (type pickup/delivery)")
             while True:
-                answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit): "), 'pickup_delivery')
+                answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): "), 'pickup_delivery')
                 if shouldRetry:
                     continue
                 break
             if answer.lower() == "quit":
                 exit()
+            elif 'cancel' in answer.lower():
+                return
             elif answer.find("delivery") != -1:
                 pickup = False
             else:
@@ -372,12 +380,14 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
             while attempts < 4:
                 print("Which BlackSmith™'s store location would you like to pick-up your order from? (type 'list' to get a list of all locations)")
                 while True:
-                    answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit): "), 'location')
+                    answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): "), 'location')
                     if shouldRetry:
                         continue
                     break
                 if answer.lower() == "quit":
                     exit()
+                elif 'cancel' in answer.lower():
+                    return
                 elif answer.lower().find("list") != -1:
                     # Help the user discover what locations exist.
                     print("Our bookstores can be found in the following locations:")
@@ -416,10 +426,10 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
                 # Need to prevent selecting a date when the specific location is closed, 
                 # or a time when the location is closed.
                 date = getPickupDate(address)
-                print(f"Okay! I've set the date for pickup to {date.day:02d}/{date.month:02d}/{date.year:02d}")
                 # -1 means the user cancelled the order in the handlers
                 if date == -1:
                     return
+                print(f"Okay! I've set the date for pickup to {date.day:02d}/{date.month:02d}/{date.year:02d}")
                 time = getPickupTime(address)
                 # -1 means the user cancelled the order in the handlers
                 if time == -1:
@@ -542,10 +552,12 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
             dateStr = date.strftime('%d/%m/%Y')
             summary = aggregateOrderDetails(book, quantity, price, 'pickup', address, dateStr, time)
             print(addDiscourseMarker('confirmation', f"Your order for {summary} has been placed!"))
+            collectFeedback()
         else:
             storeOrder(book, getISBNbyTitle(book), quantity, pickup, address, None, None, price, name)
             summary = aggregateOrderDetails(book, quantity, price, 'delivery', address)
             print(addDiscourseMarker('confirmation', f"Your order for {summary} has been placed!"))
+            collectFeedback()
 
 def getPickupDate(location: str):
     # Dates will be based on a unix epoch timestamp for simple storage.
@@ -689,12 +701,14 @@ def getPickupTime(location):
                 else:
                     print(f"Is that {timeRes.group(1)} am or pm?")
                     while True:
-                        answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit): "), 'general')
+                        answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): "), 'general')
                         if shouldRetry:
                             continue
                         break
                     if answer.lower() == "quit":
                         exit()
+                    if 'cancel' in answer.lower():
+                        return -1
                     hour = int(timeRes.group(1))
                     if 'pm' in answer.lower() or 'afternoon' in answer.lower():
                         time = 12 if hour == 12 else hour + 12

@@ -5,7 +5,7 @@ import json
 from data_access import readName, saveName, resetSession
 from utils import confirmation
 from nlg import getReferringExpression, addDiscourseMarker, generateSuggestion
-from context import updateContext
+from context import updateContext, getContext
 
 '''
 Simple handler for when the user thanks the chatbot
@@ -417,3 +417,90 @@ def facilities(prompt=None):
             print("- Cafe available")
         if 'floors' in loc:
             print(f"- {loc['floors']} floors")
+
+def stockCheck(prompt=None):
+    from data_access import fuzzySearchTitle, getLocationsAvailable, extractLocation
+    import re
+    
+    updateContext('lastIntent', 'stockCheck')
+    
+    book = None
+    location = None
+    
+    if prompt:
+        locationExtract = r"(?i)\b(?:at|in|from)\s+([A-Za-z\s]+)(?:\?|$)"
+        locationMatch = re.search(locationExtract, prompt)
+        
+        titleExtract = r"(?i)(?:can you tell me if|can i check if|can you check if|can i see if you have|is|check stock for|check if you have|check|do you have|where can i find|where can i get|which locations have|which stores have|where is|where do you have|what locations stock|availability of|available for|stock)\s+['\"]?([A-Za-z0-9'':,&() ]{3,})['\"]?(?:\s+(?:is in stock|in stock|available|stocked|is available))?(?:\s+(?:at|in|from)\s+[A-Za-z\s]+)?(?:\?|$)"
+        titleMatch = re.search(titleExtract, prompt)
+        
+        if titleMatch:
+            potentialTitle = titleMatch.group(1).strip()
+            
+            if locationMatch:
+                potentialTitle = re.sub(r"(?i)\s+(?:at|in|from)\s+[A-Za-z\s]+(?:\?|$)", "", potentialTitle).strip()
+                location = extractLocation(locationMatch.group(1))
+            
+            potentialTitle = re.sub(r"(?i)\s+(?:is in stock|in stock|available|stocked|is available)$", "", potentialTitle).strip()
+            
+            matches = fuzzySearchTitle(potentialTitle)
+            if matches:
+                if matches[0][1] <= 2:
+                    book = matches[0][0]
+                    updateContext('lastBook', book)
+                elif matches[0][1] <= len(potentialTitle) // 3:
+                    print(f"Did you mean '{matches[0][0]}'?")
+                    if confirmation():
+                        book = matches[0][0]
+                        updateContext('lastBook', book)
+    
+    if not book:
+        lastBook = getContext('lastBook')
+        if lastBook:
+            print(f"Check stock for {lastBook}?")
+            if confirmation():
+                book = lastBook
+        
+        if not book:
+            print("Which book would you like to check stock for?")
+            answer = input("Please enter your prompt (QUIT to exit): ")
+            if answer.lower() == "quit":
+                exit()
+            
+            matches = fuzzySearchTitle(answer)
+            if matches:
+                if matches[0][1] <= 2:
+                    book = matches[0][0]
+                    updateContext('lastBook', book)
+                else:
+                    print(f"Did you mean '{matches[0][0]}'?")
+                    if confirmation():
+                        book = matches[0][0]
+                        updateContext('lastBook', book)
+            
+            if not book:
+                print(f"Sorry, I couldn't find that book in our stock.")
+                return
+    
+    availableLocations = getLocationsAvailable(book)
+    
+    if not availableLocations:
+        print(f"'{book}' is currently not in stock at any location.")
+        return
+    
+    if location:
+        locationLower = location.lower()
+        availableLocationsLower = [loc.lower() for loc in availableLocations]
+        
+        if locationLower in availableLocationsLower:
+            properLocation = availableLocations[availableLocationsLower.index(locationLower)]
+            print(f"Yes, '{book}' is in stock at {properLocation}.")
+            updateContext('lastLocation', properLocation)
+        else:
+            print(f"No, '{book}' is not in stock at {location}.")
+            print(f"However, it is available at: {', '.join(availableLocations)}")
+    else:
+        print(f"'{book}' is in stock at the following locations:")
+        for loc in availableLocations:
+            print(f"  - {loc}")
+
