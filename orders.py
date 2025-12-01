@@ -303,20 +303,57 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
     if book:
         if numbers:
             # Detected a numerical value in the user's prompt.
-            # Confirm with user if this is the quantity they want to order.
-            
             # Need to convert word for number into number.
             if numbers.group(1):
                 quant = wordToInt(numbers.group(1).lower())
             else:
                 quant = numbers.group(2)
-
-            print(f"To confirm, you'd like to order {quant} copies?")
-            if confirmation():
-                quantity = quant
-                skip = True
+            
+            # Find all numbers in the prompt to check if there are multiple
+            allNumbers = re.findall(reQuantityExtract, prompt)
+            
+            # Only confirm if:
+            # 1. There are multiple numbers (ambiguous which is quantity)
+            # 2. The number is a word (less explicit than digit)
+            # 3. The prompt doesn't clearly indicate quantity context
+            needsConfirmation = False
+            
+            if len(allNumbers) > 1:
+                # Multiple numbers found - iterate through them
+                print("I found multiple numbers in your request. Which quantity did you mean?")
+                for i, num in enumerate(allNumbers, 1):
+                    numValue = wordToInt(num[0].lower()) if num[0] else num[1]
+                    print(f"{i}. {numValue} copies")
+                
+                choice = input("Please enter the number (1, 2, etc.): ").strip()
+                try:
+                    idx = int(choice) - 1
+                    if 0 <= idx < len(allNumbers):
+                        selectedNum = allNumbers[idx]
+                        quant = wordToInt(selectedNum[0].lower()) if selectedNum[0] else selectedNum[1]
+                        quantity = quant
+                        skip = True
+                except ValueError:
+                    print("Sorry for the misunderstanding, ", end='')
+            elif numbers.group(1):
+                # Number was a word - confirm for clarity
+                needsConfirmation = True
+            elif not re.search(r'(?i)\b(copies|copy|books?)\b.*?\b' + str(quant) + r'\b|\b' + str(quant) + r'\b.*?\b(copies|copy|books?)\b', prompt):
+                # Number found but not in clear quantity context
+                needsConfirmation = True
             else:
-                print("Sorry for the misunderstanding, ", end='')
+                # Clear, direct numerical input in proper context - no confirmation needed
+                quantity = int(quant)
+                skip = True
+            
+            if needsConfirmation and not skip:
+                print(f"To confirm, you'd like to order {quant} copies?")
+                if confirmation():
+                    quantity = quant
+                    skip = True
+                else:
+                    print("Sorry for the misunderstanding, ", end='')
+        
         if not skip:
             while True:
                 print("How many copies would you like?")
@@ -335,17 +372,30 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
                         quant = wordToInt(numbers.group(1))
                     else:
                         quant = numbers.group(2)
-                    print(f"To confirm, you'd like to order {quant} copies?")
-                    if confirmation():
-                        # Perform a stock check
+                    
+                    # Check if answer is just a number 
+                    if re.match(r'^\s*\d+\s*$', answer):
+                        # Direct numerical response, no confirmation needed
                         inStock, available = stockCheck(book, int(quant))
                         if not inStock:
                             print(generateContextualError('stock_insufficient', available))
                         else:
                             quantity = int(quant)
                             break
+                    else:
+                        # More complex answer, needs confirmation
+                        print(f"To confirm, you'd like to order {quant} copies?")
+                        if confirmation():
+                            # Perform a stock check
+                            inStock, available = stockCheck(book, int(quant))
+                            if not inStock:
+                                print(generateContextualError('stock_insufficient', available))
+                            else:
+                                quantity = int(quant)
+                                break
     
     if quantity and book:
+        print(f"Quantity: {quantity}")
         # Now have all the information needed to set the price for this order.
         price = getPrice(book) * float(quantity)
         if pickupMatch:
