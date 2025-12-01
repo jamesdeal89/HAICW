@@ -667,8 +667,14 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
                 
                 if confirmation():
                     address = addressInput
-                    price += 4.99
-                    print(addDiscourseMarker('confirmation', f"Delivery will cost an additional £4.99. Your total is now £{price:.2f}"))
+                    print(addDiscourseMarker('confirmation', f'Delivery will cost an additional £4.99, is that ok?'))
+                    if confirmation():
+                        price += 4.99
+                        print(addDiscourseMarker('confirmation', f"This charge has been added."))
+                    else:
+                        print(addDiscourseMarker('result','your order has been cancelled.'))
+                        collectFeedback(addressInput)
+                        return
                 else:
                     validAddress = False
                     attempts += 1
@@ -917,7 +923,7 @@ def getPickupTime(location, book=None, quantity=None, price=None):
                 time = int(timeRes.group(4))
             elif timeRes.group(6):
                 # Extracted a general timing, e.g: lunchtime.
-                time = genTimesMap[timeRes.group(6)]
+                time = genTimesMap[timeRes.group(6).lower()]
             else:
                 if attempts > 2:
                     # If above 2 attempts, suggest an available time for this location.

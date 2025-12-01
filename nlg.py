@@ -140,11 +140,11 @@ def generateSuggestion(suggestionType, options):
 
 def addDiscourseMarker(context, message):
     markers = {
-        'clarification': ['Actually, ', 'To clarify, ', 'Let me explain: ', ''],
-        'continuation': ['Also, ', 'Additionally, ', 'By the way, ', ''],
-        'result': ['So ', 'Therefore, ', 'As a result, ', ''],
+        'clarification': ['Actually, ', 'To clarify, ', 'Let me explain: ', 'To be clear: ', ''],
+        'continuation': ['Also, ', 'Additionally, ', 'By the way, ', 'Following on from this, ',''],
+        'result': ['So ', 'Therefore, ', 'As a result, ', 'This means ', ''],
         'contrast': ['However, ', 'On the other hand, ', 'But ', ''],
-        'confirmation': ['Great! ', 'Perfect! ', 'Excellent! ', 'Understood. ']
+        'confirmation': ['Great! ', 'Perfect! ', 'Excellent! ', 'Understood. ', 'Awesome! ', '']
     }
     
     candidates = markers.get(context, [''])

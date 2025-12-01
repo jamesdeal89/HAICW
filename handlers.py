@@ -52,7 +52,7 @@ def small(prompt):
 
     patterns = [r"(?i)\b(?:feel|feeling)\s+(\w+)",
                 r"(?i)\b(?:I|me)\b(?:\s+\w)?\s+feel\s+(.+?)\s+when\s+(.+)",
-                r"(?i)\bwhen\s+(.+?)\s+(it\smakes\s)(?:i|me)\b(?:\s+\w)?\s+feel\s+(.+)",
+                r"(?i)\bwhen\s+(.+?)\s+(?:i|me)\b(?:\s+\w)?\s+feel\s+(.+)",
                 r"(?i)\b(?:how\sare\syou|how'?s\sit\sgoing|how'?s\sthings|what'?s\snew|how\shave\syou\sbeen)\b",
                 r"(?i)\b(?:hi|hey|hello|howdy|greetings|good\s+(?:morning|afternoon|evening|day)|what'?s\sup|sup)\b"]
 
@@ -84,8 +84,8 @@ def small(prompt):
     if emotionWithReason:
         reason = ""
         for word in re.findall(r"\w+",emotionWithReason.group(2)):
-            if word in referenceMap.keys():
-                reason += referenceMap[word] + " "
+            if word.lower() in referenceMap.keys():
+                reason += referenceMap[word.lower()] + " "
             else:
                 reason += word + " "
 
@@ -95,8 +95,8 @@ def small(prompt):
         reason = ""
         # instead of split(' '), this will also remove punctuation when tokenising
         for word in re.findall(r"\w+",emotionWithReason1.group(1)):
-            if word in referenceMap.keys():
-                reason += referenceMap[word] + " "
+            if word.lower() in referenceMap.keys():
+                reason += referenceMap[word.lower()] + " "
             else:
                 reason += word + " "
 
