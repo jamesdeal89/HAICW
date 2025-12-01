@@ -16,6 +16,36 @@
             "comments": "very bad i do not like it",
             "lastPrompt": "sdsg",
             "timestamp": 1764240139
+        },
+        {
+            "rating": 2,
+            "comments": "Some confusing responses where it said it didn't understand, but proceeded to do what I wanted correctly anyways.",
+            "lastPrompt": "",
+            "timestamp": 1764624700
+        },
+        {
+            "rating": 1,
+            "comments": "",
+            "lastPrompt": "",
+            "timestamp": 1764624899
+        },
+        {
+            "rating": 5,
+            "comments": "",
+            "lastPrompt": "",
+            "timestamp": 1764626575
+        },
+        {
+            "rating": 5,
+            "comments": "most incredible experience of my life",
+            "lastPrompt": "",
+            "timestamp": 1764627101
+        },
+        {
+            "rating": 5,
+            "comments": "quick and painless experience",
+            "lastPrompt": "",
+            "timestamp": 1764627842
         }
     ]
 }

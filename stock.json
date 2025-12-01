@@ -430,6 +430,691 @@
                 "Sheffield",
                 "Cambridge"
             ]
+        },
+        {
+            "name": "Project Hail Mary",
+            "author": "Andy Weir",
+            "ISBN": 9780593135204,
+            "count": 28,
+            "pages": 476,
+            "price": 13.99,
+            "genre": "Science Fiction",
+            "available": [
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Edinburgh",
+                "Bristol",
+                "Liverpool",
+                "Brighton"
+            ]
+        },
+        {
+            "name": "The Martian",
+            "author": "Andy Weir",
+            "ISBN": 9780553418026,
+            "count": 22,
+            "pages": 369,
+            "price": 11.99,
+            "genre": "Science Fiction",
+            "available": [
+                "London",
+                "Manchester",
+                "Leeds",
+                "Sheffield",
+                "Newcastle",
+                "Oxford"
+            ]
+        },
+        {
+            "name": "Snow Crash",
+            "author": "Neal Stephenson",
+            "ISBN": 9780553380958,
+            "count": 16,
+            "pages": 440,
+            "price": 12.99,
+            "genre": "Cyberpunk",
+            "available": [
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Sheffield",
+                "Leeds"
+            ]
+        },
+        {
+            "name": "Do Androids Dream of Electric Sheep",
+            "author": "Philip K. Dick",
+            "ISBN": 9780345404473,
+            "count": 18,
+            "pages": 210,
+            "price": 10.99,
+            "genre": "Science Fiction",
+            "available": [
+                "London",
+                "Oxford",
+                "Cambridge",
+                "Manchester",
+                "Bristol"
+            ]
+        },
+        {
+            "name": "The Hunger Games",
+            "author": "Suzanne Collins",
+            "ISBN": 9780439023481,
+            "count": 30,
+            "pages": 374,
+            "price": 9.99,
+            "genre": "Dystopian",
+            "available": [
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Liverpool",
+                "Newcastle",
+                "Edinburgh",
+                "Bristol",
+                "Brighton"
+            ]
+        },
+        {
+            "name": "A Game of Thrones",
+            "author": "George R.R. Martin",
+            "ISBN": 9780553103540,
+            "count": 25,
+            "pages": 694,
+            "price": 14.99,
+            "genre": "Fantasy",
+            "available": [
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Edinburgh",
+                "Liverpool",
+                "Bristol"
+            ]
+        },
+        {
+            "name": "Harry Potter and the Philosopher's Stone",
+            "author": "J.K. Rowling",
+            "ISBN": 9780439554930,
+            "count": 40,
+            "pages": 309,
+            "price": 8.99,
+            "genre": "Fantasy",
+            "available": [
+                "Nottingham",
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Bristol",
+                "Edinburgh",
+                "Liverpool",
+                "Brighton",
+                "Oxford",
+                "Cambridge",
+                "Dublin"
+            ]
+        },
+        {
+            "name": "The Way of Kings",
+            "author": "Brandon Sanderson",
+            "ISBN": 9780765326355,
+            "count": 19,
+            "pages": 1007,
+            "price": 16.99,
+            "genre": "Fantasy",
+            "available": [
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Edinburgh",
+                "Nottingham"
+            ]
+        },
+        {
+            "name": "Mistborn: The Final Empire",
+            "author": "Brandon Sanderson",
+            "ISBN": 9780765311788,
+            "count": 21,
+            "pages": 541,
+            "price": 13.99,
+            "genre": "Fantasy",
+            "available": [
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Bristol",
+                "Liverpool",
+                "Edinburgh"
+            ]
+        },
+        {
+            "name": "The Girl with the Dragon Tattoo",
+            "author": "Stieg Larsson",
+            "ISBN": 9780307269751,
+            "count": 23,
+            "pages": 465,
+            "price": 11.99,
+            "genre": "Mystery Thriller",
+            "available": [
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Bristol",
+                "Liverpool",
+                "Brighton",
+                "Edinburgh"
+            ]
+        },
+        {
+            "name": "Gone Girl",
+            "author": "Gillian Flynn",
+            "ISBN": 9780307588364,
+            "count": 26,
+            "pages": 415,
+            "price": 11.99,
+            "genre": "Mystery Thriller",
+            "available": [
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Liverpool",
+                "Bristol",
+                "Newcastle",
+                "Brighton"
+            ]
+        },
+        {
+            "name": "The Da Vinci Code",
+            "author": "Dan Brown",
+            "ISBN": 9780307474278,
+            "count": 24,
+            "pages": 454,
+            "price": 10.99,
+            "genre": "Mystery Thriller",
+            "available": [
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Liverpool",
+                "Leeds",
+                "Sheffield"
+            ]
+        },
+        {
+            "name": "Big Little Lies",
+            "author": "Liane Moriarty",
+            "ISBN": 9780399167065,
+            "count": 20,
+            "pages": 460,
+            "price": 11.99,
+            "genre": "Mystery Thriller",
+            "available": [
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Brighton",
+                "Bristol",
+                "Liverpool"
+            ]
+        },
+        {
+            "name": "All the Light We Cannot See",
+            "author": "Anthony Doerr",
+            "ISBN": 9781476746586,
+            "count": 27,
+            "pages": 530,
+            "price": 13.99,
+            "genre": "Historical Fiction",
+            "available": [
+                "London",
+                "Oxford",
+                "Cambridge",
+                "Manchester",
+                "Birmingham",
+                "Edinburgh",
+                "Bristol"
+            ]
+        },
+        {
+            "name": "The Nightingale",
+            "author": "Kristin Hannah",
+            "ISBN": 9780312577223,
+            "count": 25,
+            "pages": 440,
+            "price": 12.99,
+            "genre": "Historical Fiction",
+            "available": [
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Edinburgh",
+                "Bristol",
+                "Liverpool",
+                "Brighton"
+            ]
+        },
+        {
+            "name": "The Pillars of the Earth",
+            "author": "Ken Follett",
+            "ISBN": 9780451166890,
+            "count": 18,
+            "pages": 973,
+            "price": 15.99,
+            "genre": "Historical Fiction",
+            "available": [
+                "London",
+                "Oxford",
+                "Manchester",
+                "Birmingham",
+                "Edinburgh"
+            ]
+        },
+        {
+            "name": "Where the Crawdads Sing",
+            "author": "Delia Owens",
+            "ISBN": 9780735219090,
+            "count": 32,
+            "pages": 370,
+            "price": 11.99,
+            "genre": "Contemporary Fiction",
+            "available": [
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Bristol",
+                "Edinburgh",
+                "Liverpool",
+                "Brighton",
+                "Newcastle",
+                "Dublin"
+            ]
+        },
+        {
+            "name": "Normal People",
+            "author": "Sally Rooney",
+            "ISBN": 9781984822178,
+            "count": 28,
+            "pages": 266,
+            "price": 10.99,
+            "genre": "Contemporary Fiction",
+            "available": [
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Bristol",
+                "Edinburgh",
+                "Liverpool",
+                "Dublin",
+                "Brighton"
+            ]
+        },
+        {
+            "name": "Little Fires Everywhere",
+            "author": "Celeste Ng",
+            "ISBN": 9780735224292,
+            "count": 24,
+            "pages": 338,
+            "price": 11.99,
+            "genre": "Contemporary Fiction",
+            "available": [
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Bristol",
+                "Liverpool",
+                "Brighton"
+            ]
+        },
+        {
+            "name": "Becoming",
+            "author": "Michelle Obama",
+            "ISBN": 9781524763138,
+            "count": 29,
+            "pages": 448,
+            "price": 14.99,
+            "genre": "Memoir",
+            "available": [
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Oxford",
+                "Cambridge",
+                "Edinburgh",
+                "Bristol",
+                "Liverpool"
+            ]
+        },
+        {
+            "name": "The Glass Castle",
+            "author": "Jeannette Walls",
+            "ISBN": 9780743247542,
+            "count": 21,
+            "pages": 288,
+            "price": 11.99,
+            "genre": "Memoir",
+            "available": [
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Oxford",
+                "Bristol",
+                "Edinburgh"
+            ]
+        },
+        {
+            "name": "Born a Crime",
+            "author": "Trevor Noah",
+            "ISBN": 9780399588174,
+            "count": 23,
+            "pages": 304,
+            "price": 12.99,
+            "genre": "Memoir",
+            "available": [
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Edinburgh",
+                "Bristol",
+                "Liverpool",
+                "Brighton"
+            ]
+        },
+        {
+            "name": "Thinking, Fast and Slow",
+            "author": "Daniel Kahneman",
+            "ISBN": 9780374533557,
+            "count": 19,
+            "pages": 499,
+            "price": 14.99,
+            "genre": "Non-Fiction",
+            "available": [
+                "London",
+                "Oxford",
+                "Cambridge",
+                "Manchester",
+                "Birmingham",
+                "Edinburgh"
+            ]
+        },
+        {
+            "name": "A Brief History of Time",
+            "author": "Stephen Hawking",
+            "ISBN": 9780553380163,
+            "count": 17,
+            "pages": 212,
+            "price": 11.99,
+            "genre": "Non-Fiction",
+            "available": [
+                "London",
+                "Oxford",
+                "Cambridge",
+                "Manchester",
+                "Edinburgh"
+            ]
+        },
+        {
+            "name": "The Immortal Life of Henrietta Lacks",
+            "author": "Rebecca Skloot",
+            "ISBN": 9781400052172,
+            "count": 20,
+            "pages": 381,
+            "price": 13.99,
+            "genre": "Non-Fiction",
+            "available": [
+                "London",
+                "Oxford",
+                "Cambridge",
+                "Manchester",
+                "Birmingham",
+                "Edinburgh",
+                "Bristol"
+            ]
+        },
+        {
+            "name": "The Power of Now",
+            "author": "Eckhart Tolle",
+            "ISBN": 9781577314806,
+            "count": 25,
+            "pages": 236,
+            "price": 11.99,
+            "genre": "Self-Help",
+            "available": [
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Bristol",
+                "Liverpool",
+                "Brighton",
+                "Edinburgh"
+            ]
+        },
+        {
+            "name": "The Subtle Art of Not Giving a F*ck",
+            "author": "Mark Manson",
+            "ISBN": 9780062457714,
+            "count": 31,
+            "pages": 224,
+            "price": 10.99,
+            "genre": "Self-Help",
+            "available": [
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Liverpool",
+                "Newcastle",
+                "Leeds",
+                "Brighton",
+                "Bristol"
+            ]
+        },
+        {
+            "name": "How to Win Friends and Influence People",
+            "author": "Dale Carnegie",
+            "ISBN": 9780671027032,
+            "count": 22,
+            "pages": 288,
+            "price": 9.99,
+            "genre": "Self-Help",
+            "available": [
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Oxford",
+                "Cambridge",
+                "Edinburgh"
+            ]
+        },
+        {
+            "name": "Jane Eyre",
+            "author": "Charlotte Bronte",
+            "ISBN": 9780141441146,
+            "count": 20,
+            "pages": 507,
+            "price": 8.99,
+            "genre": "Literary Fiction",
+            "available": [
+                "London",
+                "Oxford",
+                "Cambridge",
+                "Bath",
+                "Edinburgh",
+                "York"
+            ]
+        },
+        {
+            "name": "Wuthering Heights",
+            "author": "Emily Bronte",
+            "ISBN": 9780141439556,
+            "count": 18,
+            "pages": 416,
+            "price": 8.99,
+            "genre": "Literary Fiction",
+            "available": [
+                "London",
+                "Oxford",
+                "Cambridge",
+                "Bath",
+                "York"
+            ]
+        },
+        {
+            "name": "Fahrenheit 451",
+            "author": "Ray Bradbury",
+            "ISBN": 9781451673319,
+            "count": 21,
+            "pages": 249,
+            "price": 9.99,
+            "genre": "Dystopian",
+            "available": [
+                "London",
+                "Oxford",
+                "Cambridge",
+                "Manchester",
+                "Birmingham",
+                "Bristol"
+            ]
+        },
+        {
+            "name": "The Road",
+            "author": "Cormac McCarthy",
+            "ISBN": 9780307387899,
+            "count": 16,
+            "pages": 287,
+            "price": 10.99,
+            "genre": "Dystopian",
+            "available": [
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Edinburgh",
+                "Bristol"
+            ]
+        },
+        {
+            "name": "Ender's Game",
+            "author": "Orson Scott Card",
+            "ISBN": 9780812550702,
+            "count": 23,
+            "pages": 324,
+            "price": 11.99,
+            "genre": "Science Fiction",
+            "available": [
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Leeds",
+                "Sheffield",
+                "Newcastle"
+            ]
+        },
+        {
+            "name": "The Hitchhiker's Guide to the Galaxy",
+            "author": "Douglas Adams",
+            "ISBN": 9780345391803,
+            "count": 27,
+            "pages": 216,
+            "price": 9.99,
+            "genre": "Science Fiction",
+            "available": [
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Oxford",
+                "Cambridge",
+                "Edinburgh",
+                "Bristol"
+            ]
+        },
+        {
+            "name": "Circe",
+            "author": "Madeline Miller",
+            "ISBN": 9780316556347,
+            "count": 24,
+            "pages": 393,
+            "price": 12.99,
+            "genre": "Fantasy",
+            "available": [
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Oxford",
+                "Edinburgh",
+                "Bristol",
+                "Brighton"
+            ]
+        },
+        {
+            "name": "The Song of Achilles",
+            "author": "Madeline Miller",
+            "ISBN": 9780062060624,
+            "count": 22,
+            "pages": 352,
+            "price": 11.99,
+            "genre": "Fantasy",
+            "available": [
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Oxford",
+                "Edinburgh",
+                "Bristol"
+            ]
+        },
+        {
+            "name": "The Kite Runner",
+            "author": "Khaled Hosseini",
+            "ISBN": 9781594631931,
+            "count": 26,
+            "pages": 371,
+            "price": 11.99,
+            "genre": "Contemporary Fiction",
+            "available": [
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Oxford",
+                "Edinburgh",
+                "Bristol",
+                "Liverpool"
+            ]
+        },
+        {
+            "name": "Life of Pi",
+            "author": "Yann Martel",
+            "ISBN": 9780156027328,
+            "count": 19,
+            "pages": 319,
+            "price": 10.99,
+            "genre": "Contemporary Fiction",
+            "available": [
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Oxford",
+                "Edinburgh",
+                "Bristol"
+            ]
+        },
+        {
+            "name": "The Alchemist",
+            "author": "Paulo Coelho",
+            "ISBN": 9780061122415,
+            "count": 28,
+            "pages": 208,
+            "price": 9.99,
+            "genre": "Contemporary Fiction",
+            "available": [
+                "London",
+                "Manchester",
+                "Birmingham",
+                "Bristol",
+                "Liverpool",
+                "Brighton",
+                "Edinburgh",
+                "Oxford"
+            ]
         }
     ]
 }
