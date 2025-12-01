@@ -123,7 +123,7 @@ def main():
             elif intent == "thank":
                 print(thank())
             elif intent == "reccomend":
-                reccomend()
+                reccomend(resolvedPrompt)
             elif intent == "check":
                 check()
             elif intent == "order":

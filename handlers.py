@@ -179,28 +179,39 @@ def identity(prompt):
 Handles when the user wants a reccomendation for a book.
 Uses genre-based recommendations from the available stock.
 '''
-def reccomend():
+def reccomend(prompt=''):
     from data_access import getGenres, getGenreBooks
     import random
     
     updateContext('lastIntent', 'recommend')
     
     genres = getGenres()
-    print("What genre are you interested in?")
-    print(generateSuggestion('available_genres', genres))
-    
-    genreInput = input("Please enter your prompt (QUIT to exit): ")
-    if genreInput.lower() == "quit":
-        exit()
     
     from context import resolveEllipsis
-    resolvedInput = resolveEllipsis(genreInput)
     
     matchedGenre = None
-    for genre in genres:
-        if genre.lower() in resolvedInput.lower() or resolvedInput.lower() in genre.lower():
-            matchedGenre = genre
-            break
+    
+    if prompt:
+        resolvedInput = resolveEllipsis(prompt)
+        for genre in genres:
+            if genre.lower() in resolvedInput.lower() or resolvedInput.lower() in genre.lower():
+                matchedGenre = genre
+                break
+    
+    if not matchedGenre:
+        print("What genre are you interested in?")
+        print(generateSuggestion('available_genres', genres))
+        
+        genreInput = input("Please enter your prompt (QUIT to exit): ")
+        if genreInput.lower() == "quit":
+            exit()
+        
+        resolvedInput = resolveEllipsis(genreInput)
+        
+        for genre in genres:
+            if genre.lower() in resolvedInput.lower() or resolvedInput.lower() in genre.lower():
+                matchedGenre = genre
+                break
     
     if matchedGenre:
         updateContext('lastGenre', matchedGenre)

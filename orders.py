@@ -119,6 +119,33 @@ def handleInputWithIntents(userInput: str, expectedType: str = None):
     # Didn't match any special intent, return for normal processing
     return userInput, False
 
+def detectCorrection(userInput):
+    """
+    Detects if user is trying to correct a previous input.
+    Returns tuple: (isCorrection: bool, correctionType: str, newValue: any)
+    """
+    inputLower = userInput.lower().strip()
+    
+    # Correction patterns
+    quantityCorrection = re.search(r'(?:sorry|no|wait|actually|i meant)\s+(?:i meant |i wanted |it\'?s |make that )?(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s*(?:copies|copy|books?)?', inputLower)
+    if quantityCorrection:
+        numStr = quantityCorrection.group(1)
+        try:
+            newQty = int(numStr) if numStr.isdigit() else wordToInt(numStr)
+            return (True, 'quantity', newQty)
+        except:
+            pass
+    
+    bookCorrection = re.search(r'(?:sorry|no|wait|actually|i meant)\s+(?:i meant |i wanted |it\'?s |make that )?["\']?([A-Za-z0-9\s:,\-\'&()]+?)["\']?\s*(?:instead|actually|please)?$', inputLower)
+    if bookCorrection and not quantityCorrection:
+        return (True, 'book', bookCorrection.group(1).strip())
+    
+    locationCorrection = re.search(r'(?:sorry|no|wait|actually|i meant)\s+(?:i meant |i wanted |it\'?s |make that |from )?([A-Za-z\s]+?)(?:\s+(?:instead|actually|please|location|store))?$', inputLower)
+    if locationCorrection and any(word in inputLower for word in ['location', 'store', 'pickup', 'from']):
+        return (True, 'location', locationCorrection.group(1).strip())
+    
+    return (False, None, None)
+
 def collectFeedback(lastPrompt=""):
     print("\nWe'd appreciate your feedback to help us improve!")
     print("On a scale of 1-5, how would you rate your experience? (1=poor, 5=excellent)")
@@ -342,7 +369,7 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
                 # Number found but not in clear quantity context
                 needsConfirmation = True
             else:
-                # Clear, direct numerical input in proper context - no confirmation needed
+                # Direct numerical input in proper context, no confirmation needed
                 quantity = int(quant)
                 skip = True
             
@@ -410,20 +437,46 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
                 pickup = False
         else:
             # No decision is clear in the initial prompt, ask directly
-            print("For pickup or delivery? (type pickup/delivery)")
             while True:
-                answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): "), 'pickup_delivery')
-                if shouldRetry:
+                print("For pickup or delivery? (type pickup/delivery)")
+                while True:
+                    answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): "), 'pickup_delivery')
+                    if shouldRetry:
+                        continue
+                    break
+                if answer.lower() == "quit":
+                    exit()
+                elif 'cancel' in answer.lower():
+                    return
+                
+                # Check for correction in the pickup/delivery response
+                isCorrection, corrType, newValue = detectCorrection(answer)
+                if isCorrection:
+                    if corrType == 'quantity':
+                        print(f"Updating quantity to {newValue}...")
+                        quantity = int(newValue)
+                        price = getPrice(book) * float(quantity)
+                    elif corrType == 'book':
+                        matches = fuzzySearchTitle(newValue)
+                        if matches and matches[0][1] <= 5:
+                            print(f"Updating book to {matches[0][0]}...")
+                            book = matches[0][0]
+                            updateContext('lastBook', book)
+                            price = getPrice(book) * float(quantity)
+                        else:
+                            print(f"Sorry, couldn't find '{newValue}'. Keeping {book}.")
+                    print("So, pickup or delivery?")
                     continue
-                break
-            if answer.lower() == "quit":
-                exit()
-            elif 'cancel' in answer.lower():
-                return
-            elif answer.find("delivery") != -1:
-                pickup = False
-            else:
-                pickup = True
+                
+                if answer.find("deliv") != -1:
+                    pickup = False
+                    break
+                elif answer.find("pick") != -1:
+                    pickup = True
+                    break
+                else:
+                    print("Please specify 'pickup' or 'delivery'.")
+                    continue
         # Based on pickup boolean, get home address details or get store location.
         if pickup:
             attempts = 0
@@ -446,9 +499,29 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
                 else:
                     # Search for the location they specified.
                     # After 3 fails to recognise a location name, print out the list of locations even if the user didn't ask.
+                    
+                    # Check for correction in the location response
+                    isCorrection, corrType, newValue = detectCorrection(answer)
+                    if isCorrection:
+                        if corrType == 'quantity':
+                            print(f"Updating quantity to {newValue}...")
+                            quantity = int(newValue)
+                            price = getPrice(book) * float(quantity)
+                        elif corrType == 'book':
+                            matches = fuzzySearchTitle(newValue)
+                            if matches and matches[0][1] <= 5:
+                                print(f"Updating book to {matches[0][0]}...")
+                                book = matches[0][0]
+                                updateContext('lastBook', book)
+                                price = getPrice(book) * float(quantity)
+                            else:
+                                print(f"Sorry, couldn't find '{newValue}'. Keeping {book}.")
+                        print("Now, which location for pickup?")
+                        continue
+                    
                     location = extractLocation(answer)
                     if location:
-                        print(f'Okay! I have set your order to be picked up from the BlackSmith store in {location}!')
+                        print(f'Okay! I have set your order to be picked up from the BlackSmith store in {location.title()}!')
                         address = location
                         break
                     else:
@@ -475,12 +548,20 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
                 # Need to select a pick-up date and timeslot.
                 # Need to prevent selecting a date when the specific location is closed, 
                 # or a time when the location is closed.
-                date = getPickupDate(address)
+                result = getPickupDate(address, book, quantity, price)
+                if isinstance(result, tuple):
+                    date, book, quantity, price = result
+                else:
+                    date = result
                 # -1 means the user cancelled the order in the handlers
                 if date == -1:
                     return
                 print(f"Okay! I've set the date for pickup to {date.day:02d}/{date.month:02d}/{date.year:02d}")
-                time = getPickupTime(address)
+                result = getPickupTime(address, book, quantity, price)
+                if isinstance(result, tuple):
+                    time, book, quantity, price = result
+                else:
+                    time = result
                 # -1 means the user cancelled the order in the handlers
                 if time == -1:
                     return
@@ -501,6 +582,25 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
                     exit()
                 elif 'cancel' in answer.lower():
                     return
+                
+                # Check for correction in the address input
+                isCorrection, corrType, newValue = detectCorrection(answer)
+                if isCorrection:
+                    if corrType == 'quantity':
+                        print(f"Updating quantity to {newValue}...")
+                        quantity = int(newValue)
+                        price = getPrice(book) * float(quantity)
+                        print("Now, back to your delivery address...")
+                        continue
+                    elif corrType == 'book':
+                        matches = fuzzySearchTitle(newValue)
+                        if matches and matches[0][1] <= 5:
+                            print(f"Updating book to {matches[0][0]}...")
+                            book = matches[0][0]
+                            updateContext('lastBook', book)
+                            price = getPrice(book) * float(quantity)
+                            print("Now, back to your delivery address...")
+                            continue
                 
                 addressInput = answer.strip()
                 # Simple length check to filter out clearly incorrect responses. 
@@ -609,9 +709,10 @@ def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invI
             print(addDiscourseMarker('confirmation', f"Your order for {summary} has been placed!"))
             collectFeedback()
 
-def getPickupDate(location: str):
+def getPickupDate(location: str, book=None, quantity=None, price=None):
     # Dates will be based on a unix epoch timestamp for simple storage.
     date = None
+    orderUpdated = False
     while True:
         print("On what date would you like to pickup from this store?")
         while True:
@@ -623,6 +724,28 @@ def getPickupDate(location: str):
             exit()
         if 'cancel' in answer.lower():
             return -1
+        
+        # Check for correction in the date input
+        if book and quantity is not None and price is not None:
+            isCorrection, corrType, newValue = detectCorrection(answer)
+            if isCorrection:
+                orderUpdated = True
+                if corrType == 'quantity':
+                    print(f"Updating quantity to {newValue}...")
+                    quantity = int(newValue)
+                    from data_access import getPrice as getPriceFunc
+                    price = getPriceFunc(book) * float(quantity)
+                elif corrType == 'book':
+                    matches = fuzzySearchTitle(newValue)
+                    if matches and matches[0][1] <= 5:
+                        print(f"Updating book to {matches[0][0]}...")
+                        book = matches[0][0]
+                        from context import updateContext
+                        updateContext('lastBook', book)
+                        from data_access import getPrice as getPriceFunc
+                        price = getPriceFunc(book) * float(quantity)
+                print("Now, what date for pickup?")
+                continue
         # Extractions for when the user has said a relative date. E.g: 'tomorrow', 'day after tomorrow', etc.
         relativeExtract = r"(?i)\b(?:today|day\wafter\wtomorrow|tomorrow)\b"
         relResult = re.search(relativeExtract, answer)
@@ -677,6 +800,8 @@ def getPickupDate(location: str):
                 continue
             open, openings = isLocOpenOnDate(location, getUnixEpochTimestamp(date.day, date.month, date.year))
             if open:
+                if orderUpdated:
+                    return (date, book, quantity, price)
                 return date
             else:
                 print(generateContextualError('location_closed', location))
@@ -698,7 +823,7 @@ Returns standardised hour of pickup in 24 hour format integer.
 E.g: 1pm -> returns int 13.
 If failed, returns -1.
 '''
-def getPickupTime(location):
+def getPickupTime(location, book=None, quantity=None, price=None):
     # Time will be stored in 24 hour format with no minutes.
     # If the user enters a time which is not a round hour, truncate.
     time = None
@@ -711,6 +836,7 @@ def getPickupTime(location):
         'evening': 18,
     }
     attempts = 0
+    orderUpdated = False
     while True:
         print(f"What time would you like to pick up your order from the {location} location?")
         while True:
@@ -722,6 +848,28 @@ def getPickupTime(location):
             exit()
         if "cancel" in answer.lower():
             return -1
+        
+        # Check for correction in the time input
+        if book and quantity is not None and price is not None:
+            isCorrection, corrType, newValue = detectCorrection(answer)
+            if isCorrection:
+                orderUpdated = True
+                if corrType == 'quantity':
+                    print(f"Updating quantity to {newValue}...")
+                    quantity = int(newValue)
+                    from data_access import getPrice as getPriceFunc
+                    price = getPriceFunc(book) * float(quantity)
+                elif corrType == 'book':
+                    matches = fuzzySearchTitle(newValue)
+                    if matches and matches[0][1] <= 5:
+                        print(f"Updating book to {matches[0][0]}...")
+                        book = matches[0][0]
+                        from context import updateContext
+                        updateContext('lastBook', book)
+                        from data_access import getPrice as getPriceFunc
+                        price = getPriceFunc(book) * float(quantity)
+                print("Now, what time for pickup?")
+                continue
         timeExtract = r"""
             (?i)                        
             \b(?:at|around|about|for|in\sthe)?\s*   # leading word
@@ -796,6 +944,8 @@ def getPickupTime(location):
         if time:
             isOpen, open, close = isLocOpenAtTime(location, time)
             if isOpen:
+                if orderUpdated:
+                    return (time, book, quantity, price)
                 return time
             else:
                 print(addDiscourseMarker('clarification', 

@@ -30,7 +30,7 @@ def aggregateOrderDetails(title, quantity, cost, deliveryType, location, date=No
     parts.append(f"totaling £{cost:.2f}")
     
     if deliveryType == 'pickup':
-        parts.append(f"for pickup at {location}")
+        parts.append(f"for pickup at {location.title()}")
         if date and time is not None:
             parts.append(f"on {date} at {time:02d}:00")
         elif date:
