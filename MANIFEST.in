@@ -1,0 +1,8 @@
+include README.md
+include LICENSE
+include requirements.txt
+include *.csv
+include *.json
+include *.md
+recursive-include acmart-primary *
+recursive-include ReportImages *
