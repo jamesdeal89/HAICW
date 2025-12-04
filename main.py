@@ -62,13 +62,16 @@ Bulked out using confirmation:
 '''
 
 # Import from refactored modules
-from preprocessing import readIntentsCsv, stemVectorWeight, generateInvertedIndex, readQaCsv
+from preprocessing import readIntentsCsv, stemVectorWeight, generateInvertedIndex, readQaCsv, clearOldPickles
 from search import searchIntent, question
 from handlers import discover, small, identity, thank, reccomend, check, opening, address, facilities, locations, stockCheck
 from orders import order
 from context import resolveEllipsis
 
 def main():
+    # Clear old pickle caches if they're older than 1 day
+    clearOldPickles()
+    
     print("======== STARTING BOOKSTORE CHATBOT ========")
     # NOTE: below ASCII art was generated via https://patorjk.com/software/taag/
     print("""
@@ -109,7 +112,7 @@ def main():
         if prompt.lower() == "quit":
             break
         resolvedPrompt = resolveEllipsis(prompt)
-        intentResult = searchIntent(invIdxIntents, resolvedPrompt, count, tfidf, XtrainTf, intents)
+        intentResult = searchIntent(invIdxIntents, resolvedPrompt, count, tfidf, intents)
         if intentResult:
             intent = intents[intentResult[0]][1]
             if intent == "discover":
@@ -117,7 +120,7 @@ def main():
             elif intent == "small":
                 print(small(resolvedPrompt))
             elif intent == "question":
-                print(question(qa, resolvedPrompt, countQa, tfidfQa, XtrainTfQa, invIdxQa))
+                print(question(qa, resolvedPrompt, countQa, tfidfQa, invIdxQa))
             elif intent == "identity":
                 print(identity(resolvedPrompt))
             elif intent == "thank":
@@ -127,8 +130,8 @@ def main():
             elif intent == "check":
                 check()
             elif intent == "order":
-                order(resolvedPrompt, intents, count, tfidf, XtrainTf, invIdxIntents, 
-                      qa, countQa, tfidfQa, XtrainTfQa, invIdxQa)
+                order(resolvedPrompt, intents, count, tfidf, invIdxIntents, 
+                      qa, countQa, tfidfQa, invIdxQa)
             elif intent == "opening":
                 opening(resolvedPrompt)
             elif intent == "address":

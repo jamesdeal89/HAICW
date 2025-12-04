@@ -5,27 +5,27 @@
 ```mermaid
 flowchart TD
     UI[User Interface]
-    
+  
     MAIN[main.py<br/>Main Controller<br/>Conversation Loop]
-    
+  
     PREPROC[preprocessing.py<br/>Stemming, Vectorization<br/>TF-IDF, Inverted Index]
-    
+  
     SEARCH[search.py<br/>searchIntent, question<br/>Cosine Similarity]
-    
+  
     CONTEXT[context.py<br/>sessionContext<br/>resolveEllipsis]
-    
+  
     HANDLERS[handlers.py<br/>small, discover, identity<br/>reccomend, check, opening<br/>address, facilities, locations]
-    
+  
     ORDERS[orders.py<br/>order, detectCorrection<br/>handleInputWithIntents<br/>getPickupDate, getPickupTime]
-    
+  
     NLG[nlg.py<br/>getReferringExpression<br/>aggregateOrderDetails<br/>generateContextualError]
-    
-    DATA[data_access.py<br/>fuzzySearchTitle<br/>stockCheck, storeOrder]
-    
+  
+    DATA[dataAccess.py<br/>fuzzySearchTitle<br/>stockCheck, storeOrder]
+  
     UTILS[utils.py<br/>confirmation, wordToInt<br/>levenshteinDistance]
-    
+  
     DATASETS[(intents.csv<br/>qa.csv<br/>stock.json<br/>locations.json<br/>orders.json)]
-    
+  
     UI --> MAIN
     MAIN --> PREPROC & CONTEXT
     PREPROC & CONTEXT --> SEARCH
@@ -37,7 +37,7 @@ flowchart TD
     NLG --> UI
 ```
 
-## 2. Intent Classification Flow
+# 2. Intent Classification Flow
 
 ```mermaid
 flowchart TD
@@ -123,25 +123,25 @@ stateDiagram-v2
         [*] --> LocationSelection
         LocationSelection --> DateSelection: Valid location
         LocationSelection --> LocationSelection: Invalid location
-      
+    
         note right of LocationSelection
             Correction Point 3
             Can correct book or quantity
             during location selection
         end note
-      
+    
         DateSelection --> TimeSelection: Valid date
         DateSelection --> DateSelection: Invalid or closed date
-      
+    
         note right of DateSelection
             Correction Point 4
             Can correct book, quantity, location
             during date selection
         end note
-      
+    
         TimeSelection --> OrderConfirmation: Valid time
         TimeSelection --> TimeSelection: Store closed at time
-      
+    
         note right of TimeSelection
             Correction Point 5
             Can correct book or quantity
@@ -153,7 +153,7 @@ stateDiagram-v2
         [*] --> AddressInput
         AddressInput --> OrderConfirmation: Valid address
         AddressInput --> AddressInput: Invalid address
-      
+    
         note right of AddressInput
             Correction Point 6
             Can correct book or quantity
@@ -262,14 +262,14 @@ graph TB
     DOCS[Training Documents] --> STEM[Stemming]
     STEM --> VECTOR[Vectorization]
     VECTOR --> TFIDF[TF-IDF Weighting]
-    
+  
     TFIDF --> BUILD[Build Inverted Index]
     BUILD --> INDEX[Inverted Index<br/>Maps terms to documents]
     BUILD --> NORMS[Document Norms<br/>Precomputed for efficiency]
-    
+  
     QUERY[Query Input] --> QSTEM[Stem and Vectorize Query]
     QSTEM --> LOOKUP[Lookup Query Terms<br/>in Inverted Index]
-    
+  
     INDEX --> LOOKUP
     LOOKUP --> SPARSE[Sparse Dot Product<br/>Only documents with overlapping terms]
     NORMS --> COSINE[Normalize by Document Norms]

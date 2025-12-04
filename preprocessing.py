@@ -1,8 +1,9 @@
-# ------ Pre-processing ------
+# ------ Preprocessing ------
 
 import os
 import csv
 import pickle
+import time
 from collections import defaultdict
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
@@ -13,6 +14,35 @@ import re
 from numpy.linalg import norm
 
 download('stopwords', quiet=True)
+
+# Cache timeout: 1 day in seconds
+CACHE_TIMEOUT = 24 * 60 * 60
+
+def clearOldPickles():
+    """
+    Remove pickle cache files if they are older than 1 day.
+    This ensures the cache regenerates periodically with fresh data.
+    """
+    pickle_files = [
+        'intents.pickle',
+        'qa.pickle',
+        'XtrainTfIntents.pickle',
+        'countIntents.pickle',
+        'tfidfIntents.pickle',
+        'invIdx.pickle',
+        'XtrainTfQa.pickle',
+        'countQa.pickle',
+        'tfidfQa.pickle',
+        'invIdxQa.pickle'
+    ]
+    
+    current_time = time.time()
+    for pickle_file in pickle_files:
+        if os.path.exists(pickle_file):
+            file_age = current_time - os.path.getmtime(pickle_file)
+            if file_age > CACHE_TIMEOUT:
+                os.remove(pickle_file)
+                print(f"Cleared old cache file: {pickle_file}")
 
 def readIntentsCsv():
     '''
@@ -83,7 +113,7 @@ def stemVectorWeight(intents: list, filterStopwords: bool, pName: str, pName1: s
     X_train_counts = count_vect.fit_transform(prompts)
 
     # Term weighting: Term frequency - Inverse document frequency
-    tf_transformer = TfidfTransformer(use_idf=True, sublinear_tf=True).fit(X_train_counts)
+    tf_transformer = TfidfTransformer(use_idf=True, sublinear_tf=True, norm=None).fit(X_train_counts)
     X_train_tf = tf_transformer.transform(X_train_counts)
     # Save to disk for next run
     with open(pName, "wb") as f:
@@ -126,8 +156,6 @@ def generateInvertedIndex(count_vect, X_train_tf, pName):
         inverted_index[term][docId] = score
 
     # Precompute per-document l2 norms so cosine similarity can be computed quickly
-    # Use dense conversion here; for typical coursework datasets this is fine.
-    # If memory is a concern for larger collections, compute norms from sparse directly.
     try:
         dVecs = X_train_tf.toarray()
         # list of floats: norm of each document vector

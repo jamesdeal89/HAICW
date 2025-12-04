@@ -2,7 +2,7 @@ import re
 import os
 import json
 
-from data_access import readName, saveName, resetSession
+from dataAccess import readName, saveName, resetSession
 from utils import confirmation
 from nlg import getReferringExpression, addDiscourseMarker, generateSuggestion
 from context import updateContext, getContext
@@ -180,7 +180,7 @@ Handles when the user wants a reccomendation for a book.
 Uses genre-based recommendations from the available stock.
 '''
 def reccomend(prompt=''):
-    from data_access import getGenres, getGenreBooks
+    from dataAccess import getGenres, getGenreBooks
     import random
     
     updateContext('lastIntent', 'recommend')
@@ -236,7 +236,7 @@ def reccomend(prompt=''):
 Handles when a user's intent is to check their existing orders.
 '''
 def check():
-    from data_access import getOrdersJSON, readName
+    from dataAccess import getOrdersJSON, readName
     from datetime import datetime
     
     updateContext('lastIntent', 'check')
@@ -297,7 +297,7 @@ def check():
 Handles when a user's intent is to query about available locations.
 '''
 def locations():
-    from data_access import getAllLocations
+    from dataAccess import getAllLocations
     
     print("Our bookstores can be found in the following locations:")
     for location in getAllLocations():
@@ -307,7 +307,7 @@ def locations():
 Handles when a user's intent is to query about openining times / dates.
 '''
 def opening(prompt=None):
-    from data_access import getLocationsJSON, extractLocation
+    from dataAccess import getLocationsJSON, extractLocation
     from context import resolveEllipsis, updateContext
     
     updateContext('lastIntent', 'opening')
@@ -349,7 +349,7 @@ def opening(prompt=None):
 Handles when a user's intent is to query about the bookstore's address.
 '''
 def address(prompt=None):
-    from data_access import getLocationsJSON, extractLocation
+    from dataAccess import getLocationsJSON, extractLocation
     from context import resolveEllipsis, updateContext
     
     updateContext('lastIntent', 'address')
@@ -390,7 +390,7 @@ def address(prompt=None):
 Handles when a user's intent is to query about a location's facilities.
 '''
 def facilities(prompt=None):
-    from data_access import getLocationsJSON, extractLocation
+    from dataAccess import getLocationsJSON, extractLocation
     from context import resolveEllipsis, updateContext
     
     updateContext('lastIntent', 'facilities')
@@ -430,7 +430,7 @@ def facilities(prompt=None):
             print(f"- {loc['floors']} floors")
 
 def stockCheck(prompt=None):
-    from data_access import fuzzySearchTitle, getLocationsAvailable, extractLocation
+    from dataAccess import fuzzySearchTitle, getLocationsAvailable, extractLocation
     import re
     
     updateContext('lastIntent', 'stockCheck')

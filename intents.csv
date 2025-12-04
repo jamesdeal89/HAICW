@@ -748,3 +748,6 @@ PROMPT, INTENT
 "Because it makes me seem less competent than my colleagues","small"
 "It makes me feel like my colleagues are judging me","small"
 "Because it makes me seem less competent than my colleagues","small"
+"Can I do the Nottingham one","address"
+"where is Deaths end in stock?","stockCheck"
+"actually I meant 7","order"

@@ -36,7 +36,8 @@ def saveName(name):
 
 def resetSession():
     # Delete session JSON on disk
-    os.remove("session.json")
+    if os.path.exists("session.json"):
+        os.remove("session.json")
 
 def getStockJSON():
     with open('stock.json', 'r') as f:

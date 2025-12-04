@@ -3,7 +3,7 @@
 import re
 import datetime
 
-from data_access import (
+from dataAccess import (
     fuzzySearchTitle, stockCheck, getPrice, getAllLocations, extractLocation,
     isLocOpenOnDate, isLocOpenAtTime, storeOrder, getISBNbyTitle, readName, storeFeedback, getLocationsAvailable
 )
@@ -18,12 +18,10 @@ from context import updateContext
 _intents = None
 _count = None
 _tfidf = None
-_XtrainTf = None
 _invIdxIntents = None
 _qa = None
 _countQa = None
 _tfidfQa = None
-_XtrainTfQa = None
 _invIdxQa = None
 
 def handleInputWithIntents(userInput: str, expectedType: str = None):
@@ -86,7 +84,7 @@ def handleInputWithIntents(userInput: str, expectedType: str = None):
     if not _intents:
         return userInput, False
         
-    intentResult = searchIntent(_invIdxIntents, userInput, _count, _tfidf, _XtrainTf, _intents)
+    intentResult = searchIntent(_invIdxIntents, userInput, _count, _tfidf, _intents)
     
     if intentResult:
         intent = _intents[intentResult[0]][1]
@@ -111,7 +109,7 @@ def handleInputWithIntents(userInput: str, expectedType: str = None):
         elif intent == "question":
             # Handle Q&A during transaction
             if _qa:
-                print(question(_qa, userInput, _countQa, _tfidfQa, _XtrainTfQa, _invIdxQa))
+                print(question(_qa, userInput, _countQa, _tfidfQa, _invIdxQa))
                 print("\nNow, back to your order...")
                 return None, True
         # For "order" intent, don't interrupt - treat as normal input (avoid nested orders)
@@ -191,19 +189,17 @@ Flow:
         - ask address (check against some verification, plus provide a structure to use)
         - confirm cost (book + postage)
 '''
-def order(prompt: str, intents=None, count=None, tfidf=None, XtrainTf=None, invIdxIntents=None, 
-          qa=None, countQa=None, tfidfQa=None, XtrainTfQa=None, invIdxQa=None):
-    global _intents, _count, _tfidf, _XtrainTf, _invIdxIntents
-    global _qa, _countQa, _tfidfQa, _XtrainTfQa, _invIdxQa
+def order(prompt: str, intents=None, count=None, tfidf=None, invIdxIntents=None, 
+          qa=None, countQa=None, tfidfQa=None, invIdxQa=None):
+    global _intents, _count, _tfidf, _invIdxIntents
+    global _qa, _countQa, _tfidfQa, _invIdxQa
     _intents = intents
     _count = count
     _tfidf = tfidf
-    _XtrainTf = XtrainTf
     _invIdxIntents = invIdxIntents
     _qa = qa
     _countQa = countQa
     _tfidfQa = tfidfQa
-    _XtrainTfQa = XtrainTfQa
     _invIdxQa = invIdxQa
     
     updateContext('lastIntent', 'order')
@@ -739,7 +735,7 @@ def getPickupDate(location: str, book=None, quantity=None, price=None):
                 if corrType == 'quantity':
                     print(f"Updating quantity to {newValue}...")
                     quantity = int(newValue)
-                    from data_access import getPrice as getPriceFunc
+                    from dataAccess import getPrice as getPriceFunc
                     price = getPriceFunc(book) * float(quantity)
                 elif corrType == 'book':
                     matches = fuzzySearchTitle(newValue)
@@ -748,7 +744,7 @@ def getPickupDate(location: str, book=None, quantity=None, price=None):
                         book = matches[0][0]
                         from context import updateContext
                         updateContext('lastBook', book)
-                        from data_access import getPrice as getPriceFunc
+                        from dataAccess import getPrice as getPriceFunc
                         price = getPriceFunc(book) * float(quantity)
                 print("Now, what date for pickup?")
                 continue
@@ -863,7 +859,7 @@ def getPickupTime(location, book=None, quantity=None, price=None):
                 if corrType == 'quantity':
                     print(f"Updating quantity to {newValue}...")
                     quantity = int(newValue)
-                    from data_access import getPrice as getPriceFunc
+                    from dataAccess import getPrice as getPriceFunc
                     price = getPriceFunc(book) * float(quantity)
                 elif corrType == 'book':
                     matches = fuzzySearchTitle(newValue)
@@ -872,7 +868,7 @@ def getPickupTime(location, book=None, quantity=None, price=None):
                         book = matches[0][0]
                         from context import updateContext
                         updateContext('lastBook', book)
-                        from data_access import getPrice as getPriceFunc
+                        from dataAccess import getPrice as getPriceFunc
                         price = getPriceFunc(book) * float(quantity)
                 print("Now, what time for pickup?")
                 continue
