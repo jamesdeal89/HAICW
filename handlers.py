@@ -8,7 +8,7 @@ from dataAccess import (
 )
 from utils import confirmation, getDateFromUnix
 from search import bookDescSearch
-from nlg import getReferringExpression, generateSuggestion
+from nlg import getReferringExpression, generateSuggestion, generateContextualError
 from context import updateContext, getContext, resolveEllipsis
 
 '''
@@ -192,18 +192,24 @@ def reccomend(prompt='', bookDesc=None, countBookDesc=None, tfidfBookDesc=None, 
     print("[1] Genre-based (browse by genre)")
     print("[2] Recommendation-based (describe what you're looking for)")
     
-    choiceInput = input("Please enter your choice (1 or 2, or QUIT to exit): ")
+    choiceInput = input("Please enter your choice (1 or 2, QUIT to exit, or CANCEL to cancel): ")
     if choiceInput.lower() == "quit":
         exit()
+    if 'cancel' in choiceInput.lower():
+        print("Recommendation cancelled.")
+        return
     
     if choiceInput == "2" and bookDesc and countBookDesc and tfidfBookDesc and invIdxBookDesc:
         # Recommendation-based search using description matching
         # Loop to allow rephrasing
         while True:
             print("Please describe the type of book you're looking for:")
-            descInput = input("Please enter your prompt (QUIT to exit): ")
+            descInput = input("Please enter your prompt (QUIT to exit, CANCEL to cancel): ")
             if descInput.lower() == "quit":
                 exit()
+            if 'cancel' in descInput.lower():
+                print("Recommendation cancelled.")
+                return
             userDesc = resolveEllipsis(descInput)
             
             results = bookDescSearch(bookDesc, userDesc, countBookDesc, tfidfBookDesc, invIdxBookDesc)
@@ -224,7 +230,6 @@ def reccomend(prompt='', bookDesc=None, countBookDesc=None, tfidfBookDesc=None, 
                     
                     # Ask for confirmation using utility
                     print("\nDoes this sound like what you're looking for?")
-                    from utils import confirmation
                     if confirmation():
                         # User accepted - exit the loop
                         print("Great! Let me know if you'd like to order this book or if you need anything else.")
@@ -261,11 +266,9 @@ def reccomend(prompt='', bookDesc=None, countBookDesc=None, tfidfBookDesc=None, 
                             print("I apologize, but I'm having trouble finding what you're looking for. Could you try describing the book differently?")
                             continue
                 else:
-                    from nlg import generateContextualError
                     print(generateContextualError('book_not_found', bookTitle))
                     continue
             else:
-                from nlg import generateContextualError
                 print(generateContextualError('generic'))
                 continue
     else:
@@ -307,10 +310,8 @@ def reccomend(prompt='', bookDesc=None, countBookDesc=None, tfidfBookDesc=None, 
                 print(f"{ref.capitalize()} is a {matchedGenre} book with {recommended['pages']} pages, priced at £{recommended['price']:.2f}.")
                 print(f"We have {recommended['count']} copies in stock.")
             else:
-                from nlg import generateContextualError
                 print(generateContextualError('book_not_found', f"any {matchedGenre} books"))
         else:
-            from nlg import generateContextualError
             error = generateContextualError('generic')
             print(f"{error} Please try again with one of the available genres.")
 

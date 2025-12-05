@@ -464,10 +464,10 @@ def order(prompt: str, intents=None, count=None, tfidf=None, invIdxIntents=None,
                     print("So, pickup or delivery?")
                     continue
                 
-                if answer.find("deliv") != -1:
+                if answer.lower().find("deliv") != -1:
                     pickup = False
                     break
-                elif answer.find("pick") != -1:
+                elif answer.lower().find("pick") != -1:
                     pickup = True
                     break
                 else:
