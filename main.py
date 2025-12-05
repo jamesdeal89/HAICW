@@ -61,7 +61,10 @@ Bulked out using confirmation:
         - add their prompt and the confirmed intent to dataset.
 '''
 
-# Import from refactored modules
+# Prevent warnings which may occur from pickling, sometimes versions may mistmatch, but has little effect.
+import warnings
+warnings.filterwarnings('ignore')
+
 from preprocessing import readIntentsCsv, stemVectorWeight, generateInvertedIndex, readQaCsv, readBookDescriptions, clearOldPickles
 from search import searchIntent, question, bookDescSearch
 from handlers import discover, small, identity, thank, reccomend, check, opening, address, facilities, locations, stockCheck
@@ -110,7 +113,7 @@ def main():
 
     # Book description search initialisations
     bookDesc = readBookDescriptions()
-    XtrainTfBookDesc, countBookDesc, tfidfBookDesc = stemVectorWeight(bookDesc, True, "XtrainTfBookDesc.pickle", "countBookDesc.pickle", "tfidfBookDesc.pickle")
+    XtrainTfBookDesc, countBookDesc, tfidfBookDesc = stemVectorWeight(bookDesc, True, "XtrainTfBookDesc.pickle", "countBookDesc.pickle", "tfidfBookDesc.pickle", textIndex=1)
     invIdxBookDesc = generateInvertedIndex(countBookDesc, XtrainTfBookDesc, "invIdxBookDesc.pickle")
 
     # First use 

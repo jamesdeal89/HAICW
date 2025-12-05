@@ -94,7 +94,7 @@ def stemmed_filterStopwords_words(doc):
     tokens = re.findall(r'\b\w+\b', doc.lower())
     return [p_stemmer.stem(token) for token in tokens if token not in stopwords.words('english')]
 
-def stemVectorWeight(intents: list, filterStopwords: bool, pName: str, pName1: str, pName2: str):
+def stemVectorWeight(intents: list, filterStopwords: bool, pName: str, pName1: str, pName2: str, textIndex: int = 0):
     # If already saved to disk, simply load and return the disk objects
     if os.path.exists(pName) and os.path.exists(pName1) and os.path.exists(pName2):
         with open(pName, "rb") as f:
@@ -108,7 +108,7 @@ def stemVectorWeight(intents: list, filterStopwords: bool, pName: str, pName1: s
 
     # Get just the prompts to vectorise, but maintain indexing to resolve to labels.
     prompts = []
-    for pair in intents: prompts.append(pair[0])
+    for pair in intents: prompts.append(pair[textIndex])
 
     # Initialise and run the count based vectoriser on the prompts, 
     # also using the stemmer.
