@@ -160,8 +160,10 @@ def identity(prompt: str) -> None:
             uName = re.search(reIntents[0],answer)
             if not uName and len(answer.strip().split(' ')) == 1:
                 saveName(answer.strip())
-            else:
+            elif uName:
                 saveName(uName.group(1))
+            else:
+                return "Sorry, I didn't understand that name - you can introduce yourself at any point by saying 'my name is...'"
             return f"Thanks for letting me know your name, {readName()}. I'll remember that. If you'd like to find out more about what I can do, ask 'what can you do?'"
 
     elif forget:
