@@ -807,7 +807,7 @@ def getPickupDate(location: str, book=None, quantity=None, price=None):
                 return date
             else:
                 print(generateContextualError('location_closed', location))
-                print(f"The {location} location is not open on {date.strftime("%A %d %B %Y")}, but is open on every:")
+                print(f"The {location} location is not open on {date.strftime('%A %d %B %Y')}, but is open on every:")
                 weekdayIter = 0
                 daysOfWeek = ['Monday, ','Tuesday, ','Wednesday, ','Thursday, ','Friday, ','Saturday, ','Sunday, ']
                 for char in openings:
