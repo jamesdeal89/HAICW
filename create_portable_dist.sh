@@ -10,7 +10,9 @@ cd dist_portable
 # Copy all necessary files
 cp ../*.py .
 cp ../*.csv .
-cp ../*.json .
+# Only copy configuration JSON files, not user data files
+cp ../stock.json .
+cp ../locations.json .
 cp ../*.md .
 cp ../requirements.txt .
 cp ../LICENSE .
@@ -131,9 +133,11 @@ DATA FILES:
   - qa.csv: Question-answer knowledge base
   - stock.json: Book inventory
   - locations.json: Store locations
-  - orders.json: Order history
-  - session.json: Session state
-  - feedback.json: User feedback
+
+USER DATA FILES (auto-generated on first use):
+  - orders.json: Order history (created when first order is placed)
+  - session.json: Session state (created on first run)
+  - feedback.json: User feedback (created when feedback is given)
 
 CACHE FILES (auto-generated):
   *.pickle files are cached preprocessed data for faster startup.
