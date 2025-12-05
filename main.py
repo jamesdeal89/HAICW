@@ -145,7 +145,8 @@ def main() -> None:
                 check()
             elif intent == "order":
                 order(resolvedPrompt, intents, count, tfidf, invIdxIntents, 
-                      qa, countQa, tfidfQa, invIdxQa)
+                      qa, countQa, tfidfQa, invIdxQa,
+                      bookDesc, countBookDesc, tfidfBookDesc, invIdxBookDesc)
             elif intent == "opening":
                 opening(resolvedPrompt)
             elif intent == "address":

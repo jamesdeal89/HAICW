@@ -50,7 +50,7 @@ def resolveEllipsis(query: str) -> str:
     
     if re.match(r'^(that one|it|this|that|the book)$', queryLower):
         if sessionContext['lastBook']:
-            if sessionContext['lastIntent'] == 'order':
+            if sessionContext['lastIntent'] in ['order', 'recommend']:
                 return f"order {sessionContext['lastBook']}"
             elif sessionContext['lastIntent'] == 'check':
                 return f"check {sessionContext['lastBook']} availability"

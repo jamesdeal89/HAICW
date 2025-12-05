@@ -8,10 +8,10 @@ from dataAccess import (
     isLocOpenOnDate, isLocOpenAtTime, storeOrder, getISBNbyTitle, readName, storeFeedback, getLocationsAvailable
 )
 from utils import confirmation, wordToInt, getUnixEpochTimestamp
-from handlers import identity, small, discover, thank
+from handlers import identity, small, discover, thank, reccomend
 from search import searchIntent, question
 from nlg import aggregateOrderDetails, generateContextualError, addDiscourseMarker
-from context import updateContext
+from context import updateContext, resolveEllipsis
 
 # Global variables for intent matching during transactions
 # These will be set by order() function from main's context
@@ -23,6 +23,10 @@ _qa = None
 _countQa = None
 _tfidfQa = None
 _invIdxQa = None
+_bookDesc = None
+_countBookDesc = None
+_tfidfBookDesc = None
+_invIdxBookDesc = None
 
 def handleInputWithIntents(userInput: str, expectedType: str = None):
     '''
@@ -44,6 +48,10 @@ def handleInputWithIntents(userInput: str, expectedType: str = None):
     if userInput.lower() in ['quit', 'cancel'] or 'cancel' in userInput.lower():
         return userInput, False
     
+    # Resolve ellipsis BEFORE checking transaction relevance
+    # This ensures "it", "that one", etc. are resolved to actual book names
+    userInput = resolveEllipsis(userInput)
+    
     # Check if input seems transaction-relevant based on context
     isTransactionRelevant = False
     
@@ -53,7 +61,9 @@ def handleInputWithIntents(userInput: str, expectedType: str = None):
             isTransactionRelevant = True
     elif expectedType == 'book':
         # If it's a reasonable length for a book title (more than 2 chars)
-        if len(userInput.strip()) > 2 and not re.match(r'^(yes|no|yeah|nope|yep)$', userInput, re.IGNORECASE):
+        # But exclude common intent patterns that shouldn't be treated as book titles
+        intentPatterns = r'(?i)^(recommend|suggest|what|where|when|why|how|tell|show|list|can you|do you|are you|help|discover)'
+        if len(userInput.strip()) > 2 and not re.match(r'^(yes|no|yeah|nope|yep)$', userInput, re.IGNORECASE) and not re.search(intentPatterns, userInput):
             isTransactionRelevant = True
     elif expectedType == 'location':
         # Check if 'list' command or if it might be a location name
@@ -110,6 +120,12 @@ def handleInputWithIntents(userInput: str, expectedType: str = None):
             # Handle Q&A during transaction
             if _qa:
                 print(question(_qa, userInput, _countQa, _tfidfQa, _invIdxQa))
+                print("\nNow, back to your order...")
+                return None, True
+        elif intent == "reccomend":
+            # Handle book recommendations during transaction
+            if _bookDesc:
+                reccomend(userInput, _bookDesc, _countBookDesc, _tfidfBookDesc, _invIdxBookDesc)
                 print("\nNow, back to your order...")
                 return None, True
         # For "order" intent, don't interrupt - treat as normal input (avoid nested orders)
@@ -211,6 +227,15 @@ def getBookSelection(prompt: str) -> str | None:
         if 'cancel' in answer.lower():
             return None
         break
+    
+    # Resolve ellipsis (e.g., "that one", "it") before fuzzy searching
+    answer = resolveEllipsis(answer)
+    
+    # If ellipsis resolution added "order" prefix, extract the book title
+    orderMatch = re.search(reTitleExtract, answer)
+    if orderMatch:
+        answer = orderMatch.group(1)
+    
     attempts = 0
     while True:
         matches = fuzzySearchTitle(answer)
@@ -234,6 +259,16 @@ def getBookSelection(prompt: str) -> str | None:
                         if confirmation():
                             book = matches[2][0]
                             return book
+                # All suggestions declined, cancel order
+                print("Unable to find the book you're looking for.")
+                print("Cancelling order.")
+                return None
+        else:
+            # No fuzzy search match, so see if the user mistakenly tried to enter another kind of prompt.
+            _, shouldRetry = handleInputWithIntents(answer, None)
+            if shouldRetry:
+                # Intent was handled, don't increment attempts
+                print("\nNow, which book would you like to order?")
                 while True:
                     answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): "), 'book')
                     if shouldRetry:
@@ -243,15 +278,17 @@ def getBookSelection(prompt: str) -> str | None:
                     if 'cancel' in answer.lower():
                         return None
                     break
-        else:
-            attempts += 1
-            if attempts > 3:
-                # Try to handle as a different intent before giving up
-                while True:
-                    answer, shouldRetry = handleInputWithIntents(answer, None)
-                    if shouldRetry:
-                        # Intent was handled, ask for book again
-                        print("\nNow, which book would you like to order?")
+            else:
+                # No intent matched, increment attempts
+                attempts += 1
+                if attempts >= 3:
+                    print("Sorry, we don't stock that book.")
+                    print("Cancelling order.")
+                    return None
+                else:
+                    print(generateContextualError('book_not_found', answer))
+                    print(addDiscourseMarker('continuation', "Please try again."))
+                    while True:
                         answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): "), 'book')
                         if shouldRetry:
                             continue
@@ -259,23 +296,7 @@ def getBookSelection(prompt: str) -> str | None:
                             exit()
                         if 'cancel' in answer.lower():
                             return None
-                        attempts = 0  # Reset attempts after handling intent
                         break
-                    else:
-                        # No intent matched, give up
-                        return None
-            else:
-                print(generateContextualError('book_not_found', answer))
-                print(addDiscourseMarker('continuation', "Please try again."))
-                while True:
-                    answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): "), 'book')
-                    if shouldRetry:
-                        continue
-                    if answer.lower() == "quit":
-                        exit()
-                    if 'cancel' in answer.lower():
-                        return None
-                    break
 
 def getQuantitySelection(prompt: str, book: str) -> int | None:
     reQuantityExtract = r"(?i)\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen| \
@@ -631,9 +652,11 @@ Flow:
         - confirm cost (book + postage)
 '''
 def order(prompt: str, intents=None, count=None, tfidf=None, invIdxIntents=None, 
-          qa=None, countQa=None, tfidfQa=None, invIdxQa=None):
+          qa=None, countQa=None, tfidfQa=None, invIdxQa=None,
+          bookDesc=None, countBookDesc=None, tfidfBookDesc=None, invIdxBookDesc=None):
     global _intents, _count, _tfidf, _invIdxIntents
     global _qa, _countQa, _tfidfQa, _invIdxQa
+    global _bookDesc, _countBookDesc, _tfidfBookDesc, _invIdxBookDesc
     _intents = intents
     _count = count
     _tfidf = tfidf
@@ -642,6 +665,10 @@ def order(prompt: str, intents=None, count=None, tfidf=None, invIdxIntents=None,
     _countQa = countQa
     _tfidfQa = tfidfQa
     _invIdxQa = invIdxQa
+    _bookDesc = bookDesc
+    _countBookDesc = countBookDesc
+    _tfidfBookDesc = tfidfBookDesc
+    _invIdxBookDesc = invIdxBookDesc
     
     updateContext('lastIntent', 'order')
     
