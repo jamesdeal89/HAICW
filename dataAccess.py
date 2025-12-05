@@ -39,6 +39,29 @@ def resetSession():
     if os.path.exists("session.json"):
         os.remove("session.json")
 
+def savePreferredGenre(genre):
+    # Save the user's preferred genre to session JSON
+    if os.path.exists('session.json'):
+        with open("session.json", "r") as f:
+            session = json.load(f)
+        session['preferredGenre'] = genre
+        with open("session.json", "w") as f:
+            json.dump(session, f)
+    else:
+        session = {
+            "preferredGenre": genre
+        }
+        with open("session.json", "w") as f:
+            json.dump(session, f)
+
+def getPreferredGenre():
+    # Read preferred genre from session JSON
+    if os.path.exists('session.json'):
+        with open("session.json", "r") as f:
+            session = json.load(f)
+        return session.get('preferredGenre', None)
+    return None
+
 def getStockJSON():
     with open('stock.json', 'r') as f:
         data = json.load(f)

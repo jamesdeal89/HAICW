@@ -4,7 +4,7 @@ import random
 from dataAccess import (
     readName, saveName, resetSession, getBookByTitle, getGenres, getGenreBooks,
     getOrdersJSON, getAllLocations, getLocationsJSON, extractLocation,
-    fuzzySearchTitle, getLocationsAvailable
+    fuzzySearchTitle, getLocationsAvailable, savePreferredGenre, getPreferredGenre
 )
 from utils import confirmation, getDateFromUnix
 from search import bookDescSearch
@@ -212,6 +212,11 @@ def reccomend(prompt='', bookDesc=None, countBookDesc=None, tfidfBookDesc=None, 
                 return
             userDesc = resolveEllipsis(descInput)
             
+            # Personalize search with preferred genre if available
+            preferredGenre = getPreferredGenre()
+            if preferredGenre:
+                userDesc = f"{userDesc} {preferredGenre}"
+            
             results = bookDescSearch(bookDesc, userDesc, countBookDesc, tfidfBookDesc, invIdxBookDesc)
             
             if results:
@@ -300,6 +305,7 @@ def reccomend(prompt='', bookDesc=None, countBookDesc=None, tfidfBookDesc=None, 
         
         if matchedGenre:
             updateContext('lastGenre', matchedGenre)
+            savePreferredGenre(matchedGenre)
             books = getGenreBooks(matchedGenre)
             if books:
                 recommended = random.choice(books)
