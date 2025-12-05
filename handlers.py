@@ -128,7 +128,7 @@ def discover() -> None:
     "I can help with many things!\n",
     "Let me walk you through my features:\n\n"
     "    1. Book orders - I can help you order a book for either home delivery or pick-up from one of our locations.\n\n",
-    "   2. Book reccomendation - if you're not sure what you want to order, you can ask me about genres and authors and I'll explain their work.\n\n",
+    "   2. Book recomendation - if you're not sure what you want to order, you can ask me about genres and authors and I'll explain their work.\n\n",
     "   3. Location information - I can list all our locations, describe the facilties of specific stores and let you know their opening times.\n\n",
     "   4. Book and literary information QA - you can ask me about writing, literature, and authors and I'll explain them.\n\n",
     "   5. Memory - I will remember your name and address you as such if you inform me of it!\n\n",

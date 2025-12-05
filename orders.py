@@ -244,21 +244,38 @@ def getBookSelection(prompt: str) -> str | None:
                         return None
                     break
         else:
-            print(generateContextualError('book_not_found', answer))
-            print(addDiscourseMarker('continuation', "Please try again."))
-            while True:
-                answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): "), 'book')
-                if shouldRetry:
-                    continue
-                if answer.lower() == "quit":
-                    exit()
-                if 'cancel' in answer.lower():
-                    return None
-                break
-        attempts += 1
-        if attempts > 3:
-            print("Sorry, we don't stock that book.")
-            return None
+            attempts += 1
+            if attempts > 3:
+                # Try to handle as a different intent before giving up
+                while True:
+                    answer, shouldRetry = handleInputWithIntents(answer, None)
+                    if shouldRetry:
+                        # Intent was handled, ask for book again
+                        print("\nNow, which book would you like to order?")
+                        answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): "), 'book')
+                        if shouldRetry:
+                            continue
+                        if answer.lower() == "quit":
+                            exit()
+                        if 'cancel' in answer.lower():
+                            return None
+                        attempts = 0  # Reset attempts after handling intent
+                        break
+                    else:
+                        # No intent matched, give up
+                        return None
+            else:
+                print(generateContextualError('book_not_found', answer))
+                print(addDiscourseMarker('continuation', "Please try again."))
+                while True:
+                    answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): "), 'book')
+                    if shouldRetry:
+                        continue
+                    if answer.lower() == "quit":
+                        exit()
+                    if 'cancel' in answer.lower():
+                        return None
+                    break
 
 def getQuantitySelection(prompt: str, book: str) -> int | None:
     reQuantityExtract = r"(?i)\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen| \
@@ -368,9 +385,19 @@ def getPickupOrDelivery(prompt: str, book: str, quantity: int, price: float) -> 
         isCorrection, corrType, newValue = detectCorrection(answer)
         if isCorrection:
             if corrType == 'quantity':
-                print(f"Updating quantity to {newValue}...")
-                quantity = int(newValue)
-                price = getPrice(book) * float(quantity)
+                newQuantity = int(newValue)
+                inStock, available = stockCheck(book, newQuantity)
+                if inStock:
+                    print(f"Updating quantity to {newQuantity}...")
+                    quantity = newQuantity
+                    price = getPrice(book) * float(quantity)
+                else:
+                    if available == False:
+                        print(f"Sorry, '{book}' is not in stock.")
+                    else:
+                        print(f"Sorry, we only have {available} copies of '{book}' available.")
+                    print("Please try a different quantity.")
+                    continue
             elif corrType == 'book':
                 matches = fuzzySearchTitle(newValue)
                 if matches and matches[0][1] <= 5:
@@ -412,9 +439,19 @@ def getLocationSelection(book: str, quantity: int, price: float) -> str | None:
             isCorrection, corrType, newValue = detectCorrection(answer)
             if isCorrection:
                 if corrType == 'quantity':
-                    print(f"Updating quantity to {newValue}...")
-                    quantity = int(newValue)
-                    price = getPrice(book) * float(quantity)
+                    newQuantity = int(newValue)
+                    inStock, available = stockCheck(book, newQuantity)
+                    if inStock:
+                        print(f"Updating quantity to {newQuantity}...")
+                        quantity = newQuantity
+                        price = getPrice(book) * float(quantity)
+                    else:
+                        if available == False:
+                            print(f"Sorry, '{book}' is not in stock.")
+                        else:
+                            print(f"Sorry, we only have {available} copies of '{book}' available.")
+                        print("Please try a different quantity.")
+                        continue
                 elif corrType == 'book':
                     matches = fuzzySearchTitle(newValue)
                     if matches and matches[0][1] <= 5:
@@ -469,11 +506,21 @@ def getDeliveryAddress(book: str, quantity: int, price: float) -> tuple[str, flo
         isCorrection, corrType, newValue = detectCorrection(answer)
         if isCorrection:
             if corrType == 'quantity':
-                print(f"Updating quantity to {newValue}...")
-                quantity = int(newValue)
-                price = getPrice(book) * float(quantity)
-                print("Now, back to your delivery address...")
-                continue
+                newQuantity = int(newValue)
+                inStock, available = stockCheck(book, newQuantity)
+                if inStock:
+                    print(f"Updating quantity to {newQuantity}...")
+                    quantity = newQuantity
+                    price = getPrice(book) * float(quantity)
+                    print("Now, back to your delivery address...")
+                    continue
+                else:
+                    if available == False:
+                        print(f"Sorry, '{book}' is not in stock.")
+                    else:
+                        print(f"Sorry, we only have {available} copies of '{book}' available.")
+                    print("Please try a different quantity.")
+                    continue
             elif corrType == 'book':
                 matches = fuzzySearchTitle(newValue)
                 if matches and matches[0][1] <= 5:
@@ -687,7 +734,7 @@ def getPickupDate(location: str, book: str | None = None, quantity: int | None =
     date = None
     orderUpdated = False
     while True:
-        print("On what date would you like to pickup from this store?")
+        print("On what date would you like to pickup from this store?\nE.g: 'tomorrow', '2-12', '2/12', '2/12/26', 'between the 12th of December and 15th of December'")
         while True:
             answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): "), 'date')
             if shouldRetry:
@@ -704,10 +751,21 @@ def getPickupDate(location: str, book: str | None = None, quantity: int | None =
             if isCorrection:
                 orderUpdated = True
                 if corrType == 'quantity':
-                    print(f"Updating quantity to {newValue}...")
-                    quantity = int(newValue)
-                    from dataAccess import getPrice as getPriceFunc
-                    price = getPriceFunc(book) * float(quantity)
+                    newQuantity = int(newValue)
+                    from dataAccess import stockCheck as stockCheckFunc
+                    inStock, available = stockCheckFunc(book, newQuantity)
+                    if inStock:
+                        print(f"Updating quantity to {newQuantity}...")
+                        quantity = newQuantity
+                        from dataAccess import getPrice as getPriceFunc
+                        price = getPriceFunc(book) * float(quantity)
+                    else:
+                        if available == False:
+                            print(f"Sorry, '{book}' is not in stock.")
+                        else:
+                            print(f"Sorry, we only have {available} copies of '{book}' available.")
+                        print("Please try a different quantity.")
+                        continue
                 elif corrType == 'book':
                     matches = fuzzySearchTitle(newValue)
                     if matches and matches[0][1] <= 5:
@@ -719,10 +777,117 @@ def getPickupDate(location: str, book: str | None = None, quantity: int | None =
                         price = getPriceFunc(book) * float(quantity)
                 print("Now, what date for pickup?")
                 continue
+        
+        monthNames = {
+            'january': 1, 'jan': 1, 'february': 2, 'feb': 2, 'march': 3, 'mar': 3,
+            'april': 4, 'apr': 4, 'may': 5, 'june': 6, 'jun': 6, 'july': 7, 'jul': 7,
+            'august': 8, 'aug': 8, 'september': 9, 'sep': 9, 'sept': 9, 'october': 10,
+            'oct': 10, 'november': 11, 'nov': 11, 'december': 12, 'dec': 12
+        }
+        
+        # Check for date range FIRST (e.g., "between tomorrow and Friday")
+        rangeExtract = r"(?i)between\s+(.+?)\s+and\s+(.+?)$"
+        rangeResult = re.search(rangeExtract, answer)
+        if rangeResult:
+            startStr = rangeResult.group(1).strip()
+            endStr = rangeResult.group(2).strip()
+            
+            startDate = None
+            endDate = None
+            
+            relMatch1 = re.search(r"(?i)\b(today|tomorrow|day\safter\stomorrow)\b", startStr)
+            relMatch2 = re.search(r"(?i)\b(today|tomorrow|day\safter\stomorrow)\b", endStr)
+            
+            today = datetime.date.today()
+            
+            if relMatch1:
+                token = relMatch1.group(1).lower()
+                if token == "today":
+                    startDate = today
+                elif token == "tomorrow":
+                    startDate = today + datetime.timedelta(days=1)
+                else:
+                    startDate = today + datetime.timedelta(days=2)
+            
+            if relMatch2:
+                token = relMatch2.group(1).lower()
+                if token == "today":
+                    endDate = today
+                elif token == "tomorrow":
+                    endDate = today + datetime.timedelta(days=1)
+                else:
+                    endDate = today + datetime.timedelta(days=2)
+            
+            numMatch1 = re.search(r"(?i)(\d{1,2})(?:st|nd|rd|th)?\s+(?:of\s+)?(\w+)", startStr)
+            numMatch2 = re.search(r"(?i)(\d{1,2})(?:st|nd|rd|th)?\s+(?:of\s+)?(\w+)", endStr)
+            
+            if numMatch1 and not startDate:
+                try:
+                    day = int(numMatch1.group(1))
+                    monthStr = numMatch1.group(2).lower()
+                    if monthStr in monthNames:
+                        month = monthNames[monthStr]
+                        year = today.year
+                        try:
+                            cand = datetime.date(year, month, day)
+                            if cand < today:
+                                year += 1
+                            startDate = datetime.date(year, month, day)
+                        except ValueError:
+                            pass
+                except:
+                    pass
+            
+            if numMatch2 and not endDate:
+                try:
+                    day = int(numMatch2.group(1))
+                    monthStr = numMatch2.group(2).lower()
+                    if monthStr in monthNames:
+                        month = monthNames[monthStr]
+                        year = today.year
+                        try:
+                            cand = datetime.date(year, month, day)
+                            if cand < today:
+                                year += 1
+                            endDate = datetime.date(year, month, day)
+                        except ValueError:
+                            pass
+                except:
+                    pass
+            
+            if startDate and endDate and startDate <= endDate:
+                candidateDates = []
+                current = startDate
+                while current <= endDate:
+                    if current >= today:
+                        open, openings = isLocOpenOnDate(location, getUnixEpochTimestamp(current.day, current.month, current.year))
+                        if open:
+                            candidateDates.append(current)
+                    current += datetime.timedelta(days=1)
+                
+                if candidateDates:
+                    selectedDate = candidateDates[0]
+                    print(f"I found {len(candidateDates)} available date(s) in that range.")
+                    print(f"The earliest available date is {selectedDate.strftime('%A, %d %B %Y')}.")
+                    print("Would you like to pick up on this date?")
+                    if confirmation():
+                        date = selectedDate
+                    else:
+                        if len(candidateDates) > 1:
+                            print("Here are all available dates in your range:")
+                            for i, d in enumerate(candidateDates[:5], 1):
+                                print(f"{i}. {d.strftime('%A, %d %B %Y')}")
+                            if len(candidateDates) > 5:
+                                print(f"... and {len(candidateDates) - 5} more")
+                        continue
+                else:
+                    print(f"Sorry, the {location} location is not open on any date in that range.")
+                    continue
+        
         # Extractions for when the user has said a relative date. E.g: 'tomorrow', 'day after tomorrow', etc.
         relativeExtract = r"(?i)\b(?:today|day\wafter\wtomorrow|tomorrow)\b"
         relResult = re.search(relativeExtract, answer)
-        if relResult:
+        if relResult and not date:
             token = relResult.group(0).lower()
             today = datetime.date.today()
             if token == "today":
@@ -731,38 +896,55 @@ def getPickupDate(location: str, book: str | None = None, quantity: int | None =
             elif token == "tomorrow":
                 date = today + datetime.timedelta(days=1)
             else:
-                # Set to day after tomorrow
                 today = datetime.date.today()
                 date = today + datetime.timedelta(days=2)
         
-        # Extractions for when the user enters a date in formats:
-        #   5/9, 05/09, etc
-        #   06/07/2025, 05-09-25, etc.
+        naturalDateExtract = r"(?i)(\d{1,2})(?:st|nd|rd|th)?\s+(?:of\s+)?(\w+)(?:\s+(\d{4}))?"
+        naturalResult = re.search(naturalDateExtract, answer)
+        if naturalResult and not date:
+            try:
+                day = int(naturalResult.group(1))
+                monthStr = naturalResult.group(2).lower()
+                yearStr = naturalResult.group(3)
+                
+                if monthStr in monthNames:
+                    month = monthNames[monthStr]
+                    today = datetime.date.today()
+                    
+                    if yearStr:
+                        year = int(yearStr)
+                    else:
+                        year = today.year
+                        try:
+                            cand = datetime.date(year, month, day)
+                            if cand < today:
+                                year += 1
+                        except ValueError:
+                            pass
+                    
+                    date = datetime.date(year, month, day)
+            except Exception:
+                date = None
+        
         dateExtract = r"(?i)\b(?:0?[1-9]|[12][0-9]|3[01])[/-](?:0?[1-9]|1[0-2])(?:[/-](?:\d{2}|\d{4}))?\b"
         dateResult = re.search(dateExtract, answer)
-        if dateResult:
-            # Split into day and month independently.
+        if dateResult and not date:
             dayMonth = dateResult.group(0).split("-") if '-' in dateResult.group(0) else dateResult.group(0).split('/')
             try:
                 day = int(dayMonth[0])
                 month = int(dayMonth[1])
                 today = datetime.date.today()
                 if len(dayMonth) == 3:
-                    # means the user included a year
                     year = int(dayMonth[2])
                     if year < 100:
-                        # to account for when they truncate the year to 2 digits.
                         year += 2000
                 else:
                     year = today.year
                     try:
-                        # if no year was provided and the date desired has already passed, assume next year
                         cand = datetime.date(year, month, day)
                         if cand < today:
                             year += 1
                     except ValueError:
-                        # when invalid day or month
-                        # raise this error so the outer except catches it
                         raise
                 date = datetime.date(year, month, day)
             except Exception:
@@ -811,7 +993,7 @@ def getPickupTime(location: str, book: str | None = None, quantity: int | None =
     attempts = 0
     orderUpdated = False
     while True:
-        print(f"What time would you like to pick up your order from the {location} location?")
+        print(f"What time would you like to pick up your order from the {location.title()} location?\nE.g: '3pm', '15:00', 'between 9am and 2pm' 'afternoon'")
         while True:
             answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): "), 'time')
             if shouldRetry:
@@ -828,10 +1010,21 @@ def getPickupTime(location: str, book: str | None = None, quantity: int | None =
             if isCorrection:
                 orderUpdated = True
                 if corrType == 'quantity':
-                    print(f"Updating quantity to {newValue}...")
-                    quantity = int(newValue)
-                    from dataAccess import getPrice as getPriceFunc
-                    price = getPriceFunc(book) * float(quantity)
+                    newQuantity = int(newValue)
+                    from dataAccess import stockCheck as stockCheckFunc
+                    inStock, available = stockCheckFunc(book, newQuantity)
+                    if inStock:
+                        print(f"Updating quantity to {newQuantity}...")
+                        quantity = newQuantity
+                        from dataAccess import getPrice as getPriceFunc
+                        price = getPriceFunc(book) * float(quantity)
+                    else:
+                        if available == False:
+                            print(f"Sorry, '{book}' is not in stock.")
+                        else:
+                            print(f"Sorry, we only have {available} copies of '{book}' available.")
+                        print("Please try a different quantity.")
+                        continue
                 elif corrType == 'book':
                     matches = fuzzySearchTitle(newValue)
                     if matches and matches[0][1] <= 5:
@@ -843,6 +1036,82 @@ def getPickupTime(location: str, book: str | None = None, quantity: int | None =
                         price = getPriceFunc(book) * float(quantity)
                 print("Now, what time for pickup?")
                 continue
+        
+        # Check for time range first (e.g., "between 9am and 1pm")
+        timeRangeExtract = r"(?i)between\s+(.+?)\s+(?:and|to)\s+(.+?)(?:\s|$)"
+        timeRangeRes = re.search(timeRangeExtract, answer)
+        if timeRangeRes:
+            startStr = timeRangeRes.group(1).strip()
+            endStr = timeRangeRes.group(2).strip()
+            
+            startTime = None
+            endTime = None
+            
+            # Parse start time
+            startMatch = re.search(r"(\d{1,2})\s*(am|pm|a\.m\.|p\.m\.)", startStr, re.IGNORECASE)
+            if startMatch:
+                hour = int(startMatch.group(1))
+                meridiem = startMatch.group(2).lower()
+                if 'pm' in meridiem or 'p.m.' in meridiem:
+                    startTime = 12 if hour == 12 else hour + 12
+                else:
+                    startTime = 0 if hour == 12 else hour
+            else:
+                # Check for general time or 24hr
+                if startStr.lower() in genTimesMap:
+                    startTime = genTimesMap[startStr.lower()]
+                else:
+                    match24 = re.search(r"([01]\d|2[0-3])", startStr)
+                    if match24:
+                        startTime = int(match24.group(1))
+            
+            # Parse end time
+            endMatch = re.search(r"(\d{1,2})\s*(am|pm|a\.m\.|p\.m\.)", endStr, re.IGNORECASE)
+            if endMatch:
+                hour = int(endMatch.group(1))
+                meridiem = endMatch.group(2).lower()
+                if 'pm' in meridiem or 'p.m.' in meridiem:
+                    endTime = 12 if hour == 12 else hour + 12
+                else:
+                    endTime = 0 if hour == 12 else hour
+            else:
+                # Check for general time or 24hr
+                if endStr.lower() in genTimesMap:
+                    endTime = genTimesMap[endStr.lower()]
+                else:
+                    match24 = re.search(r"([01]\d|2[0-3])", endStr)
+                    if match24:
+                        endTime = int(match24.group(1))
+            
+            if startTime is not None and endTime is not None and startTime < endTime:
+                # Find available times in the range
+                candidateTimes = []
+                for hour in range(startTime, endTime + 1):
+                    isOpen, open, close = isLocOpenAtTime(location, hour)
+                    if isOpen:
+                        candidateTimes.append(hour)
+                
+                if candidateTimes:
+                    time = candidateTimes[0]
+                    print(f"I found {len(candidateTimes)} available time(s) in that range.")
+                    print(f"The earliest available time is {time}:00 ({time if time <= 12 else time - 12}{'am' if time < 12 else 'pm'}).")
+                    print("Would you like to pick up at this time?")
+                    if confirmation():
+                        if orderUpdated:
+                            return (time, book, quantity, price)
+                        return time
+                    else:
+                        if len(candidateTimes) > 1:
+                            print("Here are all available times in your range:")
+                            for i, t in enumerate(candidateTimes[:5], 1):
+                                print(f"{i}. {t}:00 ({t if t <= 12 else t - 12}{'am' if t < 12 else 'pm'})")
+                            if len(candidateTimes) > 5:
+                                print(f"... and {len(candidateTimes) - 5} more")
+                        continue
+                else:
+                    print(f"Sorry, the {location} location is not open during any time in that range.")
+                    continue
+        
         timeExtract = r"""
             (?i)                        
             \b(?:at|around|about|for|in\sthe)?\s*   # leading word
