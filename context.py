@@ -9,14 +9,14 @@ sessionContext = {
     'conversationTurn': 0
 }
 
-def updateContext(key, value):
+def updateContext(key: str, value) -> None:
     sessionContext[key] = value
     sessionContext['conversationTurn'] += 1
 
-def getContext(key):
+def getContext(key: str):
     return sessionContext.get(key)
 
-def resetContext():
+def resetContext() -> None:
     global sessionContext
     sessionContext = {
         'lastBook': None,
@@ -27,7 +27,7 @@ def resetContext():
         'conversationTurn': 0
     }
 
-def resolveEllipsis(query):
+def resolveEllipsis(query: str) -> str:
     queryLower = query.lower().strip()
     
     if re.match(r'^\d+$', queryLower):

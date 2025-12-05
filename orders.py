@@ -117,7 +117,7 @@ def handleInputWithIntents(userInput: str, expectedType: str = None):
     # Didn't match any special intent, return for normal processing
     return userInput, False
 
-def detectCorrection(userInput):
+def detectCorrection(userInput: str) -> tuple[bool, str, str]:
     """
     Detects if user is trying to correct a previous input.
     Returns tuple: (isCorrection: bool, correctionType: str, newValue: any)
@@ -144,7 +144,7 @@ def detectCorrection(userInput):
     
     return (False, None, None)
 
-def collectFeedback(lastPrompt=""):
+def collectFeedback(lastPrompt: str = "") -> None:
     print("\nWe'd appreciate your feedback to help us improve!")
     print("On a scale of 1-5, how would you rate your experience? (1=poor, 5=excellent)")
     while True:
@@ -171,6 +171,400 @@ def collectFeedback(lastPrompt=""):
     
     storeFeedback(rating, comments, lastPrompt)
     print("Thank you for your feedback!")
+
+def getBookSelection(prompt: str) -> str | None:
+    reTitleExtract = r"(?i)\b(?:order|buy|get|purchase|place)\b.*?\b([A-Za-z0-9'':,&() ]{3,}?)\b(?=(?:\s+(?:for|from|to|at|in|pickup|delivery|delivered|store)\b|[.?!,;]|$))"
+    title = re.search(reTitleExtract, prompt)
+    
+    matches = []
+    if title:
+        matches = fuzzySearchTitle(title.group(1))
+    if matches:
+        if matches[0][1] <= 2:
+            book = matches[0][0]
+            updateContext('lastBook', book)
+            print(f"Ordering: {book}")
+            return book
+        else:
+            print(f"Okay! So you'd like to order: {matches[0][0]}?")
+            if confirmation():
+                book = matches[0][0]
+                return book
+            elif len(matches) > 1:
+                print(f"Did you mean: {matches[1][0]}?")
+                if confirmation():
+                    book = matches[1][0]
+                    return book
+                elif len(matches) > 2:
+                    print(f"Or perhaps: {matches[2][0]}?")
+                    if confirmation():
+                        book = matches[2][0]
+                        return book
+    
+    print("You'd like to place an order for which book? (please enter just the title)")
+    while True:
+        answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): "), 'book')
+        if shouldRetry:
+            continue
+        if answer.lower() == "quit":
+            exit()
+        if 'cancel' in answer.lower():
+            return None
+        break
+    attempts = 0
+    while True:
+        matches = fuzzySearchTitle(answer)
+        if matches:
+            if matches[0][1] <= 2:
+                book = matches[0][0]
+                print(f"Ordering: {book}")
+                return book
+            else:
+                print(f"Okay! So you'd like to order: {matches[0][0]}?")
+                if confirmation():
+                    book = matches[0][0]
+                    return book
+                elif len(matches) > 1:
+                    print(f"Did you mean: {matches[1][0]}?")
+                    if confirmation():
+                        book = matches[1][0]
+                        return book
+                    elif len(matches) > 2:
+                        print(f"Or perhaps: {matches[2][0]}?")
+                        if confirmation():
+                            book = matches[2][0]
+                            return book
+                while True:
+                    answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): "), 'book')
+                    if shouldRetry:
+                        continue
+                    if answer.lower() == "quit":
+                        exit()
+                    if 'cancel' in answer.lower():
+                        return None
+                    break
+        else:
+            print(generateContextualError('book_not_found', answer))
+            print(addDiscourseMarker('continuation', "Please try again."))
+            while True:
+                answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): "), 'book')
+                if shouldRetry:
+                    continue
+                if answer.lower() == "quit":
+                    exit()
+                if 'cancel' in answer.lower():
+                    return None
+                break
+        attempts += 1
+        if attempts > 3:
+            print("Sorry, we don't stock that book.")
+            return None
+
+def getQuantitySelection(prompt: str, book: str) -> int | None:
+    reQuantityExtract = r"(?i)\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen| \
+                        sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|million)\b|\b(\d+)\b"
+    numbers = re.search(reQuantityExtract, prompt)
+    
+    skip = False
+    if numbers:
+        if numbers.group(1):
+            quant = wordToInt(numbers.group(1).lower())
+        else:
+            quant = numbers.group(2)
+        
+        allNumbers = re.findall(reQuantityExtract, prompt)
+        
+        needsConfirmation = False
+        
+        if len(allNumbers) > 1:
+            print("I found multiple numbers in your request. Which quantity did you mean?")
+            for i, num in enumerate(allNumbers, 1):
+                numValue = wordToInt(num[0].lower()) if num[0] else num[1]
+                print(f"{i}. {numValue} copies")
+            
+            choice = input("Please enter the number (1, 2, etc.): ").strip()
+            try:
+                idx = int(choice) - 1
+                if 0 <= idx < len(allNumbers):
+                    selectedNum = allNumbers[idx]
+                    quant = wordToInt(selectedNum[0].lower()) if selectedNum[0] else selectedNum[1]
+                    return int(quant)
+            except ValueError:
+                print("Sorry for the misunderstanding, ", end='')
+        elif numbers.group(1):
+            needsConfirmation = True
+        elif not re.search(r'(?i)\b(copies|copy|books?)\b.*?\b' + str(quant) + r'\b|\b' + str(quant) + r'\b.*?\b(copies|copy|books?)\b', prompt):
+            needsConfirmation = True
+        else:
+            return int(quant)
+        
+        if needsConfirmation and not skip:
+            print(f"To confirm, you'd like to order {quant} copies?")
+            if confirmation():
+                return int(quant)
+            else:
+                print("Sorry for the misunderstanding, ", end='')
+    
+    while True:
+        print("How many copies would you like?")
+        while True:
+            answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): "), 'quantity')
+            if shouldRetry:
+                continue
+            break
+        if answer.lower() == "quit":
+            exit()
+        elif 'cancel' in answer.lower():
+            return None
+        numbers = re.search(reQuantityExtract, answer)
+        if numbers:
+            if numbers.group(1):
+                quant = wordToInt(numbers.group(1))
+            else:
+                quant = numbers.group(2)
+            
+            if re.match(r'^\s*\d+\s*$', answer):
+                inStock, available = stockCheck(book, int(quant))
+                if not inStock:
+                    print(generateContextualError('stock_insufficient', available))
+                else:
+                    return int(quant)
+            else:
+                print(f"To confirm, you'd like to order {quant} copies?")
+                if confirmation():
+                    inStock, available = stockCheck(book, int(quant))
+                    if not inStock:
+                        print(generateContextualError('stock_insufficient', available))
+                    else:
+                        return int(quant)
+
+def getPickupOrDelivery(prompt: str, book: str, quantity: int, price: float) -> bool | None:
+    rePickupExtract = r"(?i)\b(pick-?up|drop-?off)\b"
+    reDeliveryExtract = r"(?i)\b(delivery|home)\b"
+    pickupMatch = re.search(rePickupExtract, prompt)
+    deliveryMatch = re.search(reDeliveryExtract, prompt)
+    
+    if pickupMatch:
+        print("You would like to pick-up from one of our locations, right?")
+        if confirmation():
+            return True
+    elif deliveryMatch:
+        print("You would like this order to be for home delivery, right?")
+        if confirmation():
+            return False
+    
+    while True:
+        print("For pickup or delivery? (type pickup/delivery)")
+        while True:
+            answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): "), 'pickup_delivery')
+            if shouldRetry:
+                continue
+            break
+        if answer.lower() == "quit":
+            exit()
+        elif 'cancel' in answer.lower():
+            return None
+        
+        isCorrection, corrType, newValue = detectCorrection(answer)
+        if isCorrection:
+            if corrType == 'quantity':
+                print(f"Updating quantity to {newValue}...")
+                quantity = int(newValue)
+                price = getPrice(book) * float(quantity)
+            elif corrType == 'book':
+                matches = fuzzySearchTitle(newValue)
+                if matches and matches[0][1] <= 5:
+                    print(f"Updating book to {matches[0][0]}...")
+                    book = matches[0][0]
+                    updateContext('lastBook', book)
+                    price = getPrice(book) * float(quantity)
+                else:
+                    print(f"Sorry, couldn't find '{newValue}'. Keeping {book}.")
+            print("So, pickup or delivery?")
+            continue
+        
+        if answer.lower().find("deliv") != -1:
+            return False
+        elif answer.lower().find("pick") != -1:
+            return True
+        else:
+            print("Please specify 'pickup' or 'delivery'.")
+            continue
+
+def getLocationSelection(book: str, quantity: int, price: float) -> str | None:
+    attempts = 0
+    while attempts < 4:
+        print("Which BlackSmith™'s store location would you like to pick-up your order from? (type 'list' to get a list of all locations)")
+        while True:
+            answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): "), 'location')
+            if shouldRetry:
+                continue
+            break
+        if answer.lower() == "quit":
+            exit()
+        elif 'cancel' in answer.lower():
+            return None
+        elif answer.lower().find("list") != -1:
+            print("Our bookstores can be found in the following locations:")
+            for location in getAllLocations():
+                print(f"Location: {location[0]}, Address: {location[1]}")
+        else:
+            isCorrection, corrType, newValue = detectCorrection(answer)
+            if isCorrection:
+                if corrType == 'quantity':
+                    print(f"Updating quantity to {newValue}...")
+                    quantity = int(newValue)
+                    price = getPrice(book) * float(quantity)
+                elif corrType == 'book':
+                    matches = fuzzySearchTitle(newValue)
+                    if matches and matches[0][1] <= 5:
+                        print(f"Updating book to {matches[0][0]}...")
+                        book = matches[0][0]
+                        updateContext('lastBook', book)
+                        price = getPrice(book) * float(quantity)
+                    else:
+                        print(f"Sorry, couldn't find '{newValue}'. Keeping {book}.")
+                print("Now, which location for pickup?")
+                continue
+            
+            location = extractLocation(answer)
+            if location:
+                print(f'Okay! I have set your order to be picked up from the BlackSmith store in {location.title()}!')
+                return location
+            else:
+                attempts += 1
+                if attempts == 2:
+                    print("If you are entering the address and I'm failing to recognise it, I am just looking for the general location, e.g: 'London'.")
+                    print("For your reference, our bookstores can be found in the following locations:")
+                    for location in getAllLocations():
+                        print(f"Location: {location[0]}, Address: {location[1]}")
+                if attempts > 3:
+                    error = generateContextualError('location_not_found', answer)
+                    print(addDiscourseMarker('clarification', f"{error}\nWould you like to cancel this order? If not, I'll keep trying."))
+                    if confirmation():
+                        print(addDiscourseMarker('result', "I've cancelled this order."))
+                        collectFeedback(answer)
+                        return None
+                    else:
+                        print(addDiscourseMarker('continuation', "I'll keep trying!"))
+                        attempts = 0
+    return None
+
+def getDeliveryAddress(book: str, quantity: int, price: float) -> tuple[str, float] | None:
+    print("What is your delivery address?")
+    print("Please provide your full address in the format: House number, Street, City, Postcode")
+    validAddress = False
+    attempts = 0
+    while not validAddress:
+        while True:
+            answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): "), 'general')
+            if shouldRetry:
+                continue
+            break
+        if answer.lower() == "quit":
+            exit()
+        elif 'cancel' in answer.lower():
+            return None
+        
+        isCorrection, corrType, newValue = detectCorrection(answer)
+        if isCorrection:
+            if corrType == 'quantity':
+                print(f"Updating quantity to {newValue}...")
+                quantity = int(newValue)
+                price = getPrice(book) * float(quantity)
+                print("Now, back to your delivery address...")
+                continue
+            elif corrType == 'book':
+                matches = fuzzySearchTitle(newValue)
+                if matches and matches[0][1] <= 5:
+                    print(f"Updating book to {matches[0][0]}...")
+                    book = matches[0][0]
+                    updateContext('lastBook', book)
+                    price = getPrice(book) * float(quantity)
+                    print("Now, back to your delivery address...")
+                    continue
+        
+        addressInput = answer.strip()
+        if len(addressInput) < 10:
+            error = generateContextualError('address_invalid')
+            print(f"{error} Please provide a complete address including postcode.")
+            attempts += 1
+            if attempts > 3:
+                print("Would you like to cancel this order? If not, I'll keep trying.")
+                if confirmation():
+                    print(addDiscourseMarker('result', "I've cancelled this order."))
+                    collectFeedback(addressInput)
+                    return None
+                else:
+                    print(addDiscourseMarker('continuation', "I'll keep trying!"))
+                    attempts = 0
+            continue
+        
+        postcodePattern = r'\b[A-Z]{1,2}\d{1,2}[A-Z]?\s?\d[A-Z]{2}\b'
+        postcodeMatch = re.search(postcodePattern, addressInput, re.IGNORECASE)
+        
+        if not postcodeMatch:
+            error = generateContextualError('address_invalid')
+            print(f"{error}\nUK postcodes should look like: SW1A 1AA, M1 1AE, B33 8TH, etc.")
+            attempts += 1
+            if attempts > 3:
+                print("Would you like to cancel this order? If not, I'll keep trying.")
+                if confirmation():
+                    print(addDiscourseMarker('result', "I've cancelled this order."))
+                    collectFeedback(addressInput)
+                    return None
+                else:
+                    print(addDiscourseMarker('continuation', "I'll keep trying!"))
+                    attempts = 0
+            continue
+        
+        postcode = postcodeMatch.group(0).upper()
+        addressParts = addressInput.split(',')
+        
+        if len(addressParts) < 3:
+            print("Your address should have at least: Street, City, Postcode")
+            print("Please separate parts with commas, for example: 123 High Street, London, SW1A 1AA")
+            attempts += 1
+            if attempts > 3:
+                error = generateContextualError('address_invalid')
+                print(f"{error}\nWould you like to cancel this order? If not, I'll keep trying.")
+                if confirmation():
+                    print(addDiscourseMarker('result', "I've cancelled this order."))
+                    collectFeedback(addressInput)
+                    return None
+                else:
+                    print(addDiscourseMarker('continuation', "I'll keep trying!"))
+                    attempts = 0
+            continue
+        
+        validAddress = True
+
+        print(f"To confirm, your delivery address is: {addressInput}?")
+        print(f"Postcode detected: {postcode}")
+        
+        if confirmation():
+            print(addDiscourseMarker('confirmation', f'Delivery will cost an additional £4.99, is that ok?'))
+            if confirmation():
+                return addressInput, 4.99
+            else:
+                print(addDiscourseMarker('result','your order has been cancelled.'))
+                collectFeedback(addressInput)
+                return None
+        else:
+            validAddress = False
+            attempts += 1
+            if attempts > 3:
+                print(generateContextualError('address_invalid') + "\n" + \
+                    "Would you like to cancel this order? If not, I'll keep trying to understand your address.")
+                if confirmation():
+                    print(addDiscourseMarker('result', 
+                        "I've cancelled this order as I couldn't understand your delivery address."))
+                    collectFeedback(addressInput)
+                    return None
+                else:
+                    print(addDiscourseMarker('continuation', "I'll keep trying!"))
+                    attempts = 0
+    return None
 
 '''
 Use a slot filling approach.
@@ -204,7 +598,6 @@ def order(prompt: str, intents=None, count=None, tfidf=None, invIdxIntents=None,
     
     updateContext('lastIntent', 'order')
     
-    # Declare slots as None for now, any left as None after initial scan of prompt will be ask for
     book: str = None
     quantity: int = None
     pickup: bool = None
@@ -212,333 +605,28 @@ def order(prompt: str, intents=None, count=None, tfidf=None, invIdxIntents=None,
     price: float = None
     name: str = None
 
-    # Extract the book title they want to order.
-    reTitleExtract = r"(?i)\b(?:order|buy|get|purchase|place)\b.*?\b([A-Za-z0-9'':,&() ]{3,}?)\b(?=(?:\s+(?:for|from|to|at|in|pickup|delivery|delivered|store)\b|[.?!,;]|$))"
-    title = re.search(reTitleExtract, prompt)
-    # Extract the quantity they want to order.
-    # Matches both numerical words and digits.
-    reQuantityExtract = r"(?i)\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen| \
-                        sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|million)\b|\b(\d+)\b"
-    numbers = re.search(reQuantityExtract, prompt)
-    # Extract if it's for pickup for delivery.
-    rePickupExtract = r"(?i)\b(pick-?up|drop-?off)\b"
-    reDeliveryExtract = r"(?i)\b(delivery|home)\b"
-    pickupMatch = re.search(rePickupExtract, prompt)
-    deliveryMatch = re.search(reDeliveryExtract, prompt)
-
-    # Check for book in stock.json 
-    # Use Levenshtein-based fuzzy search to ensure detected book title can match 
-    # to a specific title as per stock.json.
-    matches = []
-    if title:
-        matches = fuzzySearchTitle(title.group(1))
-    if matches:
-        # Extracted a title from the prompt and able to fuzzy find it in the stock dataset.
-        # If distance is very low (<=2), high confidence - no need to confirm
-        if matches[0][1] <= 2:
-            book = matches[0][0]
-            updateContext('lastBook', book)
-            print(f"Ordering: {book}")
-        else:
-            # Lower confidence, confirm with user
-            print(f"Okay! So you'd like to order: {matches[0][0]}?")
-            if confirmation():
-                book = matches[0][0]
-            elif len(matches) > 1:
-                # User said no to first match, try second match
-                print(f"Did you mean: {matches[1][0]}?")
-                if confirmation():
-                    book = matches[1][0]
-                elif len(matches) > 2:
-                    # Try third match
-                    print(f"Or perhaps: {matches[2][0]}?")
-                    if confirmation():
-                        book = matches[2][0]
-    if not matches or not book:
-        # Extracted a title from the prompt, but unable to find it in the stock dataset.
-        print("You'd like to place an order for which book? (please enter just the title)")
-        while True:
-            answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): "), 'book')
-            if shouldRetry:
-                continue  # Intent was handled, ask again
-            if answer.lower() == "quit":
-                exit()
-            if 'cancel' in answer.lower():
-                return
-            break
-        attempts = 0
-        # Allow 3 re-entry attempts, if still no match, display list of titles in stock
-        while True:
-            matches = fuzzySearchTitle(answer)
-            if matches:
-                # Try matches in order with confidence-based approach
-                if matches[0][1] <= 2:
-                    # High confidence match
-                    book = matches[0][0]
-                    print(f"Ordering: {book}")
-                    break
-                else:
-                    # Ask for confirmation on first match
-                    print(f"Okay! So you'd like to order: {matches[0][0]}?")
-                    if confirmation():
-                        book = matches[0][0]
-                        break
-                    elif len(matches) > 1:
-                        # Try second match
-                        print(f"Did you mean: {matches[1][0]}?")
-                        if confirmation():
-                            book = matches[1][0]
-                            break
-                        elif len(matches) > 2:
-                            # Try third match
-                            print(f"Or perhaps: {matches[2][0]}?")
-                            if confirmation():
-                                book = matches[2][0]
-                                break
-                    # None of the matches were confirmed
-                    while True:
-                        answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): "), 'book')
-                        if shouldRetry:
-                            continue
-                        if answer.lower() == "quit":
-                            exit()
-                        if 'cancel' in answer.lower():
-                            return
-                        break
-            else:
-                print(generateContextualError('book_not_found', answer))
-                print(addDiscourseMarker('continuation', "Please try again."))
-                while True:
-                    answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): "), 'book')
-                    if shouldRetry:
-                        continue
-                    if answer.lower() == "quit":
-                        exit()
-                    if 'cancel' in answer.lower():
-                        return
-                    break
-            attempts += 1
-            if attempts > 3:
-                print("Sorry, we don't stock that book.")
-                break
-
-    skip = False
-    if book:
-        if numbers:
-            # Detected a numerical value in the user's prompt.
-            # Need to convert word for number into number.
-            if numbers.group(1):
-                quant = wordToInt(numbers.group(1).lower())
-            else:
-                quant = numbers.group(2)
-            
-            # Find all numbers in the prompt to check if there are multiple
-            allNumbers = re.findall(reQuantityExtract, prompt)
-            
-            # Only confirm if:
-            # 1. There are multiple numbers (ambiguous which is quantity)
-            # 2. The number is a word (less explicit than digit)
-            # 3. The prompt doesn't clearly indicate quantity context
-            needsConfirmation = False
-            
-            if len(allNumbers) > 1:
-                # Multiple numbers found - iterate through them
-                print("I found multiple numbers in your request. Which quantity did you mean?")
-                for i, num in enumerate(allNumbers, 1):
-                    numValue = wordToInt(num[0].lower()) if num[0] else num[1]
-                    print(f"{i}. {numValue} copies")
-                
-                choice = input("Please enter the number (1, 2, etc.): ").strip()
-                try:
-                    idx = int(choice) - 1
-                    if 0 <= idx < len(allNumbers):
-                        selectedNum = allNumbers[idx]
-                        quant = wordToInt(selectedNum[0].lower()) if selectedNum[0] else selectedNum[1]
-                        quantity = quant
-                        skip = True
-                except ValueError:
-                    print("Sorry for the misunderstanding, ", end='')
-            elif numbers.group(1):
-                # Number was a word - confirm for clarity
-                needsConfirmation = True
-            elif not re.search(r'(?i)\b(copies|copy|books?)\b.*?\b' + str(quant) + r'\b|\b' + str(quant) + r'\b.*?\b(copies|copy|books?)\b', prompt):
-                # Number found but not in clear quantity context
-                needsConfirmation = True
-            else:
-                # Direct numerical input in proper context, no confirmation needed
-                quantity = int(quant)
-                skip = True
-            
-            if needsConfirmation and not skip:
-                print(f"To confirm, you'd like to order {quant} copies?")
-                if confirmation():
-                    quantity = quant
-                    skip = True
-                else:
-                    print("Sorry for the misunderstanding, ", end='')
-        
-        if not skip:
-            while True:
-                print("How many copies would you like?")
-                while True:
-                    answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): "), 'quantity')
-                    if shouldRetry:
-                        continue
-                    break
-                if answer.lower() == "quit":
-                    exit()
-                elif 'cancel' in answer.lower():
-                    return
-                numbers = re.search(reQuantityExtract, answer)
-                if numbers:
-                    if numbers.group(1):
-                        quant = wordToInt(numbers.group(1))
-                    else:
-                        quant = numbers.group(2)
-                    
-                    # Check if answer is just a number 
-                    if re.match(r'^\s*\d+\s*$', answer):
-                        # Direct numerical response, no confirmation needed
-                        inStock, available = stockCheck(book, int(quant))
-                        if not inStock:
-                            print(generateContextualError('stock_insufficient', available))
-                        else:
-                            quantity = int(quant)
-                            break
-                    else:
-                        # More complex answer, needs confirmation
-                        print(f"To confirm, you'd like to order {quant} copies?")
-                        if confirmation():
-                            # Perform a stock check
-                            inStock, available = stockCheck(book, int(quant))
-                            if not inStock:
-                                print(generateContextualError('stock_insufficient', available))
-                            else:
-                                quantity = int(quant)
-                                break
+    book = getBookSelection(prompt)
+    if not book:
+        return
+    
+    updateContext('lastBook', book)
+    
+    quantity = getQuantitySelection(prompt, book)
+    if not quantity:
+        return
     
     if quantity and book:
         print(f"Quantity: {quantity}")
-        # Now have all the information needed to set the price for this order.
         price = getPrice(book) * float(quantity)
-        if pickupMatch:
-            # Keyword for pickup detected, but need to confirm.
-            print("You would like to pick-up from one of our locations, right?")
-            if confirmation():
-                pickup = True
-        elif deliveryMatch:
-            # Keyword for delivery detected, but need to confirm.
-            print("You would like this order to be for home delivery, right?")
-            if confirmation():
-                pickup = False
-        else:
-            # No decision is clear in the initial prompt, ask directly
-            while True:
-                print("For pickup or delivery? (type pickup/delivery)")
-                while True:
-                    answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): "), 'pickup_delivery')
-                    if shouldRetry:
-                        continue
-                    break
-                if answer.lower() == "quit":
-                    exit()
-                elif 'cancel' in answer.lower():
-                    return
-                
-                # Check for correction in the pickup/delivery response
-                isCorrection, corrType, newValue = detectCorrection(answer)
-                if isCorrection:
-                    if corrType == 'quantity':
-                        print(f"Updating quantity to {newValue}...")
-                        quantity = int(newValue)
-                        price = getPrice(book) * float(quantity)
-                    elif corrType == 'book':
-                        matches = fuzzySearchTitle(newValue)
-                        if matches and matches[0][1] <= 5:
-                            print(f"Updating book to {matches[0][0]}...")
-                            book = matches[0][0]
-                            updateContext('lastBook', book)
-                            price = getPrice(book) * float(quantity)
-                        else:
-                            print(f"Sorry, couldn't find '{newValue}'. Keeping {book}.")
-                    print("So, pickup or delivery?")
-                    continue
-                
-                if answer.lower().find("deliv") != -1:
-                    pickup = False
-                    break
-                elif answer.lower().find("pick") != -1:
-                    pickup = True
-                    break
-                else:
-                    print("Please specify 'pickup' or 'delivery'.")
-                    continue
-        # Based on pickup boolean, get home address details or get store location.
+        
+        pickup = getPickupOrDelivery(prompt, book, quantity, price)
+        if pickup is None:
+            return
+        
         if pickup:
-            attempts = 0
-            while attempts < 4:
-                print("Which BlackSmith™'s store location would you like to pick-up your order from? (type 'list' to get a list of all locations)")
-                while True:
-                    answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): "), 'location')
-                    if shouldRetry:
-                        continue
-                    break
-                if answer.lower() == "quit":
-                    exit()
-                elif 'cancel' in answer.lower():
-                    return
-                elif answer.lower().find("list") != -1:
-                    # Help the user discover what locations exist.
-                    print("Our bookstores can be found in the following locations:")
-                    for location in getAllLocations():
-                        print(f"Location: {location[0]}, Address: {location[1]}")
-                else:
-                    # Search for the location they specified.
-                    # After 3 fails to recognise a location name, print out the list of locations even if the user didn't ask.
-                    
-                    # Check for correction in the location response
-                    isCorrection, corrType, newValue = detectCorrection(answer)
-                    if isCorrection:
-                        if corrType == 'quantity':
-                            print(f"Updating quantity to {newValue}...")
-                            quantity = int(newValue)
-                            price = getPrice(book) * float(quantity)
-                        elif corrType == 'book':
-                            matches = fuzzySearchTitle(newValue)
-                            if matches and matches[0][1] <= 5:
-                                print(f"Updating book to {matches[0][0]}...")
-                                book = matches[0][0]
-                                updateContext('lastBook', book)
-                                price = getPrice(book) * float(quantity)
-                            else:
-                                print(f"Sorry, couldn't find '{newValue}'. Keeping {book}.")
-                        print("Now, which location for pickup?")
-                        continue
-                    
-                    location = extractLocation(answer)
-                    if location:
-                        print(f'Okay! I have set your order to be picked up from the BlackSmith store in {location.title()}!')
-                        address = location
-                        break
-                    else:
-                        attempts += 1
-                        if attempts == 2:
-                            # Help the user discover what locations exist.
-                            # Elaborate on the expected format of the response from the user.
-                            print("If you are entering the address and I'm failing to recognise it, I am just looking for the general location, e.g: 'London'.")
-                            print("For your reference, our bookstores can be found in the following locations:")
-                            for location in getAllLocations():
-                                print(f"Location: {location[0]}, Address: {location[1]}")
-                        if attempts > 3:
-                            error = generateContextualError('location_not_found', answer)
-                            print(addDiscourseMarker('clarification', f"{error}\nWould you like to cancel this order? If not, I'll keep trying."))
-                            if confirmation():
-                                print(addDiscourseMarker('result', "I've cancelled this order."))
-                                collectFeedback(answer)
-                                break
-                            else:
-                                print(addDiscourseMarker('continuation', "I'll keep trying!"))
-                                attempts = 0
+            address = getLocationSelection(book, quantity, price)
+            if not address:
+                return
             if address:
                 # If the user successfully selected a pickup location, 
                 # Need to select a pick-up date and timeslot.
@@ -562,129 +650,12 @@ def order(prompt: str, intents=None, count=None, tfidf=None, invIdxIntents=None,
                 if time == -1:
                     return
         else:
-            print("What is your delivery address?")
-            print("Please provide your full address in the format: House number, Street, City, Postcode")
-            # Encourage the user to follow a specific format of address to give the extraction the best chances of working.
-            validAddress = False
-            attempts = 0
-            # Keep trying until we get a valid extracted address.
-            while not validAddress:
-                while True:
-                    answer, shouldRetry = handleInputWithIntents(input("Please enter your prompt (QUIT to exit) (CANCEL to cancel order): "), 'general')
-                    if shouldRetry:
-                        continue
-                    break
-                if answer.lower() == "quit":
-                    exit()
-                elif 'cancel' in answer.lower():
-                    return
-                
-                # Check for correction in the address input
-                isCorrection, corrType, newValue = detectCorrection(answer)
-                if isCorrection:
-                    if corrType == 'quantity':
-                        print(f"Updating quantity to {newValue}...")
-                        quantity = int(newValue)
-                        price = getPrice(book) * float(quantity)
-                        print("Now, back to your delivery address...")
-                        continue
-                    elif corrType == 'book':
-                        matches = fuzzySearchTitle(newValue)
-                        if matches and matches[0][1] <= 5:
-                            print(f"Updating book to {matches[0][0]}...")
-                            book = matches[0][0]
-                            updateContext('lastBook', book)
-                            price = getPrice(book) * float(quantity)
-                            print("Now, back to your delivery address...")
-                            continue
-                
-                addressInput = answer.strip()
-                # Simple length check to filter out clearly incorrect responses. 
-                if len(addressInput) < 10:
-                    error = generateContextualError('address_invalid')
-                    print(f"{error} Please provide a complete address including postcode.")
-                    attempts += 1
-                    if attempts > 3:
-                        print("Would you like to cancel this order? If not, I'll keep trying.")
-                        if confirmation():
-                            print(addDiscourseMarker('result', "I've cancelled this order."))
-                            collectFeedback(addressInput)
-                            return
-                        else:
-                            print(addDiscourseMarker('continuation', "I'll keep trying!"))
-                            attempts = 0
-                    continue
-                
-                # Basic UK postcode verification.
-                postcodePattern = r'\b[A-Z]{1,2}\d{1,2}[A-Z]?\s?\d[A-Z]{2}\b'
-                postcodeMatch = re.search(postcodePattern, addressInput, re.IGNORECASE)
-                
-                if not postcodeMatch:
-                    error = generateContextualError('address_invalid')
-                    print(f"{error}\nUK postcodes should look like: SW1A 1AA, M1 1AE, B33 8TH, etc.")
-                    attempts += 1
-                    if attempts > 3:
-                        print("Would you like to cancel this order? If not, I'll keep trying.")
-                        if confirmation():
-                            print(addDiscourseMarker('result', "I've cancelled this order."))
-                            collectFeedback(addressInput)
-                            return
-                        else:
-                            print(addDiscourseMarker('continuation', "I'll keep trying!"))
-                            attempts = 0
-                    continue
-                
-                postcode = postcodeMatch.group(0).upper()
-                addressParts = addressInput.split(',')
-                
-                # Ensure the user inputs all 3 parts of the expected address.
-                if len(addressParts) < 3:
-                    print("Your address should have at least: Street, City, Postcode")
-                    print("Please separate parts with commas, for example: 123 High Street, London, SW1A 1AA")
-                    attempts += 1
-                    if attempts > 3:
-                        error = generateContextualError('address_invalid')
-                        print(f"{error}\nWould you like to cancel this order? If not, I'll keep trying.")
-                        if confirmation():
-                            print(addDiscourseMarker('result', "I've cancelled this order."))
-                            collectFeedback(addressInput)
-                            return
-                        else:
-                            print(addDiscourseMarker('continuation', "I'll keep trying!"))
-                            attempts = 0
-                    continue
-                
-                validAddress = True
-
-                # Addresses are very sensitive and consequences of getting it wrong are them losing their order, 
-                # Therefore verify before setting slot.
-                print(f"To confirm, your delivery address is: {addressInput}?")
-                print(f"Postcode detected: {postcode}")
-                
-                if confirmation():
-                    address = addressInput
-                    print(addDiscourseMarker('confirmation', f'Delivery will cost an additional £4.99, is that ok?'))
-                    if confirmation():
-                        price += 4.99
-                        print(addDiscourseMarker('confirmation', f"This charge has been added."))
-                    else:
-                        print(addDiscourseMarker('result','your order has been cancelled.'))
-                        collectFeedback(addressInput)
-                        return
-                else:
-                    validAddress = False
-                    attempts += 1
-                    if attempts > 3:
-                        print(generateContextualError('address_invalid') + "\n" + \
-                            "Would you like to cancel this order? If not, I'll keep trying to understand your address.")
-                        if confirmation():
-                            print(addDiscourseMarker('result', 
-                                "I've cancelled this order as I couldn't understand your delivery address."))
-                            collectFeedback(addressInput)
-                            return
-                        else:
-                            print(addDiscourseMarker('continuation', "I'll keep trying!"))
-                            attempts = 0
+            result = getDeliveryAddress(book, quantity, price)
+            if not result:
+                return
+            address, deliveryCharge = result
+            price += deliveryCharge
+            print(addDiscourseMarker('confirmation', f"This charge has been added."))
 
     if address:
         # Check if we know the user's name, if we do not, ask for the order and save for later too.
@@ -711,7 +682,7 @@ def order(prompt: str, intents=None, count=None, tfidf=None, invIdxIntents=None,
             print(addDiscourseMarker('confirmation', f"Your order for {summary} has been placed!"))
             collectFeedback()
 
-def getPickupDate(location: str, book=None, quantity=None, price=None):
+def getPickupDate(location: str, book: str | None = None, quantity: int | None = None, price: float | None = None):
     # Dates will be based on a unix epoch timestamp for simple storage.
     date = None
     orderUpdated = False
@@ -825,7 +796,7 @@ Returns standardised hour of pickup in 24 hour format integer.
 E.g: 1pm -> returns int 13.
 If failed, returns -1.
 '''
-def getPickupTime(location, book=None, quantity=None, price=None):
+def getPickupTime(location: str, book: str | None = None, quantity: int | None = None, price: float | None = None):
     # Time will be stored in 24 hour format with no minutes.
     # If the user enters a time which is not a round hour, truncate.
     time = None

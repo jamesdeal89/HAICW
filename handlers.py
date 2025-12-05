@@ -14,7 +14,7 @@ from context import updateContext, getContext, resolveEllipsis
 '''
 Simple handler for when the user thanks the chatbot
 '''
-def thank():
+def thank() -> None:
     
     name = readName()
     
@@ -43,7 +43,7 @@ Pattern match prompt to identify keywords which can be saved and referred to in 
 If no match, resort to generic response like "Why do you say that?" or "Tell me more".
 Allow multiple matches from a single user prompt - gradually builds up a large response if the user's prompt was multi-faceted.
 '''
-def small(prompt):
+def small(prompt: str) -> None:
 
     # List of regex patterns to match and capture specific keywords.
     # These keywords, depending on type, will be inserted into template responses. 
@@ -123,7 +123,7 @@ def small(prompt):
 Handler for when intent is detected to be 'discover' which means the user is asking about what the chatbot can do.
 Prints out a detailed explanation of capabilties to make the chatbot less of a 'black box'.
 '''
-def discover():
+def discover() -> None:
     print(
     "I can help with many things!\n",
     "Let me walk you through my features:\n\n"
@@ -136,7 +136,7 @@ def discover():
     "    7. Small talk - I can handle basic small talk if you'd like to chat.\n\n",
     "I hope this helps you converse with me effectively!")
 
-def identity(prompt):
+def identity(prompt: str) -> None:
     # Use regular expression to determine specific intent (either they want to set the name or recall it)
     reIntents = [r"(?i)\b(?:my name is|call me|i am|i'm)\s+([A-Za-z][A-Za-z' -]*)",
                  r"(?i)\b(?:what\s+is\s+my\s+name|do\s+you\s+know\s+my\s+name|who\s+am\s+i)\b",
@@ -182,7 +182,7 @@ def identity(prompt):
 Handles when the user wants a reccomendation for a book.
 Uses genre-based recommendations from the available stock.
 '''
-def reccomend(prompt='', bookDesc=None, countBookDesc=None, tfidfBookDesc=None, invIdxBookDesc=None):
+def reccomend(prompt: str = '', bookDesc=None, countBookDesc=None, tfidfBookDesc=None, invIdxBookDesc=None) -> None:
     
     updateContext('lastIntent', 'recommend')
     
@@ -324,7 +324,7 @@ def reccomend(prompt='', bookDesc=None, countBookDesc=None, tfidfBookDesc=None, 
 '''
 Handles when a user's intent is to check their existing orders.
 '''
-def check():
+def check() -> None:
     updateContext('lastIntent', 'check')
     
     orders = getOrdersJSON()
@@ -382,7 +382,7 @@ def check():
 '''
 Handles when a user's intent is to query about available locations.
 '''
-def locations():
+def locations() -> None:
     print("Our bookstores can be found in the following locations:")
     for location in getAllLocations():
         print(f"Location: {location[0]}, Address: {location[1]}")
@@ -390,7 +390,7 @@ def locations():
 '''
 Handles when a user's intent is to query about openining times / dates.
 '''
-def opening(prompt=None):
+def opening(prompt: str | None = None) -> None:
     updateContext('lastIntent', 'opening')
     
     locations = getLocationsJSON()
@@ -429,7 +429,7 @@ def opening(prompt=None):
 '''
 Handles when a user's intent is to query about the bookstore's address.
 '''
-def address(prompt=None):
+def address(prompt: str | None = None) -> None:
     updateContext('lastIntent', 'address')
     
     locations = getLocationsJSON()
@@ -467,7 +467,7 @@ def address(prompt=None):
 '''
 Handles when a user's intent is to query about a location's facilities.
 '''
-def facilities(prompt=None):
+def facilities(prompt: str | None = None) -> None:
     updateContext('lastIntent', 'facilities')
     
     locations = getLocationsJSON()
@@ -504,7 +504,7 @@ def facilities(prompt=None):
         if 'floors' in loc:
             print(f"- {loc['floors']} floors")
 
-def stockCheck(prompt=None):
+def stockCheck(prompt: str | None = None) -> None:
     updateContext('lastIntent', 'stockCheck')
     
     book = None

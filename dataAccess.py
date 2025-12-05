@@ -10,14 +10,14 @@ download('stopwords', quiet=True)
 
 from utils import levenshteinDistance
 
-def readName():
+def readName() -> str | None:
     # Read name from session JSON on disk
     if os.path.exists('session.json'):
         with open("session.json", "r") as f:
             session = json.load(f)
         return session['name']
 
-def saveName(name):
+def saveName(name: str) -> None:
     # Save the user details into a JSON on disk 
     # Check if a JSON exists already
     if os.path.exists('session.json'):
@@ -34,12 +34,12 @@ def saveName(name):
         with open("session.json", "w") as f:
             json.dump(session, f)
 
-def resetSession():
+def resetSession() -> None:
     # Delete session JSON on disk
     if os.path.exists("session.json"):
         os.remove("session.json")
 
-def savePreferredGenre(genre):
+def savePreferredGenre(genre: str) -> None:
     # Save the user's preferred genre to session JSON
     if os.path.exists('session.json'):
         with open("session.json", "r") as f:
@@ -54,7 +54,7 @@ def savePreferredGenre(genre):
         with open("session.json", "w") as f:
             json.dump(session, f)
 
-def getPreferredGenre():
+def getPreferredGenre() -> str | None:
     # Read preferred genre from session JSON
     if os.path.exists('session.json'):
         with open("session.json", "r") as f:
@@ -62,12 +62,12 @@ def getPreferredGenre():
         return session.get('preferredGenre', None)
     return None
 
-def getStockJSON():
+def getStockJSON() -> dict:
     with open('stock.json', 'r') as f:
         data = json.load(f)
     return data
 
-def getOrdersJSON():
+def getOrdersJSON() -> dict:
     if os.path.exists('orders.json'):
         with open('orders.json', 'r') as f:
             data = json.load(f)
@@ -77,7 +77,7 @@ def getOrdersJSON():
 '''
 Returns the JSON data for bookstore locations.
 '''
-def getLocationsJSON():
+def getLocationsJSON() -> dict:
     with open('locations.json', 'r') as f:
         data = json.load(f)
     return data
@@ -154,7 +154,7 @@ def getGenres() -> list[str]:
 Get complete book data by title.
 Returns the book dictionary or None if not found.
 '''
-def getBookByTitle(title: str):
+def getBookByTitle(title: str) -> dict | None:
     titleNorm = title.lower().strip()
     for book in getStockJSON()['stock']:
         if book['name'].lower().strip() == titleNorm:
@@ -231,7 +231,7 @@ Time is stored as a 24 hour int for simplicity.
 time passed as a parameter should follow this.
 location should be passed as the exact location name as per the locations.json datatset.
 '''
-def isLocOpenAtTime(location: str, time: int):
+def isLocOpenAtTime(location: str, time: int) -> tuple[bool, int, int]:
     for loc in getLocationsJSON()['locations']:
         if loc['name'].lower() == location.lower():
             if loc['open'] <= time and loc['close'] > time:
@@ -265,7 +265,7 @@ Places the order as per data collected and slots filled in order().
 Will decrement the stock count in stock.json.
 Will update orders.json with these details.
 '''
-def storeOrder(title, isbn, quantity, pickup, address, date, time, cost, name):
+def storeOrder(title: str, isbn: str, quantity: int, pickup: bool, address: str, date: int | None, time: int | None, cost: float, name: str) -> None:
     orders = getOrdersJSON()
     order = {
         "title": title,

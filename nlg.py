@@ -11,7 +11,7 @@ bookRefs = {
     ]
 }
 
-def getReferringExpression(entity, entityType, isFirstMention):
+def getReferringExpression(entity: str, entityType: str, isFirstMention: bool) -> str:
     if entityType == 'book':
         if isFirstMention:
             return entity
@@ -19,7 +19,7 @@ def getReferringExpression(entity, entityType, isFirstMention):
             return random.choice(bookRefs['subsequent'])(entity)
     return entity
 
-def aggregateOrderDetails(title, quantity, cost, deliveryType, location, date=None, time=None):
+def aggregateOrderDetails(title: str, quantity: int, cost: float, deliveryType: str, location: str, date: str | None = None, time: int | None = None) -> str:
     parts = []
     
     if quantity > 1:
@@ -45,7 +45,7 @@ def aggregateOrderDetails(title, quantity, cost, deliveryType, location, date=No
     else:
         return ' '.join(parts)
 
-def generateContextualError(errorType, context=None):
+def generateContextualError(errorType: str, context=None) -> str:
     errors = {
         'book_not_found': [
             f"I couldn't find '{context}' in our stock.",
@@ -108,7 +108,7 @@ def generateContextualError(errorType, context=None):
     candidates = errors.get(errorType, errors['generic'])
     return random.choice(candidates)
 
-def generateSuggestion(suggestionType, options):
+def generateSuggestion(suggestionType: str, options: list) -> str:
     if suggestionType == 'similar_books':
         intro = random.choice([
             "Did you mean one of these?",
@@ -138,7 +138,7 @@ def generateSuggestion(suggestionType, options):
     
     return ""
 
-def addDiscourseMarker(context, message):
+def addDiscourseMarker(context: str, message: str) -> str:
     markers = {
         'clarification': ['Actually, ', 'To clarify, ', 'Let me explain: ', 'To be clear: ', ''],
         'continuation': ['Also, ', 'Additionally, ', 'By the way, ', 'Following on from this, ',''],

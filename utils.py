@@ -6,7 +6,7 @@ Shared function for basic confirmation from the user.
 Simplifies code in other handlers by providing a global abstracted function.
 Returns simply True if they confirmed, False is they did not (assume False if no affirmation detected for safety.)
 '''
-def confirmation():
+def confirmation() -> bool:
     answer = input("Please enter your prompt (QUIT to exit): ")
     if answer.lower() == "quit":
         exit()
@@ -27,14 +27,14 @@ def getUnixEpochTimestamp(dd: int,mm: int,yyyy: int)-> int:
 '''
 Convert Unix epoch timestamp into datetime object for easy printing when user queries their order.
 '''
-def getDateFromUnix(timestamp: int):
+def getDateFromUnix(timestamp: int) -> str:
     date_obj = datetime.datetime.fromtimestamp(timestamp)
     return date_obj
 
 '''
 Resolves words for numbers a user may enter into their integer form for easy processing.
 '''
-def wordToInt(word) -> int:
+def wordToInt(word: str) -> int:
     wordToInt = {
         'one': 1,
         'two': 2,
@@ -96,7 +96,7 @@ If last characters match (a[m-1] == b[n-1]) then no need to edit that char, recu
 
 If last characters differ, recur with all 3 potential operations to match the chars.
 '''
-def levenshteinDistance(a: str, b: str, m: int, n: int):
+def levenshteinDistance(a: str, b: str, m: int, n: int) -> int:
     # Using a dynamic programming approach for efficiency.
     # O(m*n) time complexity.
     # How it works is by building up a 2D array where each entry dp[i][j] represents the Levenshtein distance

@@ -23,7 +23,7 @@ intentDescriptions = {
     "opening": "opening hours"
 }
 
-def searchIntent(inverted_index, query, vectoriser, tfidf, intents):
+def searchIntent(inverted_index: dict, query: str, vectoriser, tfidf, intents: list) -> tuple[str | None, float]:
     qCounts = vectoriser.transform([query])
     qTfidf = tfidf.transform(qCounts)
 
@@ -75,11 +75,11 @@ def searchIntent(inverted_index, query, vectoriser, tfidf, intents):
 '''
 Helper function for adding intent examples to the dataset.
 '''
-def addIntentExample(prompt, intent):
+def addIntentExample(prompt: str, intent: str) -> None:
     with open('intents.csv', 'a', encoding='utf-8') as f:
         f.write(f'"{prompt}","{intent}"\n')
 
-def question(qa, question_text, vectoriser, tfidf, inv_index):
+def question(qa: list, question_text: str, vectoriser, tfidf, inv_index: dict) -> str:
     """
     Search QA using cosine similarity with the inverted index.
     Uses sparse dot-products via postings and precomputed document norms.
@@ -122,7 +122,7 @@ def question(qa, question_text, vectoriser, tfidf, inv_index):
         return f"{error} Try rephrasing your question or asking something else."
     return qa[similarity[0][0]][1]
 
-def bookDescSearch(bookDesc, userPrompt, vectoriser, tfidf, invIndex):
+def bookDescSearch(bookDesc: list, userPrompt: str, vectoriser, tfidf, invIndex: dict) -> list[tuple[int, float]]:
     """
     Search book descriptions using cosine similarity with the inverted index.
     Uses sparse dot-products via postings and precomputed document norms.

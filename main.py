@@ -72,7 +72,7 @@ from orders import order
 from context import resolveEllipsis
 import os
 
-def main():
+def main() -> None:
     # Clear old pickle caches if they're older than 1 day
     clearOldPickles()
     

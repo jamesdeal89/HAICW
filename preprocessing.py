@@ -19,7 +19,7 @@ download('stopwords', quiet=True)
 # Cache timeout: 1 day in seconds
 CACHE_TIMEOUT = 24 * 60 * 60
 
-def clearOldPickles():
+def clearOldPickles() -> None:
     """
     Remove pickle cache files if they are older than 1 day.
     This ensures the cache regenerates periodically with fresh data.
@@ -50,7 +50,7 @@ def clearOldPickles():
                 os.remove(pickle_file)
                 print(f"Cleared old cache file: {pickle_file}")
 
-def readIntentsCsv():
+def readIntentsCsv() -> list[list[str]]:
     '''
     Read in the CSV of example prompts labelled with respetive intents.
     As similarity based intent matching, resolve the user prompt to the 
@@ -87,10 +87,10 @@ def readIntentsCsv():
 # ------ Stemming, Vectorising, Weighting ------
 
 p_stemmer = PorterStemmer()
-def stemmed_words(doc):
+def stemmed_words(doc: str) -> str:
     tokens = re.findall(r'\b\w+\b', doc.lower())
     return [p_stemmer.stem(token) for token in tokens]
-def stemmed_filterStopwords_words(doc):
+def stemmed_filterStopwords_words(doc: str) -> str:
     tokens = re.findall(r'\b\w+\b', doc.lower())
     return [p_stemmer.stem(token) for token in tokens if token not in stopwords.words('english')]
 
@@ -142,10 +142,10 @@ Advantage:
 - Just store list of documents containing a term as a list.
 '''
 
-def createFloatDict():
+def createFloatDict() -> type:
     return defaultdict(float)
 
-def generateInvertedIndex(count_vect, X_train_tf, pName):
+def generateInvertedIndex(count_vect, X_train_tf, pName: str) -> dict:
     # If a saved inverted index exists on disk, load and return it.
     if os.path.exists(pName):
         with open(pName, "rb") as f:
@@ -185,7 +185,7 @@ def generateInvertedIndex(count_vect, X_train_tf, pName):
 # 'Postings' => list of docs that contain each term, alongside the term's importance in those docs.
 # inverted_index resolves a term in the vocab to it's respective postings.
 
-def readQaCsv():
+def readQaCsv() -> list[list[str]]:
     # If we have the QA object saved to disk, just load and return that
     if os.path.exists('qa.pickle'):
         with open("qa.pickle", "rb") as f:
@@ -205,7 +205,7 @@ def readQaCsv():
 
     return qa
 
-def readBookDescriptions():
+def readBookDescriptions() -> list[list[str]]:
     # If we have the book descriptions saved to disk, just load and return that
     if os.path.exists('bookDesc.pickle'):
         with open("bookDesc.pickle", "rb") as f:
