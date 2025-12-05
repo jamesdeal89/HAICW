@@ -500,3 +500,110 @@ flowchart TD
     NO_INTENT --> END
     RETURN_RETRY --> END
 ```
+
+## 11. Recommendation System Flow
+
+```mermaid
+flowchart TD
+    START([recommend intent detected]) --> CHOICE[Display choice:<br/>1. Genre-based<br/>2. Description-based]
+  
+    CHOICE --> INPUT_CHOICE[User enters choice]
+    INPUT_CHOICE --> CHECK_QUIT{Input = 'quit'?}
+    CHECK_QUIT -->|Yes| EXIT([Exit system])
+    CHECK_QUIT -->|No| CHECK_CANCEL{Input contains 'cancel'?}
+    CHECK_CANCEL -->|Yes| CANCEL_MSG[Print: Recommendation cancelled]
+    CANCEL_MSG --> RETURN([Return])
+  
+    CHECK_CANCEL -->|No| CHOICE_TYPE{Choice = '2'?}
+  
+    CHOICE_TYPE -->|Yes - Description| DESC_LOOP[Description-based loop]
+    CHOICE_TYPE -->|No - Genre| GENRE_FLOW[Genre-based flow]
+  
+    DESC_LOOP --> ASK_DESC[Ask: Describe the book you're looking for]
+    ASK_DESC --> INPUT_DESC[User enters description]
+    INPUT_DESC --> DESC_QUIT{Input = 'quit'?}
+    DESC_QUIT -->|Yes| EXIT
+    DESC_QUIT -->|No| DESC_CANCEL{Input contains 'cancel'?}
+    DESC_CANCEL -->|Yes| CANCEL_MSG
+    DESC_CANCEL -->|No| RESOLVE_DESC[Resolve ellipsis]
+  
+    RESOLVE_DESC --> GET_PREF[Get preferred genre<br/>from session.json]
+    GET_PREF --> HAS_PREF{Preferred genre exists?}
+    HAS_PREF -->|Yes| APPEND_GENRE[Append genre to description:<br/>userDesc + preferredGenre]
+    HAS_PREF -->|No| USE_DESC[Use description as-is]
+  
+    APPEND_GENRE --> BOOK_SEARCH[bookDescSearch:<br/>TF-IDF + Inverted Index]
+    USE_DESC --> BOOK_SEARCH
+  
+    BOOK_SEARCH --> RESULTS{Results found?}
+    RESULTS -->|No| ERROR1[Print generic error]
+    ERROR1 --> ASK_DESC
+  
+    RESULTS -->|Yes| GET_FIRST[Get first result]
+    GET_FIRST --> DISPLAY_FIRST[Display book details:<br/>title, author, genre,<br/>pages, price, stock, description]
+    DISPLAY_FIRST --> UPDATE_CONTEXT1[Update context: lastBook]
+  
+    UPDATE_CONTEXT1 --> CONFIRM1[Ask: Does this sound like<br/>what you're looking for?]
+    CONFIRM1 --> USER_CONFIRM1{User confirms?}
+  
+    USER_CONFIRM1 -->|Yes| ACCEPT_MSG1[Print: Great! Let me know<br/>if you'd like to order...]
+    ACCEPT_MSG1 --> RETURN
+  
+    USER_CONFIRM1 -->|No| CHECK_SECOND{More than 1 result?}
+    CHECK_SECOND -->|No| REPHRASE_MSG1[Print: Try describing differently]
+    REPHRASE_MSG1 --> ASK_DESC
+  
+    CHECK_SECOND -->|Yes| GET_SECOND[Get second result]
+    GET_SECOND --> DISPLAY_SECOND[Display second book details]
+    DISPLAY_SECOND --> UPDATE_CONTEXT2[Update context: lastBook]
+  
+    UPDATE_CONTEXT2 --> CONFIRM2[Ask: Does this sound better?]
+    CONFIRM2 --> USER_CONFIRM2{User confirms?}
+  
+    USER_CONFIRM2 -->|Yes| ACCEPT_MSG2[Print: Great! Let me know<br/>if you'd like to order...]
+    ACCEPT_MSG2 --> RETURN
+  
+    USER_CONFIRM2 -->|No| REPHRASE_MSG2[Print: Try describing differently]
+    REPHRASE_MSG2 --> ASK_DESC
+  
+    GENRE_FLOW --> CHECK_PROMPT{Prompt contains genre?}
+    CHECK_PROMPT -->|Yes| MATCH_GENRE1[Match genre from prompt]
+    CHECK_PROMPT -->|No| ASK_GENRE[Ask: What genre interested in?]
+  
+    ASK_GENRE --> SHOW_GENRES[Display available genres list]
+    SHOW_GENRES --> INPUT_GENRE[User enters genre]
+    INPUT_GENRE --> GENRE_QUIT{Input = 'quit'?}
+    GENRE_QUIT -->|Yes| EXIT
+    GENRE_QUIT -->|No| RESOLVE_GENRE[Resolve ellipsis]
+    RESOLVE_GENRE --> MATCH_GENRE2[Match genre from input]
+  
+    MATCH_GENRE1 --> GENRE_MATCHED{Genre found?}
+    MATCH_GENRE2 --> GENRE_MATCHED
+  
+    GENRE_MATCHED -->|No| ERROR2[Print error:<br/>Try again with available genres]
+    ERROR2 --> RETURN
+  
+    GENRE_MATCHED -->|Yes| UPDATE_LAST_GENRE[Update context: lastGenre]
+    UPDATE_LAST_GENRE --> SAVE_PREF[Save to session.json:<br/>preferredGenre]
+    SAVE_PREF --> GET_BOOKS[Get books in genre]
+  
+    GET_BOOKS --> BOOKS_EXIST{Books available?}
+    BOOKS_EXIST -->|No| ERROR3[Print: No books found in genre]
+    ERROR3 --> RETURN
+  
+    BOOKS_EXIST -->|Yes| RANDOM_SELECT[Randomly select one book]
+    RANDOM_SELECT --> DISPLAY_GENRE_BOOK[Display book details:<br/>title, author, genre,<br/>pages, price, stock]
+    DISPLAY_GENRE_BOOK --> UPDATE_GENRE_CONTEXT[Update context: lastBook]
+    UPDATE_GENRE_CONTEXT --> RETURN
+  
+    style SAVE_PREF fill:#e1f5ff,stroke:#0066cc,stroke-width:2px
+    style GET_PREF fill:#e1f5ff,stroke:#0066cc,stroke-width:2px
+    style APPEND_GENRE fill:#e1f5ff,stroke:#0066cc,stroke-width:2px
+```
+
+**Key Features:**
+- **Two recommendation modes**: Genre-based (simple random selection) and Description-based (TF-IDF search)
+- **Personalization**: Preferred genre from genre-based selections automatically enhances description-based searches
+- **Fallback system**: Offers up to 2 recommendations per description search
+- **Cancellation support**: Users can cancel at choice selection or description input
+- **Session persistence**: Preferred genre saved to `session.json` for future searches
