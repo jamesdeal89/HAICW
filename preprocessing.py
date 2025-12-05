@@ -27,6 +27,7 @@ def clearOldPickles():
     pickle_files = [
         'intents.pickle',
         'qa.pickle',
+        'bookDesc.pickle',
         'XtrainTfIntents.pickle',
         'countIntents.pickle',
         'tfidfIntents.pickle',
@@ -34,7 +35,11 @@ def clearOldPickles():
         'XtrainTfQa.pickle',
         'countQa.pickle',
         'tfidfQa.pickle',
-        'invIdxQa.pickle'
+        'invIdxQa.pickle',
+        'XtrainTfBookDesc.pickle',
+        'countBookDesc.pickle',
+        'tfidfBookDesc.pickle',
+        'invIdxBookDesc.pickle'
     ]
     
     current_time = time.time()

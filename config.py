@@ -27,8 +27,6 @@ Transaction: ordering books, scheduling pickup/delivery.
 Q&A: book recomendations, location opening times.
 '''
 
-# TODO: recomendations based on cosine similarity to book description
-
 '''
 FOR THE CHECKPOINT:
 Requirements:

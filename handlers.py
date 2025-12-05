@@ -1,17 +1,20 @@
 import re
-import os
-import json
+import random
 
-from dataAccess import readName, saveName, resetSession
-from utils import confirmation
-from nlg import getReferringExpression, addDiscourseMarker, generateSuggestion
-from context import updateContext, getContext
+from dataAccess import (
+    readName, saveName, resetSession, getBookByTitle, getGenres, getGenreBooks,
+    getOrdersJSON, getAllLocations, getLocationsJSON, extractLocation,
+    fuzzySearchTitle, getLocationsAvailable
+)
+from utils import confirmation, getDateFromUnix
+from search import bookDescSearch
+from nlg import getReferringExpression, generateSuggestion
+from context import updateContext, getContext, resolveEllipsis
 
 '''
 Simple handler for when the user thanks the chatbot
 '''
 def thank():
-    import random
     
     name = readName()
     
@@ -180,13 +183,9 @@ Handles when the user wants a reccomendation for a book.
 Uses genre-based recommendations from the available stock.
 '''
 def reccomend(prompt='', bookDesc=None, countBookDesc=None, tfidfBookDesc=None, invIdxBookDesc=None):
-    from dataAccess import getGenres, getGenreBooks, getBookByTitle
-    from search import bookDescSearch
-    import random
     
     updateContext('lastIntent', 'recommend')
     
-    from context import resolveEllipsis
     
     # Ask user for recommendation type
     print("Would you like genre-based or recommendation-based suggestions?")
@@ -319,9 +318,6 @@ def reccomend(prompt='', bookDesc=None, countBookDesc=None, tfidfBookDesc=None, 
 Handles when a user's intent is to check their existing orders.
 '''
 def check():
-    from dataAccess import getOrdersJSON, readName
-    from datetime import datetime
-    
     updateContext('lastIntent', 'check')
     
     orders = getOrdersJSON()
@@ -349,7 +345,7 @@ def check():
             if order.get('pickup'):
                 print(f"  Pickup Location: {order['address']}")
                 if order.get('date'):
-                    orderDate = datetime.fromtimestamp(order['date'])
+                    orderDate = getDateFromUnix(order['date'])
                     print(f"  Pickup Date: {orderDate.strftime('%d/%m/%Y')}")
                 if order.get('time') is not None:
                     hour = order['time']
@@ -368,7 +364,7 @@ def check():
             if order.get('pickup'):
                 print(f"  Pickup Location: {order['address']}")
                 if order.get('date'):
-                    orderDate = datetime.fromtimestamp(order['date'])
+                    orderDate = getDateFromUnix(order['date'])
                     print(f"  Pickup Date: {orderDate.strftime('%d/%m/%Y')}")
                 if order.get('time') is not None:
                     hour = order['time']
@@ -380,8 +376,6 @@ def check():
 Handles when a user's intent is to query about available locations.
 '''
 def locations():
-    from dataAccess import getAllLocations
-    
     print("Our bookstores can be found in the following locations:")
     for location in getAllLocations():
         print(f"Location: {location[0]}, Address: {location[1]}")
@@ -390,9 +384,6 @@ def locations():
 Handles when a user's intent is to query about openining times / dates.
 '''
 def opening(prompt=None):
-    from dataAccess import getLocationsJSON, extractLocation
-    from context import resolveEllipsis, updateContext
-    
     updateContext('lastIntent', 'opening')
     
     locations = getLocationsJSON()
@@ -432,9 +423,6 @@ def opening(prompt=None):
 Handles when a user's intent is to query about the bookstore's address.
 '''
 def address(prompt=None):
-    from dataAccess import getLocationsJSON, extractLocation
-    from context import resolveEllipsis, updateContext
-    
     updateContext('lastIntent', 'address')
     
     locations = getLocationsJSON()
@@ -473,9 +461,6 @@ def address(prompt=None):
 Handles when a user's intent is to query about a location's facilities.
 '''
 def facilities(prompt=None):
-    from dataAccess import getLocationsJSON, extractLocation
-    from context import resolveEllipsis, updateContext
-    
     updateContext('lastIntent', 'facilities')
     
     locations = getLocationsJSON()
@@ -513,9 +498,6 @@ def facilities(prompt=None):
             print(f"- {loc['floors']} floors")
 
 def stockCheck(prompt=None):
-    from dataAccess import fuzzySearchTitle, getLocationsAvailable, extractLocation
-    import re
-    
     updateContext('lastIntent', 'stockCheck')
     
     book = None
