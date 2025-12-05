@@ -179,58 +179,141 @@ def identity(prompt):
 Handles when the user wants a reccomendation for a book.
 Uses genre-based recommendations from the available stock.
 '''
-def reccomend(prompt=''):
-    from dataAccess import getGenres, getGenreBooks
+def reccomend(prompt='', bookDesc=None, countBookDesc=None, tfidfBookDesc=None, invIdxBookDesc=None):
+    from dataAccess import getGenres, getGenreBooks, getBookByTitle
+    from search import bookDescSearch
     import random
     
     updateContext('lastIntent', 'recommend')
     
-    genres = getGenres()
-    
     from context import resolveEllipsis
     
-    matchedGenre = None
+    # Ask user for recommendation type
+    print("Would you like genre-based or recommendation-based suggestions?")
+    print("[1] Genre-based (browse by genre)")
+    print("[2] Recommendation-based (describe what you're looking for)")
     
-    if prompt:
-        resolvedInput = resolveEllipsis(prompt)
-        for genre in genres:
-            if genre.lower() in resolvedInput.lower() or resolvedInput.lower() in genre.lower():
-                matchedGenre = genre
-                break
+    choiceInput = input("Please enter your choice (1 or 2, or QUIT to exit): ")
+    if choiceInput.lower() == "quit":
+        exit()
     
-    if not matchedGenre:
-        print("What genre are you interested in?")
-        print(generateSuggestion('available_genres', genres))
+    if choiceInput == "2" and bookDesc and countBookDesc and tfidfBookDesc and invIdxBookDesc:
+        # Recommendation-based search using description matching
+        # Loop to allow rephrasing
+        while True:
+            print("Please describe the type of book you're looking for:")
+            descInput = input("Please enter your prompt (QUIT to exit): ")
+            if descInput.lower() == "quit":
+                exit()
+            userDesc = resolveEllipsis(descInput)
+            
+            results = bookDescSearch(bookDesc, userDesc, countBookDesc, tfidfBookDesc, invIdxBookDesc)
+            
+            if results:
+                # Try first recommendation
+                docId, score = results[0]
+                bookTitle = bookDesc[docId][0]
+                bookData = getBookByTitle(bookTitle)
+                
+                if bookData:
+                    updateContext('lastBook', bookTitle)
+                    print(f"\nI recommend '{bookTitle}' by {bookData['author']}!")
+                    ref = getReferringExpression(bookTitle, 'book', False)
+                    print(f"{ref.capitalize()} is a {bookData['genre']} book with {bookData['pages']} pages, priced at £{bookData['price']:.2f}.")
+                    print(f"We have {bookData['count']} copies in stock.")
+                    print(f"\nDescription: {bookData['description']}")
+                    
+                    # Ask for confirmation using utility
+                    print("\nDoes this sound like what you're looking for?")
+                    from utils import confirmation
+                    if confirmation():
+                        # User accepted - exit the loop
+                        print("Great! Let me know if you'd like to order this book or if you need anything else.")
+                        break
+                    else:
+                        # User declined - try second recommendation if available
+                        if len(results) > 1:
+                            docId2, score2 = results[1]
+                            bookTitle2 = bookDesc[docId2][0]
+                            bookData2 = getBookByTitle(bookTitle2)
+                            
+                            if bookData2:
+                                updateContext('lastBook', bookTitle2)
+                                print(f"\nAlright, how about '{bookTitle2}' by {bookData2['author']}?")
+                                ref2 = getReferringExpression(bookTitle2, 'book', False)
+                                print(f"{ref2.capitalize()} is a {bookData2['genre']} book with {bookData2['pages']} pages, priced at £{bookData2['price']:.2f}.")
+                                print(f"We have {bookData2['count']} copies in stock.")
+                                print(f"\nDescription: {bookData2['description']}")
+                                
+                                # Ask for confirmation again
+                                print("\nDoes this sound better?")
+                                if confirmation():
+                                    # User accepted second recommendation - exit loop
+                                    print("Great! Let me know if you'd like to order this book or if you need anything else.")
+                                    break
+                                else:
+                                    # User declined both - loop back to ask for new description
+                                    print("I apologize, but I'm having trouble finding what you're looking for. Could you try describing the book differently?")
+                                    continue
+                            else:
+                                print("I apologize, but I'm having trouble finding what you're looking for. Could you try describing the book differently?")
+                                continue
+                        else:
+                            print("I apologize, but I'm having trouble finding what you're looking for. Could you try describing the book differently?")
+                            continue
+                else:
+                    from nlg import generateContextualError
+                    print(generateContextualError('book_not_found', bookTitle))
+                    continue
+            else:
+                from nlg import generateContextualError
+                print(generateContextualError('generic'))
+                continue
+    else:
+        # Genre-based search (original implementation)
+        genres = getGenres()
+        matchedGenre = None
         
-        genreInput = input("Please enter your prompt (QUIT to exit): ")
-        if genreInput.lower() == "quit":
-            exit()
+        if prompt:
+            resolvedInput = resolveEllipsis(prompt)
+            for genre in genres:
+                if genre.lower() in resolvedInput.lower() or resolvedInput.lower() in genre.lower():
+                    matchedGenre = genre
+                    break
         
-        resolvedInput = resolveEllipsis(genreInput)
+        if not matchedGenre:
+            print("What genre are you interested in?")
+            print(generateSuggestion('available_genres', genres))
+            
+            genreInput = input("Please enter your prompt (QUIT to exit): ")
+            if genreInput.lower() == "quit":
+                exit()
+            
+            resolvedInput = resolveEllipsis(genreInput)
+            
+            for genre in genres:
+                if genre.lower() in resolvedInput.lower() or resolvedInput.lower() in genre.lower():
+                    matchedGenre = genre
+                    break
         
-        for genre in genres:
-            if genre.lower() in resolvedInput.lower() or resolvedInput.lower() in genre.lower():
-                matchedGenre = genre
-                break
-    
-    if matchedGenre:
-        updateContext('lastGenre', matchedGenre)
-        books = getGenreBooks(matchedGenre)
-        if books:
-            recommended = random.choice(books)
-            title = recommended['name']
-            updateContext('lastBook', title)
-            print(f"\nI recommend '{title}' by {recommended['author']}!")
-            ref = getReferringExpression(title, 'book', False)
-            print(f"{ref.capitalize()} is a {matchedGenre} book with {recommended['pages']} pages, priced at £{recommended['price']:.2f}.")
-            print(f"We have {recommended['count']} copies in stock.")
+        if matchedGenre:
+            updateContext('lastGenre', matchedGenre)
+            books = getGenreBooks(matchedGenre)
+            if books:
+                recommended = random.choice(books)
+                title = recommended['name']
+                updateContext('lastBook', title)
+                print(f"\nI recommend '{title}' by {recommended['author']}!")
+                ref = getReferringExpression(title, 'book', False)
+                print(f"{ref.capitalize()} is a {matchedGenre} book with {recommended['pages']} pages, priced at £{recommended['price']:.2f}.")
+                print(f"We have {recommended['count']} copies in stock.")
+            else:
+                from nlg import generateContextualError
+                print(generateContextualError('book_not_found', f"any {matchedGenre} books"))
         else:
             from nlg import generateContextualError
-            print(generateContextualError('book_not_found', f"any {matchedGenre} books"))
-    else:
-        from nlg import generateContextualError
-        error = generateContextualError('generic')
-        print(f"{error} Please try again with one of the available genres.")
+            error = generateContextualError('generic')
+            print(f"{error} Please try again with one of the available genres.")
 
 '''
 Handles when a user's intent is to check their existing orders.

@@ -121,3 +121,45 @@ def question(qa, question_text, vectoriser, tfidf, inv_index):
         error = generateContextualError('generic')
         return f"{error} Try rephrasing your question or asking something else."
     return qa[similarity[0][0]][1]
+
+def bookDescSearch(bookDesc, userPrompt, vectoriser, tfidf, invIndex):
+    """
+    Search book descriptions using cosine similarity with the inverted index.
+    Uses sparse dot-products via postings and precomputed document norms.
+    """
+    # Vectorise the query
+    qCounts = vectoriser.transform([userPrompt])
+    qTfidf = tfidf.transform(qCounts)
+
+    index = invIndex['index']
+    doc_norms = invIndex['doc_norms']
+
+    q_coo = qTfidf.tocoo()
+    qVec = qTfidf.toarray().flatten()
+    q_norm = norm(qVec)
+
+    accum = defaultdict(float)
+    feature_names = vectoriser.get_feature_names_out()
+    for termId, q_weight in zip(q_coo.col, q_coo.data):
+        term = feature_names[termId]
+        postings = index.get(term)
+        if not postings:
+            continue
+        for docId, d_weight in postings.items():
+            accum[docId] += q_weight * d_weight
+
+    # Compute cosine similarity for docs in accumulator
+    similarity = []
+    for docId, dotprod in accum.items():
+        denom = q_norm * doc_norms[docId]
+        score = dotprod / denom if denom != 0 else 0.0
+        similarity.append((docId, score))
+
+    # Return the most likely book matches (top 2 for fallback)
+    similarity.sort(key=lambda x: x[1], reverse=True)
+    if not similarity:
+        return None
+    # Return top 2 results if available for fallback handling
+    if len(similarity) >= 2:
+        return [(similarity[0][0], similarity[0][1]), (similarity[1][0], similarity[1][1])]
+    return [(similarity[0][0], similarity[0][1])]

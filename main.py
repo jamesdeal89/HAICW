@@ -62,11 +62,12 @@ Bulked out using confirmation:
 '''
 
 # Import from refactored modules
-from preprocessing import readIntentsCsv, stemVectorWeight, generateInvertedIndex, readQaCsv, clearOldPickles
-from search import searchIntent, question
+from preprocessing import readIntentsCsv, stemVectorWeight, generateInvertedIndex, readQaCsv, readBookDescriptions, clearOldPickles
+from search import searchIntent, question, bookDescSearch
 from handlers import discover, small, identity, thank, reccomend, check, opening, address, facilities, locations, stockCheck
 from orders import order
 from context import resolveEllipsis
+import os
 
 def main():
     # Clear old pickle caches if they're older than 1 day
@@ -107,6 +108,16 @@ def main():
     XtrainTfQa, countQa, tfidfQa = stemVectorWeight(qa, True, "XtrainTfQa.pickle", "countQa.pickle", "tfidfQa.pickle")
     invIdxQa = generateInvertedIndex(countQa, XtrainTfQa, "invIdxQa.pickle")
 
+    # Book description search initialisations
+    bookDesc = readBookDescriptions()
+    XtrainTfBookDesc, countBookDesc, tfidfBookDesc = stemVectorWeight(bookDesc, True, "XtrainTfBookDesc.pickle", "countBookDesc.pickle", "tfidfBookDesc.pickle")
+    invIdxBookDesc = generateInvertedIndex(countBookDesc, XtrainTfBookDesc, "invIdxBookDesc.pickle")
+
+    # First use 
+    if not os.path.exists('session.json'):
+        # Asks user for their name.
+        print(small("hello"))
+    
     while True:
         prompt = input("Please enter your prompt (QUIT to exit): ")
         if prompt.lower() == "quit":
@@ -126,7 +137,7 @@ def main():
             elif intent == "thank":
                 print(thank())
             elif intent == "reccomend":
-                reccomend(resolvedPrompt)
+                reccomend(resolvedPrompt, bookDesc, countBookDesc, tfidfBookDesc, invIdxBookDesc)
             elif intent == "check":
                 check()
             elif intent == "order":

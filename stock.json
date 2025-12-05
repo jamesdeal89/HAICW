@@ -8,6 +8,7 @@
             "pages": 448,
             "price": 9.99,
             "genre": "Science Fiction",
+            "description": "Set against the backdrop of China's Cultural Revolution, a secret military project sends signals into space to contact alien civilizations. An alien civilization on the brink of destruction captures the signal and plans to invade Earth. The first book in a trilogy that explores humanity's first contact with an alien civilization across multiple dimensions and centuries.",
             "available": [
                 "Nottingham",
                 "Oxford",
@@ -26,6 +27,7 @@
             "pages": 688,
             "price": 12.99,
             "genre": "Science Fiction",
+            "description": "On the desert planet Arrakis, young Paul Atreides must navigate deadly political intrigue after his family is betrayed and massacred. The planet is the only source of the universe's most valuable substance, a spice that extends life and enhances mental abilities. Paul discovers his destiny as a prophesied figure who will lead the native Fremen in a war for control of the planet and the galaxy.",
             "available": [
                 "London",
                 "Manchester",
@@ -43,6 +45,7 @@
             "pages": 310,
             "price": 8.99,
             "genre": "Fantasy",
+            "description": "Bilbo Baggins, a comfortable hobbit, is swept into an epic quest by the wizard Gandalf and thirteen dwarves to reclaim their mountain home from the dragon Smaug. Along the journey, Bilbo finds a mysterious ring that makes him invisible and encounters trolls, goblins, and the creature Gollum. The adventure transforms Bilbo from a timid homebody into a clever hero.",
             "available": [
                 "Nottingham",
                 "London",
@@ -61,6 +64,7 @@
             "pages": 432,
             "price": 7.99,
             "genre": "Literary Fiction",
+            "description": "Elizabeth Bennet navigates issues of manners, morality, and marriage in Georgian England while dealing with her family's financial insecurity. She initially despises the proud Mr. Darcy but gradually discovers his true character beneath his reserved exterior. A witty exploration of love, class, and social expectations in Regency-era society.",
             "available": [
                 "London",
                 "Oxford",
@@ -78,6 +82,7 @@
             "pages": 180,
             "price": 8.99,
             "genre": "Literary Fiction",
+            "description": "Narrator Nick Carraway moves next door to the mysterious millionaire Jay Gatsby, whose lavish parties mask his obsession with rekindling a romance with Daisy Buchanan. Set in the Jazz Age of 1920s Long Island, the novel exposes the corruption beneath the glamorous surface of American high society. A tragic story about the impossibility of recapturing the past and the destructive power of the American Dream.",
             "available": [
                 "London",
                 "Manchester",
@@ -95,6 +100,7 @@
             "pages": 324,
             "price": 9.99,
             "genre": "Literary Fiction",
+            "description": "Young Scout Finch and her brother Jem grow up in Depression-era Alabama, where their father, lawyer Atticus Finch, defends a Black man falsely accused of rape. Through Scout's eyes, the novel explores themes of racial injustice, moral courage, and loss of innocence. A powerful examination of prejudice and the importance of standing up for what is right.",
             "available": [
                 "Nottingham",
                 "London",
@@ -113,6 +119,7 @@
             "pages": 328,
             "price": 10.99,
             "genre": "Dystopian",
+            "description": "Winston Smith works for the totalitarian Party rewriting history in Oceania, where Big Brother watches every citizen and independent thought is a crime. He begins a forbidden love affair and joins a resistance movement, but discovers the Party's surveillance and torture methods are inescapable. A chilling warning about authoritarianism, propaganda, and the manipulation of truth.",
             "available": [
                 "London",
                 "Oxford",
@@ -130,6 +137,7 @@
             "pages": 277,
             "price": 9.99,
             "genre": "Literary Fiction",
+            "description": "Sixteen-year-old Holden Caulfield narrates his experiences over a few days after being expelled from his prep school. Wandering through New York City, he struggles with teenage angst, alienation, and his inability to connect with the adult world he sees as phony. A landmark novel capturing adolescent rebellion and the painful transition from childhood to adulthood.",
             "available": [
                 "London",
                 "Manchester",
@@ -147,6 +155,7 @@
             "pages": 271,
             "price": 11.99,
             "genre": "Cyberpunk",
+            "description": "Case, a washed-up computer hacker, is hired by a mysterious employer to pull off the ultimate hack in cyberspace. Set in a gritty near-future where artificial intelligence, virtual reality, and corporate power dominate, Case navigates both the digital matrix and the dangerous physical world. The groundbreaking novel that defined the cyberpunk genre and predicted the internet age.",
             "available": [
                 "London",
                 "Manchester",
@@ -163,6 +172,7 @@
             "pages": 304,
             "price": 9.99,
             "genre": "Contemporary Fiction",
+            "description": "Nora Seed finds herself in a magical library between life and death, where each book allows her to live a different version of her life based on different choices. As she explores alternate realities, she must decide what makes life worth living. A thought-provoking exploration of regret, possibility, and finding meaning in our choices.",
             "available": [
                 "Nottingham",
                 "London",
@@ -191,7 +201,8 @@
                 "Birmingham",
                 "Edinburgh",
                 "Glasgow"
-            ]
+            ],
+            "description": "A sweeping history of humankind from the evolution of archaic human species to the present, exploring how Homo sapiens came to dominate the planet. Harari examines major revolutions in human history including the cognitive, agricultural, and scientific revolutions. The book challenges readers to reconsider their assumptions about progress, happiness, and what it means to be human."
         },
         {
             "name": "The Lord of the Rings",
@@ -208,7 +219,8 @@
                 "Cambridge",
                 "Bath",
                 "York"
-            ]
+            ],
+            "description": "Frodo Baggins inherits a powerful ring that must be destroyed in the fires of Mount Doom to prevent the dark lord Sauron from conquering Middle-earth. Accompanied by a fellowship of diverse companions, Frodo undertakes a perilous journey across a richly imagined world of elves, dwarves, wizards, and men. An epic tale of good versus evil, friendship, and sacrifice."
         },
         {
             "name": "Foundation",
@@ -225,7 +237,8 @@
                 "Sheffield",
                 "Newcastle",
                 "Cambridge"
-            ]
+            ],
+            "description": "Mathematician Hari Seldon uses psychohistory to predict the fall of the Galactic Empire and establishes a Foundation to preserve knowledge and shorten the coming dark age. The novel follows the Foundation through multiple crises as it grows from a small colony of scientists into a political power. A classic of science fiction exploring themes of history, politics, and the power of knowledge."
         },
         {
             "name": "The Handmaid's Tale",
@@ -243,7 +256,8 @@
                 "Edinburgh",
                 "Liverpool",
                 "Brighton"
-            ]
+            ],
+            "description": "In the totalitarian Republic of Gilead, women have been stripped of all rights and Offred serves as a Handmaid, forced to bear children for the ruling class. Through her eyes, we see a theocratic regime built on oppression, environmental catastrophe, and declining fertility rates. A haunting vision of religious fundamentalism and the subjugation of women."
         },
         {
             "name": "Brave New World",
@@ -260,7 +274,8 @@
                 "Manchester",
                 "Bristol",
                 "Cardiff"
-            ]
+            ],
+            "description": "In a technologically advanced future, humans are genetically engineered and conditioned from birth to fit predetermined social castes, kept docile through pleasure and drugs. Bernard Marx and John the Savage challenge this seemingly perfect society, questioning the price of stability and happiness. A prescient satire exploring the dangers of technology, consumerism, and the loss of individuality."
         },
         {
             "name": "The Name of the Wind",
@@ -278,7 +293,8 @@
                 "Edinburgh",
                 "Liverpool",
                 "Dublin"
-            ]
+            ],
+            "description": "Kvothe, now an innkeeper, recounts his transformation from a gifted child in a traveling troupe to a legendary figure known for magic, music, and adventure. His tale involves his time at a prestigious magic university, his quest to learn the truth about the mysterious Chandrian who killed his family, and his pursuit of the beautiful Denna. A lyrical fantasy that blends music, magic, and mystery."
         },
         {
             "name": "American Gods",
@@ -295,7 +311,8 @@
                 "Brighton",
                 "Sheffield",
                 "Leeds"
-            ]
+            ],
+            "description": "Ex-convict Shadow Moon is recruited by the mysterious Mr. Wednesday for a cross-country journey that reveals ancient gods living forgotten in modern America. These old gods face a coming war with new deities of technology, media, and celebrity. A darkly imaginative blend of mythology, Americana, and fantasy exploring belief, identity, and cultural change."
         },
         {
             "name": "Educated",
@@ -314,7 +331,8 @@
                 "Edinburgh",
                 "Oxford",
                 "Cambridge"
-            ]
+            ],
+            "description": "Tara Westover grows up in rural Idaho with survivalist parents who keep her out of school, working in her father's junkyard. At seventeen, she enters a classroom for the first time and eventually earns a PhD from Cambridge University. A remarkable story of the transformative power of education and the painful cost of breaking away from family."
         },
         {
             "name": "The Midnight Library",
@@ -352,7 +370,8 @@
                 "Liverpool",
                 "Brighton",
                 "Sheffield"
-            ]
+            ],
+            "description": "Alicia Berenson, a famous painter, shoots her husband and then never speaks another word. Psychotherapist Theo Faber becomes obsessed with uncovering her motive and getting her to talk. A psychological thriller with a shocking twist about obsession, trauma, and the unreliability of memory."
         },
         {
             "name": "It Ends with Us",
@@ -373,7 +392,8 @@
                 "Newcastle",
                 "Brighton",
                 "Dublin"
-            ]
+            ],
+            "description": "Lily Bloom opens a flower shop in Boston and falls for neurosurgeon Ryle Kincaid, but their relationship becomes complicated when her first love Atlas reappears. As Lily navigates difficult choices, she must confront the cycle of domestic violence she witnessed in her childhood. A powerful and emotional story about love, strength, and breaking destructive patterns."
         },
         {
             "name": "The Seven Husbands of Evelyn Hugo",
@@ -392,7 +412,8 @@
                 "Edinburgh",
                 "Brighton",
                 "Dublin"
-            ]
+            ],
+            "description": "Aging Hollywood icon Evelyn Hugo finally tells the story of her glamorous and scandalous life to unknown magazine reporter Monique Grant. Through seven marriages and decades of fame, Evelyn reveals the truth about her life, loves, and the price of ambition. A captivating tale of Old Hollywood, forbidden love, and the secrets we keep."
         },
         {
             "name": "The Book Thief",
@@ -410,7 +431,8 @@
                 "Birmingham",
                 "Edinburgh",
                 "Bristol"
-            ]
+            ],
+            "description": "Narrated by Death, the story follows Liesel Meminger, a foster girl living in Nazi Germany who steals books and shares them with others, including the Jewish man hiding in her basement. Set during World War II, Liesel finds solace in stories while witnessing the horrors of war and the Holocaust. A moving tale about the power of words, love, and humanity in the darkest times."
         },
         {
             "name": "Atomic Habits",
@@ -429,7 +451,8 @@
                 "Leeds",
                 "Sheffield",
                 "Cambridge"
-            ]
+            ],
+            "description": "A practical guide to building good habits and breaking bad ones through tiny changes that deliver remarkable results. Clear explains the science behind habit formation and provides strategies for making habits obvious, attractive, easy, and satisfying. The book demonstrates how small improvements compound over time to produce extraordinary outcomes."
         },
         {
             "name": "Project Hail Mary",
@@ -447,7 +470,8 @@
                 "Bristol",
                 "Liverpool",
                 "Brighton"
-            ]
+            ],
+            "description": "Ryland Grace wakes up alone on a spaceship with no memory of how he got there, discovering he's on a desperate mission to save Earth from an extinction-level threat. Using science and ingenuity, he must solve an impossible problem, aided by an unexpected alien ally. A thrilling hard science fiction adventure about survival, problem-solving, and interspecies cooperation."
         },
         {
             "name": "The Martian",
@@ -464,7 +488,8 @@
                 "Sheffield",
                 "Newcastle",
                 "Oxford"
-            ]
+            ],
+            "description": "Astronaut Mark Watney is stranded alone on Mars after his crew evacuates during a storm, believing him dead. Using his engineering skills, humor, and determination, he must find ways to survive while NASA works to bring him home. A gripping tale of human resilience and problem-solving in the face of impossible odds."
         },
         {
             "name": "Snow Crash",
@@ -480,7 +505,8 @@
                 "Birmingham",
                 "Sheffield",
                 "Leeds"
-            ]
+            ],
+            "description": "In a near-future America where corporations and franchises have replaced the government, hacker and pizza delivery driver Hiro Protagonist investigates a new computer virus that also affects users in the real world. The story blends virtual reality, ancient Sumerian mythology, linguistics, and anarcho-capitalism. A wild cyberpunk adventure that predicted aspects of the modern internet and virtual worlds."
         },
         {
             "name": "Do Androids Dream of Electric Sheep",
@@ -496,7 +522,8 @@
                 "Cambridge",
                 "Manchester",
                 "Bristol"
-            ]
+            ],
+            "description": "In post-apocalyptic San Francisco, bounty hunter Rick Deckard must track down and retire six escaped androids while questioning what separates humans from artificial beings. Most animals are extinct, and owning real animals has become a status symbol, while empathy is the key trait distinguishing humans from androids. A philosophical exploration of consciousness, empathy, and what it means to be human."
         },
         {
             "name": "The Hunger Games",
@@ -515,7 +542,8 @@
                 "Edinburgh",
                 "Bristol",
                 "Brighton"
-            ]
+            ],
+            "description": "In dystopian Panem, sixteen-year-old Katniss Everdeen volunteers to take her sister's place in the Hunger Games, a televised fight to the death between children from twelve districts. She must use her survival skills and navigate deadly political games to stay alive and protect those she loves. A gripping story about survival, sacrifice, and rebellion against oppression."
         },
         {
             "name": "A Game of Thrones",
@@ -532,7 +560,8 @@
                 "Edinburgh",
                 "Liverpool",
                 "Bristol"
-            ]
+            ],
+            "description": "Noble families vie for control of the Iron Throne in the Seven Kingdoms of Westeros, where summers span decades and winters can last a lifetime. Political intrigue, betrayal, and warfare unfold while an ancient evil awakens in the far north. An epic fantasy featuring complex characters, moral ambiguity, and unexpected plot twists."
         },
         {
             "name": "Harry Potter and the Philosopher's Stone",
@@ -554,7 +583,8 @@
                 "Oxford",
                 "Cambridge",
                 "Dublin"
-            ]
+            ],
+            "description": "Orphaned Harry Potter discovers on his eleventh birthday that he's a wizard and attends Hogwarts School of Witchcraft and Wizardry. He makes friends, learns magic, and uncovers the truth about his parents' death and his connection to the dark wizard Voldemort. The beginning of a beloved series about friendship, bravery, and the battle between good and evil."
         },
         {
             "name": "The Way of Kings",
@@ -570,7 +600,8 @@
                 "Birmingham",
                 "Edinburgh",
                 "Nottingham"
-            ]
+            ],
+            "description": "On the storm-ravaged world of Roshar, multiple characters navigate war, politics, and magic while an ancient evil threatens to return. Kaladin, a slave soldier, must protect those he hates while Shallan seeks to save her family through theft and deception. An epic fantasy with innovative magic systems, complex worldbuilding, and themes of honor and redemption."
         },
         {
             "name": "Mistborn: The Final Empire",
@@ -587,7 +618,8 @@
                 "Bristol",
                 "Liverpool",
                 "Edinburgh"
-            ]
+            ],
+            "description": "In a world where ash falls from the sky and the immortal Lord Ruler has reigned for a thousand years, a street thief named Vin discovers she has magical abilities. She joins a crew of rebels planning to overthrow the empire using Allomancy, a magic system based on ingesting and burning metals. A heist story combined with epic fantasy featuring innovative magic and political intrigue."
         },
         {
             "name": "The Girl with the Dragon Tattoo",
@@ -605,7 +637,8 @@
                 "Liverpool",
                 "Brighton",
                 "Edinburgh"
-            ]
+            ],
+            "description": "Journalist Mikael Blomkvist is hired to investigate the forty-year-old disappearance of a wealthy industrialist's niece, aided by brilliant but troubled hacker Lisbeth Salander. Their investigation uncovers dark family secrets and a series of brutal murders. A gripping Swedish thriller about corruption, violence against women, and the pursuit of justice."
         },
         {
             "name": "Gone Girl",
@@ -623,7 +656,8 @@
                 "Bristol",
                 "Newcastle",
                 "Brighton"
-            ]
+            ],
+            "description": "When Amy Dunne disappears on her fifth wedding anniversary, suspicion falls on her husband Nick as evidence mounts against him. Told in alternating perspectives, the story reveals the dark truth about their marriage and Amy's elaborate revenge plot. A twisted psychological thriller about manipulation, media sensationalism, and the facades of marriage."
         },
         {
             "name": "The Da Vinci Code",
@@ -640,7 +674,8 @@
                 "Liverpool",
                 "Leeds",
                 "Sheffield"
-            ]
+            ],
+            "description": "Harvard symbologist Robert Langdon is called to the Louvre when a curator is murdered with cryptic symbols left behind. Teaming with cryptologist Sophie Neveu, Langdon follows clues through art, architecture, and secret societies, uncovering a conspiracy involving the Catholic Church and the Holy Grail. A fast-paced thriller blending history, religion, and mystery."
         },
         {
             "name": "Big Little Lies",
@@ -657,7 +692,8 @@
                 "Brighton",
                 "Bristol",
                 "Liverpool"
-            ]
+            ],
+            "description": "Three women in a seaside Australian town become entangled in secrets and lies that culminate in a murder at a school fundraiser. Beneath the surface of perfect suburban lives lie domestic violence, sexual assault, and fierce friendship. A darkly comic mystery about motherhood, marriage, and the dangerous secrets women keep."
         },
         {
             "name": "All the Light We Cannot See",
@@ -675,7 +711,8 @@
                 "Birmingham",
                 "Edinburgh",
                 "Bristol"
-            ]
+            ],
+            "description": "Blind French girl Marie-Laure and German orphan Werner's lives intersect in occupied France during World War II. Marie-Laure flees Paris with her father and a valuable diamond, while Werner's gift for repairing radios leads him to a Nazi training school. A beautifully written story about survival, humanity, and the unseen connections that bind us."
         },
         {
             "name": "The Nightingale",
@@ -693,7 +730,8 @@
                 "Bristol",
                 "Liverpool",
                 "Brighton"
-            ]
+            ],
+            "description": "Two French sisters navigate occupied France during World War II in vastly different ways: Vianne struggles to survive while protecting a Jewish child, and Isabelle joins the Resistance. Their choices test their courage, loyalty, and the bonds between them. A powerful story about women's resilience and sacrifice during wartime."
         },
         {
             "name": "The Pillars of the Earth",
@@ -709,7 +747,8 @@
                 "Manchester",
                 "Birmingham",
                 "Edinburgh"
-            ]
+            ],
+            "description": "In 12th-century England, Prior Philip dreams of building a cathedral while master builder Tom and his family struggle to survive. Their lives intertwine with nobles, monks, and outlaws as civil war and religious power struggles shape medieval England. An epic historical saga spanning decades, filled with ambition, betrayal, and the human cost of grand architectural achievement."
         },
         {
             "name": "Where the Crawdads Sing",
@@ -729,7 +768,8 @@
                 "Brighton",
                 "Newcastle",
                 "Dublin"
-            ]
+            ],
+            "description": "Kya Clark, the Marsh Girl, grows up isolated in the North Carolina marshlands, abandoned by her family and shunned by the nearby town. When a local man is found dead, Kya becomes the prime suspect in a murder investigation. A haunting coming-of-age story blending romance, mystery, and stunning nature writing."
         },
         {
             "name": "Normal People",
@@ -748,7 +788,8 @@
                 "Liverpool",
                 "Dublin",
                 "Brighton"
-            ]
+            ],
+            "description": "Connell and Marianne circle each other from their school days in small-town Ireland through university in Dublin, their relationship shifting between friendship, love, and painful separation. Both struggle with class differences, mental health, and the complexity of human connection. A nuanced exploration of intimacy, miscommunication, and the lasting impact of first love."
         },
         {
             "name": "Little Fires Everywhere",
@@ -765,7 +806,8 @@
                 "Bristol",
                 "Liverpool",
                 "Brighton"
-            ]
+            ],
+            "description": "In suburban Ohio, the arrival of artist Mia Warren and her daughter Pearl upends the carefully ordered life of the Richardson family. Tensions escalate over a custody battle and buried secrets, ultimately leading to a devastating fire. A compelling examination of motherhood, privilege, identity, and the danger of perfection."
         },
         {
             "name": "Becoming",
@@ -784,7 +826,8 @@
                 "Edinburgh",
                 "Bristol",
                 "Liverpool"
-            ]
+            ],
+            "description": "Former First Lady Michelle Obama chronicles her journey from childhood on Chicago's South Side through her time in the White House. She reflects on her experiences as a mother, wife, lawyer, and public figure, sharing personal insights about finding her voice and staying true to herself. An inspiring memoir about identity, purpose, and navigating public life."
         },
         {
             "name": "The Glass Castle",
@@ -801,7 +844,8 @@
                 "Oxford",
                 "Bristol",
                 "Edinburgh"
-            ]
+            ],
+            "description": "Jeannette Walls recounts her unconventional childhood with brilliant but dysfunctional parents who chose a nomadic, impoverished lifestyle. Despite hunger, neglect, and instability, the Walls children forge bonds and eventually escape to build successful lives. A remarkable story of resilience, forgiveness, and the complexity of family love."
         },
         {
             "name": "Born a Crime",
@@ -819,7 +863,8 @@
                 "Bristol",
                 "Liverpool",
                 "Brighton"
-            ]
+            ],
+            "description": "Comedian Trevor Noah tells stories of growing up in South Africa during and after apartheid, born to a black mother and white father when their relationship was illegal. His mother's fierce determination and unconventional parenting shape his survival in a violent, unjust society. A funny, heartbreaking memoir about identity, poverty, and the triumph of the human spirit."
         },
         {
             "name": "Thinking, Fast and Slow",
@@ -836,7 +881,8 @@
                 "Manchester",
                 "Birmingham",
                 "Edinburgh"
-            ]
+            ],
+            "description": "Nobel laureate Daniel Kahneman explores the two systems that drive human thinking: fast, intuitive thinking and slow, deliberative thinking. He examines cognitive biases, heuristics, and how these mental shortcuts lead to both effective decisions and systematic errors. A groundbreaking exploration of judgment, decision-making, and behavioral economics."
         },
         {
             "name": "A Brief History of Time",
@@ -852,7 +898,8 @@
                 "Cambridge",
                 "Manchester",
                 "Edinburgh"
-            ]
+            ],
+            "description": "Renowned physicist Stephen Hawking explains complex concepts about the universe including the Big Bang, black holes, and the nature of time in accessible language. He explores fundamental questions about the origin and fate of the universe and humanity's place within it. A landmark work making cosmology understandable to general readers."
         },
         {
             "name": "The Immortal Life of Henrietta Lacks",
@@ -870,7 +917,8 @@
                 "Birmingham",
                 "Edinburgh",
                 "Bristol"
-            ]
+            ],
+            "description": "The story of Henrietta Lacks, whose cancer cells were taken without her knowledge in 1951 and became one of the most important tools in medicine, leading to countless scientific breakthroughs. Skloot explores the ethical implications while following Henrietta's family's struggle with poverty and the legacy of those cells. A powerful intersection of race, ethics, science, and family."
         },
         {
             "name": "The Power of Now",
@@ -888,7 +936,8 @@
                 "Liverpool",
                 "Brighton",
                 "Edinburgh"
-            ]
+            ],
+            "description": "Eckhart Tolle presents a guide to spiritual enlightenment through living in the present moment and freeing yourself from ego-based thinking. He argues that psychological time and the mind-made self cause suffering and that true peace comes from presence. A transformative exploration of consciousness, mindfulness, and inner peace."
         },
         {
             "name": "The Subtle Art of Not Giving a F*ck",
@@ -907,7 +956,8 @@
                 "Leeds",
                 "Brighton",
                 "Bristol"
-            ]
+            ],
+            "description": "Mark Manson argues that life's struggle is what gives it meaning and that we should choose carefully what we care about instead of trying to be positive about everything. Using profanity-laced straight talk, he challenges conventional self-help wisdom. A counterintuitive approach to living a good life by embracing limitations and choosing values wisely."
         },
         {
             "name": "How to Win Friends and Influence People",
@@ -924,7 +974,8 @@
                 "Oxford",
                 "Cambridge",
                 "Edinburgh"
-            ]
+            ],
+            "description": "Dale Carnegie's classic guide offers practical advice for improving interpersonal skills, handling people, winning them over, and changing their behavior without arousing resentment. Based on his years teaching business courses, the book emphasizes the importance of genuine interest in others and understanding their perspectives. Timeless principles for building relationships and leadership."
         },
         {
             "name": "Jane Eyre",
@@ -941,7 +992,8 @@
                 "Bath",
                 "Edinburgh",
                 "York"
-            ]
+            ],
+            "description": "Orphaned Jane Eyre endures a harsh childhood and finds work as a governess at Thornfield Hall, where she falls in love with her employer, Mr. Rochester. Their romance is disrupted by the revelation of a terrible secret hidden in the attic. A groundbreaking novel featuring a strong, independent female protagonist navigating morality, social class, and love."
         },
         {
             "name": "Wuthering Heights",
@@ -957,7 +1009,8 @@
                 "Cambridge",
                 "Bath",
                 "York"
-            ]
+            ],
+            "description": "The passionate and destructive relationship between Heathcliff and Catherine Earnshaw spans two generations on the Yorkshire moors. After Catherine marries another man, Heathcliff's obsessive revenge consumes everyone around them. A dark Gothic romance about love, cruelty, and the destructive power of obsession."
         },
         {
             "name": "Fahrenheit 451",
@@ -974,7 +1027,8 @@
                 "Manchester",
                 "Birmingham",
                 "Bristol"
-            ]
+            ],
+            "description": "In a future where firemen burn books instead of extinguishing fires, Guy Montag begins to question his role in suppressing knowledge and free thought. After meeting a free-thinking young woman, he risks everything to preserve literature and ideas. A classic dystopian warning about censorship, conformity, and the power of books."
         },
         {
             "name": "The Road",
@@ -990,7 +1044,8 @@
                 "Birmingham",
                 "Edinburgh",
                 "Bristol"
-            ]
+            ],
+            "description": "A father and son journey through a post-apocalyptic America, struggling to survive while maintaining their humanity in a world of ash and cannibals. Their bond and determination to reach the coast drive them forward through unimaginable hardship. A bleak but beautiful meditation on love, survival, and hope in the face of extinction."
         },
         {
             "name": "Ender's Game",
@@ -1007,7 +1062,8 @@
                 "Leeds",
                 "Sheffield",
                 "Newcastle"
-            ]
+            ],
+            "description": "Brilliant child Ender Wiggin is recruited into Battle School to prepare for an alien invasion, where he excels at war games and military strategy. As he rises through the ranks, Ender faces isolation, moral dilemmas, and psychological manipulation. A thought-provoking tale about leadership, empathy, and the cost of turning children into weapons."
         },
         {
             "name": "The Hitchhiker's Guide to the Galaxy",
@@ -1025,7 +1081,8 @@
                 "Cambridge",
                 "Edinburgh",
                 "Bristol"
-            ]
+            ],
+            "description": "Arthur Dent is rescued moments before Earth's destruction by his friend Ford Prefect, who reveals he's an alien researcher for a galactic travel guide. They embark on absurd adventures across the universe involving depressed robots, hyperspace bypasses, and the answer to life, the universe, and everything. A hilarious satire of science fiction and life itself."
         },
         {
             "name": "Circe",
@@ -1043,7 +1100,8 @@
                 "Edinburgh",
                 "Bristol",
                 "Brighton"
-            ]
+            ],
+            "description": "Circe, daughter of the sun god Helios, is banished to a deserted island after discovering her power of witchcraft. Over centuries, she hones her craft and encounters famous mythological figures including Odysseus, while navigating the cruelty of gods and mortals. A feminist retelling of Greek mythology exploring power, transformation, and self-discovery."
         },
         {
             "name": "The Song of Achilles",
@@ -1060,7 +1118,8 @@
                 "Oxford",
                 "Edinburgh",
                 "Bristol"
-            ]
+            ],
+            "description": "Patroclus, an exiled prince, is sent to King Peleus's court where he meets the legendary Achilles, and they form a deep bond. Their relationship evolves from friendship to love as they navigate Achilles's destiny to become a great warrior and face the Trojan War. A beautiful reimagining of the Iliad focused on love, fate, and heroism."
         },
         {
             "name": "The Kite Runner",
@@ -1078,7 +1137,8 @@
                 "Edinburgh",
                 "Bristol",
                 "Liverpool"
-            ]
+            ],
+            "description": "Amir, a privileged boy in Kabul, betrays his loyal friend Hassan and spends decades haunted by guilt. After fleeing to America during the Soviet invasion, he returns to Taliban-ruled Afghanistan seeking redemption. A powerful story of friendship, betrayal, and the enduring bonds of the past against the backdrop of Afghanistan's tumultuous history."
         },
         {
             "name": "Life of Pi",
@@ -1095,7 +1155,8 @@
                 "Oxford",
                 "Edinburgh",
                 "Bristol"
-            ]
+            ],
+            "description": "After a shipwreck, sixteen-year-old Pi Patel survives 227 days adrift in the Pacific Ocean on a lifeboat with a Bengal tiger named Richard Parker. His struggle for survival tests his faith, ingenuity, and understanding of the boundaries between humans and animals. A philosophical adventure about storytelling, belief, and the nature of truth."
         },
         {
             "name": "The Alchemist",
@@ -1114,7 +1175,8 @@
                 "Brighton",
                 "Edinburgh",
                 "Oxford"
-            ]
+            ],
+            "description": "Santiago, a Spanish shepherd boy, dreams of treasure in Egypt and embarks on a journey to follow his Personal Legend. Along the way, he learns about the Soul of the World and discovers that the treasure was within him all along. An allegorical novel about following dreams, listening to your heart, and finding your purpose."
         }
     ]
 }

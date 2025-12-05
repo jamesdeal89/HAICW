@@ -128,6 +128,17 @@ def getGenres() -> list[str]:
     return genres
 
 '''
+Get complete book data by title.
+Returns the book dictionary or None if not found.
+'''
+def getBookByTitle(title: str):
+    titleNorm = title.lower().strip()
+    for book in getStockJSON()['stock']:
+        if book['name'].lower().strip() == titleNorm:
+            return book
+    return None
+
+'''
 Check if desired stock amount is possible to order.
 Returns bool and either: 
     -1 if True as exact number not needed by the caller in this case, 

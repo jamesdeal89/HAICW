@@ -4,6 +4,7 @@ import os
 import csv
 import pickle
 import time
+import json
 from collections import defaultdict
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
@@ -198,3 +199,24 @@ def readQaCsv():
         pickle.dump(qa, f)
 
     return qa
+
+def readBookDescriptions():
+    # If we have the book descriptions saved to disk, just load and return that
+    if os.path.exists('bookDesc.pickle'):
+        with open("bookDesc.pickle", "rb") as f:
+            return pickle.load(f)
+
+    # If not saved to disk, re-load from JSON
+    bookDesc = []
+    with open('stock.json', 'r') as f:
+        stock = json.load(f)
+    
+    for book in stock['stock']:
+        # format: [name, description]
+        bookDesc.append([book['name'], book.get('description', '')])
+    
+    # Save to disk for next time
+    with open(f"bookDesc.pickle", "wb") as f:
+        pickle.dump(bookDesc, f)
+
+    return bookDesc

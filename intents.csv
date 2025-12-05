@@ -751,3 +751,5 @@ PROMPT, INTENT
 "Can I do the Nottingham one","address"
 "where is Deaths end in stock?","stockCheck"
 "actually I meant 7","order"
+"I want a different reccomendation","reccomend"
+"Thriller with spys and mystery","reccomend"
