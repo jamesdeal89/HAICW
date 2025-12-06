@@ -127,13 +127,13 @@ def discover() -> None:
     print(
     "I can help with many things!\n",
     "Let me walk you through my features:\n\n"
-    "    1. Book orders - I can help you order a book for either home delivery or pick-up from one of our locations.\n\n",
-    "   2. Book recomendation - if you're not sure what you want to order, you can ask me about genres and authors and I'll explain their work.\n\n",
-    "   3. Location information - I can list all our locations, describe the facilties of specific stores and let you know their opening times.\n\n",
-    "   4. Book and literary information QA - you can ask me about writing, literature, and authors and I'll explain them.\n\n",
-    "   5. Memory - I will remember your name and address you as such if you inform me of it!\n\n",
-    "   6. Order tracking - you can ask me to check on your previous orders to see the book, quantities, when you need to pick them up, or how much you paid.\n\n"
-    "    7. Small talk - I can handle basic small talk if you'd like to chat.\n\n",
+    "    1. Book orders - I can help you order a book for either home delivery or pick-up from one of our locations.\nAsk 'Can I order a book?'\n\n",
+    "   2. Book recomendation - if you're not sure what you want to order, you can get either a genre-based or description-based recomendation.\nSay 'Recomend me a book.'\n\n",
+    "   3. Location information - I can list all our locations, describe the facilties of specific stores and let you know their opening times.\nE.g 'When does the Nottingham location open?'\n\n",
+    "   4. Book and literary information QA - you can ask me about writing, literature, and authors and I'll explain them.\nE.g 'What is a publisher?'\n\n",
+    "   5. Memory - I will remember your name and address you as such if you inform me of it!\nE.g 'My name is John'\n\n",
+    "   6. Order tracking - you can ask me to check on your previous orders to see the book, quantities, when you need to pick them up, or how much you paid.\nSay 'Can I check my orders?'\n\n"
+    "    7. Small talk - I can handle basic small talk if you'd like to chat.\nE.g 'I feel sad when I can't read my book'\n\n",
     "I hope this helps you converse with me effectively!")
 
 def identity(prompt: str) -> None:
