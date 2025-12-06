@@ -23,7 +23,7 @@ intentDescriptions = {
     "opening": "opening hours"
 }
 
-def searchIntent(inverted_index: dict, query: str, vectoriser, tfidf, intents: list) -> tuple[str | None, float]:
+def searchIntent(inverted_index: dict, query: str, vectoriser, tfidf, intents: list, skip_confirmation: bool = False) -> tuple[str | None, float]:
     qCounts = vectoriser.transform([query])
     qTfidf = tfidf.transform(qCounts)
 
@@ -60,6 +60,10 @@ def searchIntent(inverted_index: dict, query: str, vectoriser, tfidf, intents: l
     if similarity[0][1] > confidenceThresholdIntent:
         return similarity[0]
     elif similarity[0][1] > confidenceThresholdIntentconfirm:
+        # If skip_confirmation is True (e.g., during evaluation), accept the intent without prompting
+        if skip_confirmation:
+            return similarity[0]
+        
         intentCode = intents[similarity[0][0]][1]
         intentDesc = intentDescriptions.get(intentCode, intentCode)
         print(f"To confirm, you're asking about {intentDesc}?")

@@ -16,7 +16,7 @@ flowchart TD
   
     HANDLERS[handlers.py<br/>small, discover, identity<br/>reccomend, check, opening<br/>address, facilities, locations]
   
-    ORDERS[orders.py<br/>order, detectCorrection<br/>handleInputWithIntents<br/>getPickupDate, getPickupTime]
+    ORDERS[orders.py<br/>order, detectCorrection<br/>handleInputWithIntents<br/>getBookSelection, getQuantitySelection<br/>getPickupOrDelivery, getLocationSelection<br/>getDeliveryAddress, getPickupDate, getPickupTime]
   
     NLG[nlg.py<br/>getReferringExpression<br/>aggregateOrderDetails<br/>generateContextualError]
   
@@ -91,78 +91,242 @@ flowchart TD
     THANK --> END
 ```
 
-## 3. Order Transaction Flow with Correction Points
+## 3. Order Transaction Flow with Modular Functions
 
 ```mermaid
 stateDiagram-v2
-    [*] --> BookSelection: order intent detected
+    [*] --> order: order intent detected
+    order --> getBookSelection
   
-    BookSelection --> QuantityInput: Book identified
-    BookSelection --> BookSelection: Fuzzy search if not found
+    state getBookSelection {
+        [*] --> ExtractTitle: Regex extraction
+        ExtractTitle --> FuzzySearch: Check against stock
+        FuzzySearch --> Match3{Match found?}
+        Match3 -->|Distance ≤2| ReturnBook: Auto-confirm
+        Match3 -->|Distance ≤5| AskConfirm: Ask confirmation
+        AskConfirm --> UserConfirm{User confirms?}
+        UserConfirm -->|Yes| ReturnBook
+        UserConfirm -->|No| TryMore{More matches?}
+        TryMore -->|Yes| AskNext: Show next match
+        TryMore -->|No| PromptRetry: Ask for retry
+        PromptRetry --> FuzzySearch
+        AskNext --> UserConfirm
+        
+        Match3 -->|No match| IntentCheck{Check other intents}
+        IntentCheck -->|Intent found| HandleIntent: Process intent
+        HandleIntent --> AskAgain: Ask for book again
+        AskAgain --> FuzzySearch
+        IntentCheck -->|No intent| IncrementAttempts: attempts++
+        IncrementAttempts --> CheckAttempts{attempts >= 3?}
+        CheckAttempts -->|Yes| CancelOrder: Cancel order & Return None
+        CheckAttempts -->|No| ShowError: Show book_not_found error
+        ShowError --> PromptRetry
+        
+        note right of IntentCheck
+            Checks for intents on EVERY
+            failed match attempt.
+            Doesn't increment counter
+            if intent was handled.
+        end note
+    }
   
-    QuantityInput --> DeliveryChoice: Quantity validated
-    QuantityInput --> QuantityInput: Invalid quantity
+    getBookSelection --> getQuantitySelection: Book selected
+    getBookSelection --> [*]: User cancelled (None returned)
   
-    note right of QuantityInput
-        Correction Point 1
-        detectCorrection checks
-        for book or quantity changes
-    end note
+    state getQuantitySelection {
+        [*] --> ExtractQty: Regex/word extraction
+        ExtractQty --> StockCheck: Validate stock
+        StockCheck --> InStock{Sufficient stock?}
+        InStock -->|Yes| ReturnQty
+        InStock -->|No| ShowError: Show available stock
+        ShowError --> PromptQtyRetry
+        PromptQtyRetry --> ExtractQty
+        
+        note right of StockCheck
+            Stock validation ensures
+            quantity ≤ available stock
+        end note
+    }
   
-    DeliveryChoice --> PickupFlow: pickup detected
-    DeliveryChoice --> DeliveryFlow: delivery detected
-    DeliveryChoice --> DeliveryChoice: Unclear input
+    getQuantitySelection --> getPickupOrDelivery: Quantity validated
+    getQuantitySelection --> [*]: User cancelled
   
-    note right of DeliveryChoice
-        Correction Point 2
-        Can correct book or quantity
-        while choosing delivery type
-    end note
+    state getPickupOrDelivery {
+        [*] --> CheckInput: Scan for pickup/delivery keywords
+        CheckInput --> Delivery{Contains "deliv"?}
+        Delivery -->|Yes| ReturnDelivery: Return False (delivery)
+        Delivery -->|No| Pickup{Contains "pick"?}
+        Pickup -->|Yes| ReturnPickup: Return True (pickup)
+        Pickup -->|No| ListLocs: List locations & ask again
+        ListLocs --> CheckInput
+        
+        note left of CheckInput
+            Correction Point:
+            Can correct book or quantity
+            with detectCorrection()
+        end note
+    }
+  
+    getPickupOrDelivery --> PickupFlow: pickup=True
+    getPickupOrDelivery --> DeliveryFlow: pickup=False
+    getPickupOrDelivery --> [*]: User cancelled
   
     state PickupFlow {
-        [*] --> LocationSelection
-        LocationSelection --> DateSelection: Valid location
-        LocationSelection --> LocationSelection: Invalid location
-    
-        note right of LocationSelection
-            Correction Point 3
-            Can correct book or quantity
-            during location selection
-        end note
-    
-        DateSelection --> TimeSelection: Valid date
-        DateSelection --> DateSelection: Invalid or closed date
-    
-        note right of DateSelection
-            Correction Point 4
-            Can correct book, quantity, location
-            during date selection
-        end note
-    
-        TimeSelection --> OrderConfirmation: Valid time
-        TimeSelection --> TimeSelection: Store closed at time
-    
-        note right of TimeSelection
-            Correction Point 5
-            Can correct book or quantity
-            during time selection
-        end note
+        [*] --> getLocationSelection
+        
+        state getLocationSelection {
+            [*] --> ExtractLoc: extractLocation()
+            ExtractLoc --> ValidLoc{Valid location?}
+            ValidLoc -->|Yes| ReturnLoc
+            ValidLoc -->|No| ShowLocs: List all locations
+            ShowLocs --> AskLoc: Ask user to choose
+            AskLoc --> ExtractLoc
+            
+            note right of ExtractLoc
+                Correction Point:
+                Can correct book or quantity
+                via detectCorrection()
+            end note
+        }
+        
+        getLocationSelection --> getPickupDate: Location selected
+        
+        state getPickupDate {
+            [*] --> CheckRange: Check for date range first
+            CheckRange --> RangeFound{between X and Y?}
+            RangeFound -->|Yes| ParseRange: Parse start & end dates
+            ParseRange --> FindDates: Find all open dates in range
+            FindDates --> DatesAvail{Dates available?}
+            DatesAvail -->|Yes| OfferEarliest: Show earliest + confirm
+            OfferEarliest --> UserAccepts{User accepts?}
+            UserAccepts -->|Yes| ReturnDate
+            UserAccepts -->|No| ShowAlts: Show up to 5 alternatives
+            ShowAlts --> PromptAgain
+            DatesAvail -->|No| RangeError: No open dates in range
+            RangeError --> PromptAgain
+            
+            RangeFound -->|No| CheckNatural: Check natural language date
+            CheckNatural --> NaturalFound{25th December?}
+            NaturalFound -->|Yes| ParseNatural: Parse with monthNames
+            NaturalFound -->|No| CheckRelative: Check relative date
+            CheckRelative --> RelFound{tomorrow?}
+            RelFound -->|Yes| ParseRel: Parse relative
+            RelFound -->|No| CheckNumeric: Check DD/MM/YYYY
+            CheckNumeric --> ParseNumeric
+            
+            ParseNatural --> ValidateDate
+            ParseRel --> ValidateDate
+            ParseNumeric --> ValidateDate
+            ValidateDate --> OpenCheck{Location open?}
+            OpenCheck -->|Yes| ReturnDate
+            OpenCheck -->|No| ShowOpenDays: Show open days
+            ShowOpenDays --> PromptAgain
+            PromptAgain --> CheckRange
+            
+            note right of CheckRange
+                Correction Point:
+                Can correct book, quantity
+                via detectCorrection()
+                
+                Supports:
+                - Date ranges with confirmation
+                - Natural language (25th Dec)
+                - Relative dates (tomorrow)
+                - Numeric (DD/MM/YYYY)
+            end note
+        }
+        
+        getPickupDate --> getPickupTime: Date selected
+        
+        state getPickupTime {
+            [*] --> CheckTimeRange: Check for time range first
+            CheckTimeRange --> TimeRangeFound{between X and Y?}
+            TimeRangeFound -->|Yes| ParseTimeRange: Parse start & end times
+            ParseTimeRange --> FindTimes: Find all open times in range
+            FindTimes --> TimesAvail{Times available?}
+            TimesAvail -->|Yes| OfferEarliestTime: Show earliest + confirm
+            OfferEarliestTime --> UserAcceptsTime{User accepts?}
+            UserAcceptsTime -->|Yes| ReturnTime
+            UserAcceptsTime -->|No| ShowTimeAlts: Show up to 5 alternatives
+            ShowTimeAlts --> TimePromptAgain
+            TimesAvail -->|No| TimeRangeError: No open times in range
+            TimeRangeError --> TimePromptAgain
+            
+            TimeRangeFound -->|No| Check12Hr: Check 12-hour format
+            Check12Hr --> Found12{9am/1pm?}
+            Found12 -->|Yes| Parse12Hr: Convert to 24hr
+            Found12 -->|No| Check24Hr: Check 24-hour
+            Check24Hr --> Found24{14:00?}
+            Found24 -->|Yes| Parse24Hr
+            Found24 -->|No| CheckGeneral: Check general times
+            CheckGeneral --> FoundGen{noon/morning?}
+            FoundGen -->|Yes| MapGeneral: Use genTimesMap
+            FoundGen -->|No| TimeError: Show error
+            
+            Parse12Hr --> ValidateTime
+            Parse24Hr --> ValidateTime
+            MapGeneral --> ValidateTime
+            ValidateTime --> OpenAtTime{Location open?}
+            OpenAtTime -->|Yes| ReturnTime
+            OpenAtTime -->|No| ShowOpenHours: Show open hours
+            ShowOpenHours --> TimePromptAgain
+            TimeError --> TimePromptAgain
+            TimePromptAgain --> CheckTimeRange
+            
+            note right of CheckTimeRange
+                Correction Point:
+                Can correct book, quantity
+                via detectCorrection()
+                
+                Supports:
+                - Time ranges with confirmation
+                - 12-hour (9am, 1pm)
+                - 24-hour (14:00)
+                - General (noon, morning)
+            end note
+        }
+        
+        getPickupTime --> OrderConfirm: Time selected
     }
   
     state DeliveryFlow {
-        [*] --> AddressInput
-        AddressInput --> OrderConfirmation: Valid address
-        AddressInput --> AddressInput: Invalid address
-    
-        note right of AddressInput
-            Correction Point 6
-            Can correct book or quantity
-            during address input
-        end note
+        [*] --> getDeliveryAddress
+        
+        state getDeliveryAddress {
+            [*] --> ExtractAddress: Regex for UK postcode
+            ExtractAddress --> ValidAddr{Valid format?}
+            ValidAddr -->|Yes| CalcCost: Calculate postage
+            CalcCost --> ReturnAddrCost: Return (address, cost)
+            ValidAddr -->|No| ShowFormat: Show postcode format
+            ShowFormat --> PromptAddr
+            PromptAddr --> ExtractAddress
+            
+            note right of ExtractAddress
+                Correction Point:
+                Can correct book or quantity
+                via detectCorrection()
+                
+                UK postcode validation:
+                SW1A 1AA format
+            end note
+        }
+        
+        getDeliveryAddress --> OrderConfirm: Address validated
     }
   
-    OrderConfirmation --> FeedbackCollection: Order stored
-    FeedbackCollection --> [*]: Feedback collected
+    PickupFlow --> OrderConfirm
+    DeliveryFlow --> OrderConfirm
+  
+    state OrderConfirm {
+        [*] --> DisplayDetails: Show aggregated order
+        DisplayDetails --> AskFinalConfirm: Confirm order?
+        AskFinalConfirm --> FinalConfirm{User confirms?}
+        FinalConfirm -->|Yes| StoreOrder: storeOrder()
+        FinalConfirm -->|No| CancelMsg: Order cancelled
+        StoreOrder --> CollectFeedback: collectFeedback()
+    }
+  
+    OrderConfirm --> [*]: Order complete
 ```
 
 ## 4. Context Management & Ellipsis Resolution
