@@ -190,9 +190,9 @@ def reccomend(prompt: str = '', bookDesc=None, countBookDesc=None, tfidfBookDesc
     
     
     # Ask user for recommendation type
-    print("Would you like genre-based or recommendation-based suggestions?")
+    print("Would you like genre-based or description-based suggestions?")
     print("[1] Genre-based (browse by genre)")
-    print("[2] Recommendation-based (describe what you're looking for)")
+    print("[2] Description-based (describe what you're looking for)")
     
     choiceInput = input("Please enter your choice (1 or 2, QUIT to exit, or CANCEL to cancel): ")
     if choiceInput.lower() == "quit":
