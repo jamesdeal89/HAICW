@@ -224,7 +224,7 @@ def reccomend(prompt: str = '', bookDesc=None, countBookDesc=None, tfidfBookDesc
             if results:
                 # Try first recommendation
                 docId, score = results[0]
-                bookTitle = bookDesc[docId][0]
+                bookTitle = bookDesc[docId][1]  # [description, name] - get name at index 1
                 bookData = getBookByTitle(bookTitle)
                 
                 if bookData:
@@ -245,7 +245,7 @@ def reccomend(prompt: str = '', bookDesc=None, countBookDesc=None, tfidfBookDesc
                         # User declined - try second recommendation if available
                         if len(results) > 1:
                             docId2, score2 = results[1]
-                            bookTitle2 = bookDesc[docId2][0]
+                            bookTitle2 = bookDesc[docId2][1]  # [description, name] - get name at index 1
                             bookData2 = getBookByTitle(bookTitle2)
                             
                             if bookData2:

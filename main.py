@@ -113,7 +113,7 @@ def main() -> None:
 
     # Book description search initialisations
     bookDesc = readBookDescriptions()
-    XtrainTfBookDesc, countBookDesc, tfidfBookDesc = stemVectorWeight(bookDesc, True, "XtrainTfBookDesc.pickle", "countBookDesc.pickle", "tfidfBookDesc.pickle", textIndex=1)
+    XtrainTfBookDesc, countBookDesc, tfidfBookDesc = stemVectorWeight(bookDesc, False, "XtrainTfBookDesc.pickle", "countBookDesc.pickle", "tfidfBookDesc.pickle")
     invIdxBookDesc = generateInvertedIndex(countBookDesc, XtrainTfBookDesc, "invIdxBookDesc.pickle")
 
     # First use 

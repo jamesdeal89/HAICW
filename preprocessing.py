@@ -217,8 +217,8 @@ def readBookDescriptions() -> list[list[str]]:
         stock = json.load(f)
     
     for book in stock['stock']:
-        # format: [name, description]
-        bookDesc.append([book['name'], book.get('description', '')])
+        # format: [description, name] - description first for TF-IDF vectorization
+        bookDesc.append([book.get('description', ''), book['name']])
     
     # Save to disk for next time
     with open(f"bookDesc.pickle", "wb") as f:
