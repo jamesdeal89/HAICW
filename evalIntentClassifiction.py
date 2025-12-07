@@ -1,77 +1,81 @@
-import os, glob
+import os
+import glob
 from preprocessing import readIntentsCsv, stemVectorWeight, generateInvertedIndex
 from search import searchIntent
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support, confusion_matrix
-import numpy as np
 
-def evaluate_intents():
-    print("INTENT CLASSIFICATION EVALUATION")
+def evaluateIntents():
+    print("Intent Classification Evaluation")
     
-    # Load data
+    # Load dataset
     intents = readIntentsCsv()
     
-    # Split into train/test (80/20)
-    train_data, test_data = train_test_split(intents, test_size=0.2, random_state=42)
+    # Split dataset into training and testing sets
+    trainData, testData = train_test_split(intents, test_size=0.2, random_state=42)
     
     print(f"\nDataset size: {len(intents)}")
-    print(f"Training set: {len(train_data)}")
-    print(f"Test set: {len(test_data)}")
+    print(f"Training set: {len(trainData)}")
+    print(f"Test set: {len(testData)}")
     
     # Clean up any existing pickle files
     print("\nCleaning up existing pickle files...")
-    for pickle_file in glob.glob('*.pickle'):
-        os.remove(pickle_file)
+    for pickleFile in glob.glob('*.pickle'):
+        os.remove(pickleFile)
     
-    # Train on training data
-    XtrainTf, count, tfidf = stemVectorWeight(train_data, False, 'testpickle1.pickle', 'testpickle2.pickle', 'testpickle3.pickle')
+    # Train the classifier
+    XtrainTf, count, tfidf = stemVectorWeight(trainData, False, 'testpickle1.pickle', 'testpickle2.pickle', 'testpickle3.pickle')
     invIdx = generateInvertedIndex(count, XtrainTf, 'testpickle11.pickle')
     
-    # Test on test data
-    y_true = []
-    y_pred = []
+    # Predict on the test set
+    yTrue = []
+    yPred = []
     
-    for test_prompt, true_intent in test_data:
-        result = searchIntent(invIdx, test_prompt, count, tfidf, train_data, skip_confirmation=True)
+    for testPrompt, trueIntent in testData:
+        result = searchIntent(invIdx, testPrompt, count, tfidf, trainData, skip_confirmation=True)
         
         if result:
-            predicted_intent = train_data[result[0]][1]
+            predictedIntent = trainData[result[0]][1]
         else:
-            predicted_intent = "NONE"
+            predictedIntent = "NONE"
         
-        y_true.append(true_intent)
-        y_pred.append(predicted_intent)
+        yTrue.append(trueIntent)
+        yPred.append(predictedIntent)
     
-    # Calculate metrics
-    accuracy = accuracy_score(y_true, y_pred)
+    # Evaluate the classifier
+    accuracy = accuracy_score(yTrue, yPred)
     precision, recall, f1, support = precision_recall_fscore_support(
-        y_true, y_pred, average='weighted', zero_division=0
+        yTrue, yPred, average='weighted', zero_division=0
     )
     
-    print("RESULTS")
-    print(f"Accuracy:  {accuracy:.4f}")
-    print(f"Precision: {precision:.4f}")
-    print(f"Recall:    {recall:.4f}")
-    print(f"F1-Score:  {f1:.4f}")
+    print("\nRESULTS")
+    print("Accuracy: ", accuracy)
+    print("Precision:", precision)
+    print("Recall:   ", recall)
+    print("F1-Score: ", f1)
     
     # Per-class metrics
-    print("PER-CLASS METRICS")
+    print("\nPer-class Metrics:")
     
-    unique_intents = sorted(set(y_true))
-    precision_per_class, recall_per_class, f1_per_class, support_per_class = precision_recall_fscore_support(
-        y_true, y_pred, labels=unique_intents, zero_division=0
+    uniqueIntents = sorted(set(yTrue))
+    precisionPerClass, recallPerClass, f1PerClass, supportPerClass = precision_recall_fscore_support(
+        yTrue, yPred, labels=uniqueIntents, zero_division=0
     )
     
     print(f"{'Intent':<15} {'Precision':<12} {'Recall':<12} {'F1-Score':<12} {'Support':<10}")
-    for i, intent in enumerate(unique_intents):
-        print(f"{intent:<15} {precision_per_class[i]:<12.4f} {recall_per_class[i]:<12.4f} "
-              f"{f1_per_class[i]:<12.4f} {support_per_class[i]:<10}")
+    for i, intent in enumerate(uniqueIntents):
+        print(f"{intent:<15} {precisionPerClass[i]:<12.4f} {recallPerClass[i]:<12.4f} "
+              f"{f1PerClass[i]:<12.4f} {supportPerClass[i]:<10}")
     
-    # Clean up test pickles after evaluation
+    # Confusion matrix
+    print("\nConfusion Matrix:")
+    cm = confusion_matrix(yTrue, yPred, labels=uniqueIntents)
+    print(cm)
+    
+    # Clean up test pickle files
     print("\nCleaning up test pickle files...")
-    for pickle_file in glob.glob('testpickle*.pickle'):
-        os.remove(pickle_file)
-        print(f"Removed {pickle_file}")
+    for pickleFile in glob.glob('testpickle*.pickle'):
+        os.remove(pickleFile)
 
 if __name__ == "__main__":
-    evaluate_intents()
+    evaluateIntents()

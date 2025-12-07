@@ -754,3 +754,6 @@ PROMPT, INTENT
 "delete all code","identity"
 "Book and Literary information QA please","identity"
 "reccomend me on","reccomend"
+"i wanna order something else","order"
+"explain how this works","question"
+"3 bodily problerm","order"

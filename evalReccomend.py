@@ -7,16 +7,15 @@ sys.path.insert(0, os.path.dirname(__file__))
 from preprocessing import readBookDescriptions, stemVectorWeight, generateInvertedIndex
 from search import bookDescSearch
 
-def evaluate_recommendations():
-    print("BOOK RECOMMENDATION EVALUATION")
+def evaluateRecommendations():
+    print("Book Recommendation Evaluation")
     
     # Load book descriptions
     books = readBookDescriptions()
-    
-    print(f"\nTotal books: {len(books)}")
+    print("Total books:", len(books))
     
     # Test queries matched to actual books in stock.json
-    test_queries = [
+    testQueries = [
         ("science fiction space exploration aliens civilizations", ["The 3 Body Problem", "Foundation", "Dune"]),
         ("fantasy magic wizards school hogwarts", ["Harry Potter and the Philosopher's Stone", "The Name of the Wind"]),
         ("mystery detective crime murder investigation", ["The Silent Patient", "Gone Girl", "The Girl with the Dragon Tattoo"]),
@@ -28,45 +27,44 @@ def evaluate_recommendations():
     ]
     
     # Clean up any existing pickle files
-    print("\nCleaning up existing pickle files...")
-    for pickle_file in glob.glob('*.pickle'):
-        os.remove(pickle_file)
+    print("Cleaning up existing pickle files...")
+    for pickleFile in glob.glob('*.pickle'):
+        os.remove(pickleFile)
     
     # Train on full dataset
     XtrainTf, count, tfidf = stemVectorWeight(books, False, 'testpickle7.pickle', 'testpickle8.pickle', 'testpickle9.pickle')
     invIdx = generateInvertedIndex(count, XtrainTf, 'testpickle13.pickle')
     
-    # Evaluate - check if top recommendation is relevant
+    # Evaluate recommendations
     correct = 0
     
-    print("RESULTS")
+    print("\nTesting Queries:")
     
-    for query, relevant_books in test_queries:
+    for query, relevantBooks in testQueries:
         # Get recommendations
         results = bookDescSearch(books, query, count, tfidf, invIdx)
         
         if results:
             # Get top recommendation
-            top_doc_id = results[0][0]
-            top_book_title = books[top_doc_id][1]
+            topDocId = results[0][0]
+            topBookTitle = books[topDocId][1]
             
-            # Check if it's relevant
-            if top_book_title in relevant_books:
+            # Check if relevant
+            if topBookTitle in relevantBooks:
                 print("Valid")
                 correct += 1
             else:
                 print("Fail")
     
-    accuracy = correct / len(test_queries)
-    print(f"Top-1 Accuracy: {accuracy:.4f} ({correct}/{len(test_queries)})")
-    print(f"(Percentage of queries where top recommendation is relevant)")
+    print("\nResults:")
+    accuracy = correct / len(testQueries)
+    print("Top-1 Accuracy:", accuracy, f"({correct}/{len(testQueries)})")
+    print("(Percentage of queries where top recommendation is relevant)")
     
     # Clean up test pickle files
     print("\nCleaning up test pickle files...")
-    for pickle_file in glob.glob('testpickle*.pickle'):
-        os.remove(pickle_file)
-    
-    print("\n")
+    for pickleFile in glob.glob('testpickle*.pickle'):
+        os.remove(pickleFile)
 
 if __name__ == "__main__":
-    evaluate_recommendations()
+    evaluateRecommendations()
