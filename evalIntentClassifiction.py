@@ -1,3 +1,4 @@
+# ====== EVALUATION OF INTENT CLASSIFICATION ======
 import os
 import glob
 from preprocessing import readIntentsCsv, stemVectorWeight, generateInvertedIndex

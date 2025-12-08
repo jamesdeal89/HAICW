@@ -1,3 +1,13 @@
+# ====== NATURAL LANGUAGE GENERATION ======
+'''
+Handling:
+- Referring Expression insertion.
+- Aggregation.
+- Contextual Errors.
+- Related Suggestions.
+- Discourse Markers.
+'''
+
 import random
 
 bookRefs = {

@@ -1,8 +1,13 @@
-# ------ Search ------
-
+# ====== SEARCH ======
 '''
 Use cosine similarity => cosine angle between the doc vector and the prompt vector.
+For:
+- Intent
+- QA
+- Description 
+searches.
 '''
+
 from collections import defaultdict
 from numpy.linalg import norm
 
@@ -10,7 +15,7 @@ from config import confidenceThresholdIntent, confidenceThresholdIntentconfirm
 from utils import confirmation
 from nlg import generateContextualError, addDiscourseMarker
 
-# Mapping to translate intent codes into human-readable descriptions
+# Mapping to translate intent codes into human-readable descriptions for confirmation NLG
 intentDescriptions = {
     "small": "small talk",
     "question": "questions about books",
@@ -83,11 +88,11 @@ def addIntentExample(prompt: str, intent: str) -> None:
     with open('intents.csv', 'a', encoding='utf-8') as f:
         f.write(f'"{prompt}","{intent}"\n')
 
+"""
+Search QA using cosine similarity with the inverted index.
+Uses sparse dot-products via postings and precomputed document norms.
+"""
 def question(qa: list, question_text: str, vectoriser, tfidf, inv_index: dict) -> str:
-    """
-    Search QA using cosine similarity with the inverted index.
-    Uses sparse dot-products via postings and precomputed document norms.
-    """
     # Vectorise the query
     qCounts = vectoriser.transform([question_text])
     qTfidf = tfidf.transform(qCounts)
@@ -126,11 +131,11 @@ def question(qa: list, question_text: str, vectoriser, tfidf, inv_index: dict) -
         return f"{error} Try rephrasing your question or asking something else."
     return qa[similarity[0][0]][1]
 
+"""
+Search book descriptions using cosine similarity with the inverted index.
+Uses sparse dot-products via postings and precomputed document norms.
+"""
 def bookDescSearch(bookDesc: list, userPrompt: str, vectoriser, tfidf, invIndex: dict) -> list[tuple[int, float]]:
-    """
-    Search book descriptions using cosine similarity with the inverted index.
-    Uses sparse dot-products via postings and precomputed document norms.
-    """
     # Vectorise the query
     qCounts = vectoriser.transform([userPrompt])
     qTfidf = tfidf.transform(qCounts)

@@ -1,9 +1,6 @@
+# ====== EVALUATE RELEVANCE OF DESCRIPTION-BASED RECCOMENDATIONS ======
 import os
-import sys
 import glob
-
-sys.path.insert(0, os.path.dirname(__file__))
-
 from preprocessing import readBookDescriptions, stemVectorWeight, generateInvertedIndex
 from search import bookDescSearch
 
@@ -14,7 +11,7 @@ def evaluateRecommendations():
     books = readBookDescriptions()
     print("Total books:", len(books))
     
-    # Test queries matched to actual books in stock.json
+    # Manual test queries known to match to actual books in stock.json
     testQueries = [
         ("science fiction space exploration aliens civilizations", ["The 3 Body Problem", "Foundation", "Dune"]),
         ("fantasy magic wizards school hogwarts", ["Harry Potter and the Philosopher's Stone", "The Name of the Wind"]),
@@ -39,7 +36,6 @@ def evaluateRecommendations():
     correct = 0
     
     print("\nTesting Queries:")
-    
     for query, relevantBooks in testQueries:
         # Get recommendations
         results = bookDescSearch(books, query, count, tfidf, invIdx)
@@ -49,7 +45,7 @@ def evaluateRecommendations():
             topDocId = results[0][0]
             topBookTitle = books[topDocId][1]
             
-            # Check if relevant
+            # Check if relevant based on manual labels of example valid titles.
             if topBookTitle in relevantBooks:
                 print("Valid")
                 correct += 1

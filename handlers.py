@@ -1,3 +1,4 @@
+# ====== INTENT HANDLERS (EXCEPT ORDER HANDLER) ======
 import re
 import random
 
@@ -136,6 +137,13 @@ def discover() -> None:
     "    7. Small talk - I can handle basic small talk if you'd like to chat.\nE.g 'I feel sad when I can't read my book'\n\n",
     "I hope this helps you converse with me effectively!")
 
+'''
+Identity management handler, matches keywords to determine specific sub-intent.
+Can:
+    - set name
+    - recall name
+    - delete name
+'''
 def identity(prompt: str) -> None:
     # Use regular expression to determine specific intent (either they want to set the name or recall it)
     reIntents = [r"(?i)\b(?:my name is|call me|i am|i'm)\s+([A-Za-z][A-Za-z' -]*)",
@@ -174,8 +182,6 @@ def identity(prompt: str) -> None:
             return "Okay I've forgotten any information I remembered about you."
         else:
             return "Okay, I won't forget your information."
-
-        
 
     else:
         return "I'm sorry, I don't understand your indentity related request. Perhaps try re-wording your prompt."
@@ -264,13 +270,13 @@ def reccomend(prompt: str = '', bookDesc=None, countBookDesc=None, tfidfBookDesc
                                     break
                                 else:
                                     # User declined both - loop back to ask for new description
-                                    print("I apologize, but I'm having trouble finding what you're looking for. Could you try describing the book differently?")
+                                    print("I apologise, but I'm having trouble finding what you're looking for. Could you try describing the book differently?")
                                     continue
                             else:
-                                print("I apologize, but I'm having trouble finding what you're looking for. Could you try describing the book differently?")
+                                print("I apologise, but I'm having trouble finding what you're looking for. Could you try describing the book differently?")
                                 continue
                         else:
-                            print("I apologize, but I'm having trouble finding what you're looking for. Could you try describing the book differently?")
+                            print("I apologise, but I'm having trouble finding what you're looking for. Could you try describing the book differently?")
                             continue
                 else:
                     print(generateContextualError('book_not_found', bookTitle))
@@ -279,7 +285,7 @@ def reccomend(prompt: str = '', bookDesc=None, countBookDesc=None, tfidfBookDesc
                 print(generateContextualError('generic'))
                 continue
     else:
-        # Genre-based search (original implementation)
+        # Genre-based search
         genres = getGenres()
         matchedGenre = None
         
@@ -310,6 +316,7 @@ def reccomend(prompt: str = '', bookDesc=None, countBookDesc=None, tfidfBookDesc
             savePreferredGenre(matchedGenre)
             books = getGenreBooks(matchedGenre)
             if books:
+                # Randomly chooses a book from the relevant genre.
                 recommended = random.choice(books)
                 title = recommended['name']
                 updateContext('lastBook', title)
@@ -352,7 +359,7 @@ def check() -> None:
             print(f"  Cost: £{order['cost']:.2f}")
             
             if order.get('pickup'):
-                print(f"  Pickup Location: {order['address']}")
+                print(f"  Pickup Location: {order['address'].title()}")
                 if order.get('date'):
                     orderDate = getDateFromUnix(order['date'])
                     print(f"  Pickup Date: {orderDate.strftime('%d/%m/%Y')}")
@@ -506,6 +513,13 @@ def facilities(prompt: str | None = None) -> None:
         if 'floors' in loc:
             print(f"- {loc['floors']} floors")
 
+'''
+Check stock for a book title.
+    - Could be generally i.e. check across all locations and print where available.
+    - Or at a specific location i.e check if in stock in Nottingham.
+        - If not in stock at specific location, suggest alternatives where it is.
+        - Or inform user it's not stocked at all.
+'''
 def stockCheck(prompt: str | None = None) -> None:
     updateContext('lastIntent', 'stockCheck')
     

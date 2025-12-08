@@ -1,16 +1,15 @@
+# ====== K-FOLD INTENT CLASSIFICATION TESTING ======
 import os
-import sys
 import glob
 import numpy as np
 import matplotlib.pyplot as plt
-
 from preprocessing import readIntentsCsv, stemVectorWeight, generateInvertedIndex
 from search import searchIntent
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 
+# Run k-fold cross-validation for intent classification
 def runKFoldEvaluation(intents, numFolds=10):
-    """Run k-fold cross-validation for intent classification"""
     
     allPrompts = []
     allIntents = []
@@ -23,6 +22,9 @@ def runKFoldEvaluation(intents, numFolds=10):
         allIntents.append(intent)
     
     accuracies = []
+    precisions = []
+    recalls = []
+    f1s = []
     
     for fold in range(numFolds):
         # Split data with different random state each fold
@@ -52,21 +54,34 @@ def runKFoldEvaluation(intents, numFolds=10):
                 predictedDocId = result[0]
                 predictedIntent = trainData[predictedDocId][1]
             else:
-                predictedIntent = None
+                predictedIntent = "FAILED"
             yTrue.append(trueIntent)
             yPred.append(predictedIntent)
         
-        # Calculate accuracy
+        # Calculate metrics
         accuracy = accuracy_score(yTrue, yPred)
+        precision = precision_score(yTrue, yPred, average='weighted', zero_division=0)
+        recall = recall_score(yTrue, yPred, average='weighted', zero_division=0)
+        f1 = f1_score(yTrue, yPred, average='weighted', zero_division=0)
+
         accuracies.append(accuracy)
+        precisions.append(precision)
+        recalls.append(recall)
+        f1s.append(f1)
         
         # Clean up pickle files
         for picklePattern in [f'testpickle*_fold{fold}.pickle']:
             for pf in glob.glob(picklePattern):
                 os.remove(pf)
     
-    return np.array(accuracies)
+    return {
+        'accuracy': np.array(accuracies),
+        'precision': np.array(precisions),
+        'recall': np.array(recalls),
+        'f1': np.array(f1s)
+    }
 
+# Run the K fold and collate resulsts and visualise.
 def evaluateKFold():
     print("K-Fold Cross-Validation Evaluation")
     
@@ -75,20 +90,21 @@ def evaluateKFold():
     print("Running 10-fold cross-validation...")
     
     # Run k-fold cross-validation
-    accuracies = runKFoldEvaluation(intents, numFolds=10)
+    results = runKFoldEvaluation(intents, numFolds=10)
     
     print("\nResults:")
-    print("10-fold CV accuracies:", accuracies)
-    print("Mean accuracy:", np.mean(accuracies))
-    print("Std deviation:", np.std(accuracies))
-    print("Min accuracy:", np.min(accuracies))
-    print("Max accuracy:", np.max(accuracies))
-    
-    # Visualization - Simple box plot
+    for metricName, values in results.items():
+        print(f"\n{metricName}:")
+        print("Mean accuracy:", np.mean(values))
+        print("Std deviation:", np.std(values))
+        print("Min accuracy:", np.min(values))
+        print("Max accuracy:", np.max(values))
+        
+    # Visualisation
     print("\nGenerating box plot visualization...")
     
     plt.figure(figsize=(8, 6))
-    plt.boxplot(accuracies, labels=['Intent Classifier'])
+    plt.boxplot(results['accuracy'], labels=['Intent Classifier'])
     plt.ylabel('Accuracy')
     plt.title('10-Fold Cross-Validation Results')
     plt.grid(axis='y', alpha=0.3)

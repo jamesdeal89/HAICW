@@ -21,33 +21,10 @@ CHECKLIST OF EXPECTED FEATURES:
 '''
 
 '''
-IDEA:
-Book ordering system.
+CORE IDEA:
+Book ordering, reccomendation and information system.
 Transaction: ordering books, scheduling pickup/delivery.
 Q&A: book recomendations, location opening times.
-'''
-
-'''
-FOR THE CHECKPOINT:
-Requirements:
-Implement *similarity-based* intent matching, 
-which routes the flow of the chatbot to functions for handling:
-- Small talk,
-- Discoverability (what can the bot do?),
-- Identity management,
-- Question answering.
-
-They will test with:
-Hi or Hello [greet the user and ask their name]
-What is my name [tell the user their name]
-How are you [answer]
-What can you do [answer]
-What are stocks and bonds [answer from QA dataset]
-
-NOTE: For purposes of checkpoint, need to use *stocks QA dataset* provided, 
-for final submission can change.
-
-CHECKPOINT WAS COMPLETED AND BONUS MARKS RECEIVED.
 '''
 
 '''
@@ -55,18 +32,18 @@ NOTE on Q&A dataset:
 Static dataset was partially genAI generated to bulk out examples. 
 NONE of the code, processing, etc are AI generated.
 NOTE on intents dataset:
-Based on boostrapped manual examples,
+Based on boostrapped manual examples, expanded with genAI.
 Bulked out using confirmation:
     - if the user confirms a low confidence intent match, 
         - add their prompt and the confirmed intent to dataset.
 '''
 
-# Prevent warnings which may occur from pickling, sometimes versions may mistmatch, but has little effect.
+# Prevent warnings which may occur from pickling, sometimes versions may mistmatch, but has no notable effect.
 import warnings
 warnings.filterwarnings('ignore')
 
 from preprocessing import readIntentsCsv, stemVectorWeight, generateInvertedIndex, readQaCsv, readBookDescriptions, clearOldPickles
-from search import searchIntent, question, bookDescSearch
+from search import searchIntent, question
 from handlers import discover, small, identity, thank, reccomend, check, opening, address, facilities, locations, stockCheck
 from orders import order
 from context import resolveEllipsis
@@ -101,7 +78,7 @@ def main() -> None:
     """)
     print("Welcome to BlackSmith's Bookstore Chatbot!")
 
-    # intent matching initialisations
+    # Intent matching initialisations
     intents = readIntentsCsv()
     XtrainTf, count, tfidf = stemVectorWeight(intents, False, "XtrainTf.pickle", "count.pickle", "tfidf.pickle")
     invIdxIntents = generateInvertedIndex(count, XtrainTf, "invIdx.pickle")
@@ -121,6 +98,7 @@ def main() -> None:
         # Asks user for their name.
         print(small("hello"))
     
+    # Main conversational loop and respective intent handler calls.
     while True:
         prompt = input("Please enter your prompt (QUIT to exit): ")
         if prompt.lower() == "quit":

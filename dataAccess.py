@@ -1,3 +1,4 @@
+# ====== DATA ACCESS / DATASET RELATED FUNCTIONS ======
 import json
 import os
 import re
@@ -295,6 +296,9 @@ def storeOrder(title: str, isbn: str, quantity: int, pickup: bool, address: str,
     with open('stock.json', 'w') as f:
         f.write(stockStr)
 
+'''
+Stores user feedback rating on disk, alongside their (optional) feedback message, and their last prompt as context for debugging.
+'''
 def storeFeedback(rating, comments, lastPrompt=""):
     if os.path.exists('feedback.json'):
         with open('feedback.json', 'r') as f:

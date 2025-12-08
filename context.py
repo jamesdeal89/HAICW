@@ -1,5 +1,7 @@
+# ====== SESSION CONTEXT TRACKING ======
 import re
 
+# Session context tracking slots
 sessionContext = {
     'lastBook': None,
     'lastLocation': None,
@@ -16,6 +18,9 @@ def updateContext(key: str, value) -> None:
 def getContext(key: str):
     return sessionContext.get(key)
 
+'''
+Wipe the context, re-initialise.
+'''
 def resetContext() -> None:
     global sessionContext
     sessionContext = {
@@ -27,6 +32,11 @@ def resetContext() -> None:
         'conversationTurn': 0
     }
 
+'''
+Resolve Ellipsis. 
+Based on query keywords and last intent, substitute relevant context slot into referring expression.
+Improves classification accuracy and user experience - no need to explicitly state book title every prompt.
+'''
 def resolveEllipsis(query: str) -> str:
     queryLower = query.lower().strip()
     

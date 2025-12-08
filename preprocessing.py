@@ -1,5 +1,4 @@
-# ------ Preprocessing ------
-
+# ====== PREPROCESSING ======
 import os
 import csv
 import pickle
@@ -19,11 +18,11 @@ download('stopwords', quiet=True)
 # Cache timeout: 1 day in seconds
 CACHE_TIMEOUT = 24 * 60 * 60
 
+"""
+Remove pickle cache files if they are older than 1 day.
+This ensures the cache regenerates periodically with fresh data.
+"""
 def clearOldPickles() -> None:
-    """
-    Remove pickle cache files if they are older than 1 day.
-    This ensures the cache regenerates periodically with fresh data.
-    """
     pickle_files = [
         'intents.pickle',
         'qa.pickle',
@@ -50,21 +49,12 @@ def clearOldPickles() -> None:
                 os.remove(pickle_file)
                 print(f"Cleared old cache file: {pickle_file}")
 
+'''
+Read in the CSV of example prompts labelled with respetive intents.
+As similarity based intent matching, resolve the user prompt to the 
+most similar entry in the corpus of prompt docs, resolve to respective intent label.
+'''
 def readIntentsCsv() -> list[list[str]]:
-    '''
-    Read in the CSV of example prompts labelled with respetive intents.
-    As similarity based intent matching, resolve the user prompt to the 
-    most similar entry in the corpus of prompt docs, resolve to respective intent label.
-    The labels are one of:
-    1. "small"
-    2. "question"
-    3. "identity"
-    4. "discover"
-    5. "order"
-    6. "location"
-    7. "check"
-    8. "thank"
-    '''
     # If we have the intents object saved to disk, just load and return that
     if os.path.exists('intents.pickle'):
         with open("intents.pickle", "rb") as f:
@@ -185,6 +175,10 @@ def generateInvertedIndex(count_vect, X_train_tf, pName: str) -> dict:
 # 'Postings' => list of docs that contain each term, alongside the term's importance in those docs.
 # inverted_index resolves a term in the vocab to it's respective postings.
 
+'''
+Load QA pairs.
+Format in the same way as intents to enable re-use of similarity based matching functions.
+'''
 def readQaCsv() -> list[list[str]]:
     # If we have the QA object saved to disk, just load and return that
     if os.path.exists('qa.pickle'):
@@ -205,6 +199,10 @@ def readQaCsv() -> list[list[str]]:
 
     return qa
 
+'''
+Load book descriptions.
+Format in the same way as intents to enable re-use of similarity based matching functions.
+'''
 def readBookDescriptions() -> list[list[str]]:
     # If we have the book descriptions saved to disk, just load and return that
     if os.path.exists('bookDesc.pickle'):

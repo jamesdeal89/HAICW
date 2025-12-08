@@ -1,11 +1,10 @@
-# ------ Orders/Transactions ------
-
+# ====== ORDER/TRANSACTION HANDLER (AND SUB-HANDLERS) ======
 import re
 import datetime
 
 from dataAccess import (
     fuzzySearchTitle, stockCheck, getPrice, getAllLocations, extractLocation,
-    isLocOpenOnDate, isLocOpenAtTime, storeOrder, getISBNbyTitle, readName, storeFeedback, getLocationsAvailable
+    isLocOpenOnDate, isLocOpenAtTime, storeOrder, getISBNbyTitle, readName, storeFeedback
 )
 from utils import confirmation, wordToInt, getUnixEpochTimestamp
 from handlers import identity, small, discover, thank, reccomend
@@ -28,19 +27,19 @@ _countBookDesc = None
 _tfidfBookDesc = None
 _invIdxBookDesc = None
 
+'''
+Intercepts user input during transactions.
+First tries to process as transaction data (based on expectedType).
+Only if input doesn't make sense for the transaction, check for non-order intents.
+
+expectedType can be: 'book', 'quantity', 'location', 'date', 'time', 'pickup_delivery', 'general'
+
+Returns: (processed_input, should_retry)
+- If transaction-relevant: (userInput, False) 
+- If intent handled: (None, True) - signals to re-ask
+- If quit/cancel: (userInput, False) - let caller handle
+'''
 def handleInputWithIntents(userInput: str, expectedType: str = None):
-    '''
-    Intercepts user input during transactions.
-    First tries to process as transaction data (based on expectedType).
-    Only if input doesn't make sense for the transaction, check for non-order intents.
-    
-    expectedType can be: 'book', 'quantity', 'location', 'date', 'time', 'pickup_delivery', 'general'
-    
-    Returns: (processed_input, should_retry)
-    - If transaction-relevant: (userInput, False) 
-    - If intent handled: (None, True) - signals to re-ask
-    - If quit/cancel: (userInput, False) - let caller handle
-    '''
     if not userInput:
         return userInput, False
     
@@ -133,11 +132,11 @@ def handleInputWithIntents(userInput: str, expectedType: str = None):
     # Didn't match any special intent, return for normal processing
     return userInput, False
 
+"""
+Detects if user is trying to correct a previous input.
+Returns tuple: (isCorrection: bool, correctionType: str, newValue: any)
+"""
 def detectCorrection(userInput: str) -> tuple[bool, str, str]:
-    """
-    Detects if user is trying to correct a previous input.
-    Returns tuple: (isCorrection: bool, correctionType: str, newValue: any)
-    """
     inputLower = userInput.lower().strip()
     
     # Correction patterns
@@ -160,6 +159,12 @@ def detectCorrection(userInput: str) -> tuple[bool, str, str]:
     
     return (False, None, None)
 
+'''
+Collect user feedback,
+Takes their last prompt as context for debugging.
+Asks user for a 1-5 rating, and optional further comment.
+Saved to disk.
+'''
 def collectFeedback(lastPrompt: str = "") -> None:
     print("\nWe'd appreciate your feedback to help us improve!")
     print("On a scale of 1-5, how would you rate your experience? (1=poor, 5=excellent)")
@@ -188,6 +193,9 @@ def collectFeedback(lastPrompt: str = "") -> None:
     storeFeedback(rating, comments, lastPrompt)
     print("Thank you for your feedback!")
 
+'''
+Sub-handler for prompting, extracting, and validating the user's desired book.
+'''
 def getBookSelection(prompt: str) -> str | None:
     reTitleExtract = r"(?i)\b(?:order|buy|get|purchase|place)\b.*?\b([A-Za-z0-9'':,&() ]{3,}?)\b(?=(?:\s+(?:for|from|to|at|in|pickup|delivery|delivered|store)\b|[.?!,;]|$))"
     title = re.search(reTitleExtract, prompt)
@@ -298,6 +306,9 @@ def getBookSelection(prompt: str) -> str | None:
                             return None
                         break
 
+'''
+Sub-handler for prompting, extracting, and validating the user's desired quantity.
+'''
 def getQuantitySelection(prompt: str, book: str) -> int | None:
     reQuantityExtract = r"(?i)\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen| \
                         sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|million)\b|\b(\d+)\b"
@@ -376,6 +387,9 @@ def getQuantitySelection(prompt: str, book: str) -> int | None:
                     else:
                         return int(quant)
 
+'''
+Sub-handler for prompting and extracting the user's choice between pickup or delivery.
+'''
 def getPickupOrDelivery(prompt: str, book: str, quantity: int, price: float) -> bool | None:
     rePickupExtract = r"(?i)\b(pick-?up|drop-?off)\b"
     reDeliveryExtract = r"(?i)\b(delivery|home)\b"
@@ -439,6 +453,9 @@ def getPickupOrDelivery(prompt: str, book: str, quantity: int, price: float) -> 
             print("Please specify 'pickup' or 'delivery'.")
             continue
 
+'''
+Sub-handler for prompting, extracting, and validating the user's store location choice.
+'''
 def getLocationSelection(book: str, quantity: int, price: float) -> str | None:
     attempts = 0
     while attempts < 4:
@@ -508,6 +525,9 @@ def getLocationSelection(book: str, quantity: int, price: float) -> str | None:
                         attempts = 0
     return None
 
+'''
+Sub-handler for prompting and extracting the user's delivery address (for home delivery) and checking the postcode.
+'''
 def getDeliveryAddress(book: str, quantity: int, price: float) -> tuple[str, float] | None:
     print("What is your delivery address?")
     print("Please provide your full address in the format: House number, Street, City, Postcode")
@@ -756,6 +776,11 @@ def order(prompt: str, intents=None, count=None, tfidf=None, invIdxIntents=None,
             print(addDiscourseMarker('confirmation', f"Your order for {summary} has been placed!"))
             collectFeedback()
 
+'''
+Sub-handler for prompting, extracting, and validating the user's desired date for a pickup order.
+Allows multiple date formats including month names instead of digits.
+Supports date ranges and will provide the earliest valid date in range.
+'''
 def getPickupDate(location: str, book: str | None = None, quantity: int | None = None, price: float | None = None):
     # Dates will be based on a unix epoch timestamp for simple storage.
     date = None
@@ -1001,6 +1026,7 @@ def getPickupDate(location: str, book: str | None = None, quantity: int | None =
     
 '''
 Prompts user in a loop to get the desired time for the pickup.
+Like for date extraction, supports relative times, 24 hour, 12 hour, and time ranges - suggests the earliest valid time in range.
 Returns standardised hour of pickup in 24 hour format integer.
 E.g: 1pm -> returns int 13.
 If failed, returns -1.
