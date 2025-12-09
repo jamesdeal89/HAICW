@@ -14,7 +14,7 @@ from utils import levenshteinDistance
 def readName() -> str | None:
     # Read name from session JSON on disk
     if os.path.exists('session.json'):
-        with open("session.json", "r") as f:
+        with open("session.json", "r", encoding='utf-8') as f:
             session = json.load(f)
         return session['name']
 
@@ -23,16 +23,16 @@ def saveName(name: str) -> None:
     # Check if a JSON exists already
     if os.path.exists('session.json'):
         # Exists already, so read it, update the name field, write back.
-        with open("session.json", "r") as f:
+        with open("session.json", "r", encoding='utf-8') as f:
             session = json.load(f)
         session['name'] = name
-        with open("session.json", "w") as f:
+        with open("session.json", "w", encoding='utf-8') as f:
             json.dump(session, f)
     else:
         session = {
             "name": name
         }
-        with open("session.json", "w") as f:
+        with open("session.json", "w", encoding='utf-8') as f:
             json.dump(session, f)
 
 def resetSession() -> None:
@@ -43,34 +43,34 @@ def resetSession() -> None:
 def savePreferredGenre(genre: str) -> None:
     # Save the user's preferred genre to session JSON
     if os.path.exists('session.json'):
-        with open("session.json", "r") as f:
+        with open("session.json", "r", encoding='utf-8') as f:
             session = json.load(f)
         session['preferredGenre'] = genre
-        with open("session.json", "w") as f:
+        with open("session.json", "w", encoding='utf-8') as f:
             json.dump(session, f)
     else:
         session = {
             "preferredGenre": genre
         }
-        with open("session.json", "w") as f:
+        with open("session.json", "w", encoding='utf-8') as f:
             json.dump(session, f)
 
 def getPreferredGenre() -> str | None:
     # Read preferred genre from session JSON
     if os.path.exists('session.json'):
-        with open("session.json", "r") as f:
+        with open("session.json", "r", encoding='utf-8') as f:
             session = json.load(f)
         return session.get('preferredGenre', None)
     return None
 
 def getStockJSON() -> dict:
-    with open('stock.json', 'r') as f:
+    with open('stock.json', 'r', encoding='utf-8') as f:
         data = json.load(f)
     return data
 
 def getOrdersJSON() -> dict:
     if os.path.exists('orders.json'):
-        with open('orders.json', 'r') as f:
+        with open('orders.json', 'r', encoding='utf-8') as f:
             data = json.load(f)
         return data
     return None
@@ -79,7 +79,7 @@ def getOrdersJSON() -> dict:
 Returns the JSON data for bookstore locations.
 '''
 def getLocationsJSON() -> dict:
-    with open('locations.json', 'r') as f:
+    with open('locations.json', 'r', encoding='utf-8') as f:
         data = json.load(f)
     return data
 
@@ -286,14 +286,14 @@ def storeOrder(title: str, isbn: str, quantity: int, pickup: bool, address: str,
                 "orders": [order]
         }
     ordersStr = json.dumps(orders, indent=4)
-    with open('orders.json', 'w') as f:
+    with open('orders.json', 'w', encoding='utf-8') as f:
         f.write(ordersStr)
     stock = getStockJSON()
     for book in stock['stock']:
         if book['name'].lower().strip() == title:
             book['count'] -= quantity
     stockStr = json.dumps(stock, indent=4)
-    with open('stock.json', 'w') as f:
+    with open('stock.json', 'w', encoding='utf-8') as f:
         f.write(stockStr)
 
 '''
@@ -301,7 +301,7 @@ Stores user feedback rating on disk, alongside their (optional) feedback message
 '''
 def storeFeedback(rating, comments, lastPrompt=""):
     if os.path.exists('feedback.json'):
-        with open('feedback.json', 'r') as f:
+        with open('feedback.json', 'r', encoding='utf-8') as f:
             feedback = json.load(f)
     else:
         feedback = {"feedback": []}
@@ -316,6 +316,6 @@ def storeFeedback(rating, comments, lastPrompt=""):
     feedback['feedback'].append(feedbackEntry)
     
     feedbackStr = json.dumps(feedback, indent=4)
-    with open('feedback.json', 'w') as f:
+    with open('feedback.json', 'w', encoding='utf-8') as f:
         f.write(feedbackStr)
 

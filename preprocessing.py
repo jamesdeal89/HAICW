@@ -62,7 +62,7 @@ def readIntentsCsv() -> list[list[str]]:
 
     # If not saved to disk, re-load from csv
     intents = []
-    with open('intents.csv', 'r', newline='') as f:
+    with open('intents.csv', 'r', encoding='utf-8', newline='') as f:
         r = csv.reader(f, delimiter=',')
         for row in r:
             # format: ["prompt","intent"]
@@ -187,7 +187,7 @@ def readQaCsv() -> list[list[str]]:
 
     # If not saved to disk, re-load from csv
     qa = []
-    with open('qa.csv', 'r', newline='') as f:
+    with open('qa.csv', 'r', encoding='utf-8', newline='') as f:
         r = csv.reader(f, delimiter=',')
         for row in r:
             # format: ["question","intent"]
@@ -211,7 +211,7 @@ def readBookDescriptions() -> list[list[str]]:
 
     # If not saved to disk, re-load from JSON
     bookDesc = []
-    with open('stock.json', 'r') as f:
+    with open('stock.json', 'r', encoding='utf-8') as f:
         stock = json.load(f)
     
     for book in stock['stock']:

@@ -390,7 +390,7 @@ def getQuantitySelection(prompt: str, book: str) -> int | None:
 '''
 Sub-handler for prompting and extracting the user's choice between pickup or delivery.
 '''
-def getPickupOrDelivery(prompt: str, book: str, quantity: int, price: float) -> bool | None:
+def getPickupOrDelivery(prompt: str, book: str, quantity: int, price: float) -> tuple[bool, str, int, float] | None:
     rePickupExtract = r"(?i)\b(pick-?up|drop-?off)\b"
     reDeliveryExtract = r"(?i)\b(delivery|home)\b"
     pickupMatch = re.search(rePickupExtract, prompt)
@@ -399,11 +399,11 @@ def getPickupOrDelivery(prompt: str, book: str, quantity: int, price: float) -> 
     if pickupMatch:
         print("You would like to pick-up from one of our locations, right?")
         if confirmation():
-            return True
+            return (True, book, quantity, price)
     elif deliveryMatch:
         print("You would like this order to be for home delivery, right?")
         if confirmation():
-            return False
+            return (False, book, quantity, price)
     
     while True:
         print("For pickup or delivery? (type pickup/delivery)")
@@ -446,9 +446,9 @@ def getPickupOrDelivery(prompt: str, book: str, quantity: int, price: float) -> 
             continue
         
         if answer.lower().find("deliv") != -1:
-            return False
+            return (False, book, quantity, price)
         elif answer.lower().find("pick") != -1:
-            return True
+            return (True, book, quantity, price)
         else:
             print("Please specify 'pickup' or 'delivery'.")
             continue
@@ -713,9 +713,11 @@ def order(prompt: str, intents=None, count=None, tfidf=None, invIdxIntents=None,
         print(f"Quantity: {quantity}")
         price = getPrice(book) * float(quantity)
         
-        pickup = getPickupOrDelivery(prompt, book, quantity, price)
-        if pickup is None:
+        result = getPickupOrDelivery(prompt, book, quantity, price)
+        if result is None:
             return
+        
+        pickup, book, quantity, price = result
         
         if pickup:
             address = getLocationSelection(book, quantity, price)
@@ -804,13 +806,11 @@ def getPickupDate(location: str, book: str | None = None, quantity: int | None =
                 orderUpdated = True
                 if corrType == 'quantity':
                     newQuantity = int(newValue)
-                    from dataAccess import stockCheck as stockCheckFunc
-                    inStock, available = stockCheckFunc(book, newQuantity)
+                    inStock, available = stockCheck(book, newQuantity)
                     if inStock:
                         print(f"Updating quantity to {newQuantity}...")
                         quantity = newQuantity
-                        from dataAccess import getPrice as getPriceFunc
-                        price = getPriceFunc(book) * float(quantity)
+                        price = getPrice(book) * float(quantity)
                     else:
                         if available == False:
                             print(f"Sorry, '{book}' is not in stock.")
@@ -823,10 +823,8 @@ def getPickupDate(location: str, book: str | None = None, quantity: int | None =
                     if matches and matches[0][1] <= 5:
                         print(f"Updating book to {matches[0][0]}...")
                         book = matches[0][0]
-                        from context import updateContext
                         updateContext('lastBook', book)
-                        from dataAccess import getPrice as getPriceFunc
-                        price = getPriceFunc(book) * float(quantity)
+                        price = getPrice(book) * float(quantity)
                 print("Now, what date for pickup?")
                 continue
         
@@ -1064,13 +1062,11 @@ def getPickupTime(location: str, book: str | None = None, quantity: int | None =
                 orderUpdated = True
                 if corrType == 'quantity':
                     newQuantity = int(newValue)
-                    from dataAccess import stockCheck as stockCheckFunc
-                    inStock, available = stockCheckFunc(book, newQuantity)
+                    inStock, available = stockCheck(book, newQuantity)
                     if inStock:
                         print(f"Updating quantity to {newQuantity}...")
                         quantity = newQuantity
-                        from dataAccess import getPrice as getPriceFunc
-                        price = getPriceFunc(book) * float(quantity)
+                        price = getPrice(book) * float(quantity)
                     else:
                         if available == False:
                             print(f"Sorry, '{book}' is not in stock.")
@@ -1083,10 +1079,8 @@ def getPickupTime(location: str, book: str | None = None, quantity: int | None =
                     if matches and matches[0][1] <= 5:
                         print(f"Updating book to {matches[0][0]}...")
                         book = matches[0][0]
-                        from context import updateContext
                         updateContext('lastBook', book)
-                        from dataAccess import getPrice as getPriceFunc
-                        price = getPriceFunc(book) * float(quantity)
+                        price = getPrice(book) * float(quantity)
                 print("Now, what time for pickup?")
                 continue
         
